@@ -56,27 +56,24 @@ about-books is a mobile-first web app for a solo builder with a 4-week after-hou
 ## Post-scaffold audit
 
 **Tool**: `npm audit --json`
-**Summary**: 0 CRITICAL, 6 HIGH, 10 MODERATE, 2 LOW
-**Direct vs transitive**: direct HIGH: `astro` (2 advisories); remaining 4 HIGH are transitive
-
-#### HIGH findings
-
-- **astro** (<6.3.3) — Reflected XSS via unescaped slot name (GHSA-8hv8-536x-4wqp, CVSS 7.1). Fix: upgrade astro to >=6.3.3. Direct dependency.
-- **astro** (<6.4.6) — Host header SSRF in prerendered error page fetch (GHSA-2pvr-wf23-7pc7, CVSS 7.5). Fix: upgrade astro to >=6.4.6. Direct dependency.
-- **devalue** (5.6.3–5.8.0) — DoS via sparse array deserialization (GHSA-77vg-94rm-hx3p, CVSS 7.5). Transitive (via astro). Fix available.
-- **ws** (8.0.0–8.20.1) — Memory exhaustion DoS from tiny fragments (GHSA-96hv-2xvq-fx4p, CVSS 7.5). Transitive (via wrangler/miniflare and @supabase/realtime-js). Fix available.
-- **vite** (7.0.0–7.3.3) — server.fs.deny bypass on Windows alternate paths (GHSA-fx2h-pf6j-xcff). Transitive (via astro). Fix available.
-- **miniflare / @cloudflare/vite-plugin** — HIGH finding in truncated audit output. Transitive. Fix available.
+**Summary (post `npm audit fix`, 2026-07-01)**: 0 CRITICAL, 0 HIGH, 5 MODERATE, 3 LOW
+**Direct vs transitive**: no direct HIGH or CRITICAL; all remaining are dev tooling
 
 #### MODERATE findings
 
-- @astrojs/check, @astrojs/language-server, @cloudflare/vite-plugin, astro (XSS via unescaped attribute names in spread props CVSS 4.2), wrangler, ws (uninitialized memory disclosure CVSS 4.4), volar-service-yaml, yaml, yaml-language-server (10 total). All transitive or dev dependencies. Fix available for most.
+- **@astrojs/check** (direct) — via @astrojs/language-server → volar-service-yaml → yaml. Dev tooling (language server). Fix requires `--force` (breaking change to @astrojs/check@0.9.2).
+- **@astrojs/language-server** (transitive) — via volar-service-yaml → yaml. Dev tooling.
+- **volar-service-yaml** (transitive) — via yaml. Dev tooling.
+- **yaml** (transitive, in yaml-language-server) — Stack overflow via deeply nested YAML collections (GHSA-48c2-rrv3-qjmp). Dev tooling only; not in app code path.
+- **yaml-language-server** (transitive) — Dev tooling.
 
 #### LOW findings
 
-- @babel/core (arbitrary file read via sourceMappingURL CVSS 3.2), esbuild (arbitrary file read CVSS 2.8). Both transitive. Fix available.
+- **@astrojs/cloudflare** (direct) — transitive esbuild dependency. Dev/build tooling only.
+- **astro** (direct) — residual low via esbuild chain. Fix requires `--force` (Astro v7 breaking change).
+- **esbuild** (transitive) — arbitrary file read on Windows dev server (GHSA-g7r4-m6w7-qqqr). Dev-only; does not affect production build or deployed app.
 
-**Recommended action**: `npm audit fix` resolves most findings without breaking changes. The `astro` direct dependency is the root cause of several HIGH/MODERATE chains — upgrading it likely resolves the majority. Run `npm audit fix` after reviewing, then re-audit.
+**Status**: `npm audit fix` run on 2026-07-01. All HIGH and CRITICAL cleared. Remaining 8 findings are exclusively in dev tooling (language server, esbuild). Fixing them requires `--force` which would pull in Astro v7 (breaking change) — deferred until Astro v7 is stable and the starter is updated.
 
 ## Hints recorded but not acted on
 
