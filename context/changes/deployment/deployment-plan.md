@@ -4,28 +4,116 @@
 
 The project (`about-books`) is an Astro 6 + React 19 SSR app already wired to the Cloudflare Workers adapter (`@astrojs/cloudflare` v13+). The stack is correct; what's missing is the actual deployment. The `wrangler.jsonc` still carries the scaffold name `10x-astro-starter`. Supabase integration is out of scope for this deploy — `SUPABASE_URL` / `SUPABASE_KEY` are declared `optional: true` in `astro.config.mjs` so the app builds and runs without them (auth features will be no-ops until Supabase is wired in a later phase).
 
-This plan covers: rename fix → pre-deploy safety check → manual first deploy → Cloudflare Git integration for auto-deploy on push to `main`.
+This plan covers: CLI prerequisites → rename fix → manual first deploy → Cloudflare Git integration for auto-deploy on push to `main`. The Supabase CLI and OpenAI SDK are set up here as prerequisites even though their integrations land in later phases.
 
 ---
 
-## Phase 1: Pre-deploy fixes (automated)
+## Phase 0: CLI prerequisites
 
-### Task 1 — Fix Worker name in `wrangler.jsonc`
+### Task 0 — Install and verify all required CLIs
 
-**File:** `wrangler.jsonc` (root)
+#### Wrangler (Cloudflare Workers CLI)
 
-Rename before ANY `wrangler deploy` — renaming after first deploy creates a second Worker instead of updating the existing one.
+- [ ] Verify wrangler is available (bundled as project dev dependency):
+  ```bash
+  npx wrangler --version
+  # Expected: wrangler X.X.X
+  ```
+  If missing: `npm install --save-dev wrangler`
 
-- [ ] Change `"name": "10x-astro-starter"` → `"name": "about-books"`
-- [ ] Verify `compatibility_date` is `"2026-05-08"` (already ≥ 2024-09-23 required for `nodejs_compat` + Supabase SSR cookies ✓)
-- [ ] Verify `compatibility_flags` includes `"nodejs_compat"` ✓
-- [ ] Commit: `fix: rename Worker to about-books before first deploy`
+- [ ] Authenticate:
+  ```bash
+  npx wrangler login
+  # Opens browser OAuth → Cloudflare account
+  # Success: "Successfully logged in"
+  ```
+
+- [ ] Verify authenticated account:
+  ```bash
+  npx wrangler whoami
+  # Expected: "You are logged in with an OAuth Token, associated with the email <your-email>"
+  ```
+
+> **Edge case — wrong account:** `npx wrangler logout` then `npx wrangler login` again.
+
+> **Edge case — CI / headless environment:** Use an API token instead of OAuth. Create one at Cloudflare dashboard → My Profile → API Tokens → Edit Cloudflare Workers template, scoped to the `about-books` Worker. Export as `CLOUDFLARE_API_TOKEN` env var — wrangler picks it up automatically.
 
 ---
 
-## Phase 2: Manual setup gate (human step — agent cannot perform)
+#### Supabase CLI
 
-### Task 2 — Authenticate wrangler
+> Supabase backend integration is out of scope for the first deploy. Install the CLI now so it's ready when that phase begins.
+
+- [ ] Install Supabase CLI:
+  ```bash
+  # macOS (Homebrew — recommended)
+  brew install supabase/tap/supabase
+
+  # Or via npm (no Homebrew)
+  npm install --save-dev supabase
+  ```
+
+- [ ] Verify:
+  ```bash
+  supabase --version
+  # Expected: supabase version X.X.X
+  ```
+
+- [x] Authenticate to Supabase Cloud:
+  ```bash
+  supabase login
+  # Opens browser OAuth → Supabase account
+  # Stores token at ~/.supabase/access-token
+  ```
+
+- [x] Link to the project — already done (project ref `hzazucfzlnfqnlhfevsq`):
+  ```bash
+  # From project root — requires project ref from Supabase dashboard → Settings → General
+  supabase link --project-ref <PROJECT_REF>
+  ```
+
+> **Edge case — Docker not installed:** `supabase start` (local dev stack) requires Docker Desktop. The CLI itself installs without Docker; `supabase link` and cloud commands also work without it. Only `supabase start` / `supabase db reset` need Docker.
+
+> **Edge case — `supabase` not found after `npm install`:** Use `npx supabase` instead, or add `./node_modules/.bin` to `PATH`.
+
+---
+
+#### OpenAI SDK
+
+> OpenAI integration (AI enrich, FR-006) is out of scope for the first deploy. Set up the SDK now so it's ready. Note: there is no standalone `openai` CLI — the OpenAI product surface is an SDK plus a web dashboard, not a shell tool.
+
+- [x] Install OpenAI Node SDK (project runtime is Node/Cloudflare Workers, not Python):
+  ```bash
+  npm install openai
+  ```
+
+- [x] Set your API key locally for testing (get it from https://platform.openai.com/api-keys):
+  ```bash
+  # Added OPENAI_API_KEY=sk-... to .dev.vars for Cloudflare local dev (gitignored)
+  ```
+  Also registered in `astro.config.mjs` env schema (`OPENAI_API_KEY`, context: "server", access: "secret").
+
+- [x] Verify API access with a small script — confirmed working, key authenticates and returns model list.
+
+> **Edge case — API key in Cloudflare Workers:** The OpenAI API key must be added as a Worker secret (not env var) before wiring FR-006:
+> ```bash
+> npx wrangler secret put OPENAI_API_KEY
+> ```
+> Do NOT commit the key to `.dev.vars` in version control — `.dev.vars` is gitignored but double-check before any commit touching that file.
+
+> **Edge case — SDK compatibility in workerd:** Before building FR-006, test that `openai` npm package works in the Workers runtime. The SDK uses `fetch` under the hood (supported), but verify retry/timeout logic doesn't depend on Node.js-only APIs. See `infrastructure.md` — Unknown Unknowns §1.
+
+---
+
+#### GitHub CLI
+
+- [x] Install GitHub CLI — confirmed installed (`gh version 2.95.0`).
+
+---
+
+## Phase 1: Manual setup gate (human step — agent cannot perform)
+
+### Task 1 — Authenticate wrangler
 
 - [ ] **Run in terminal:** `npx wrangler login`
   - Opens browser OAuth to your Cloudflare account
@@ -35,9 +123,9 @@ Rename before ANY `wrangler deploy` — renaming after first deploy creates a se
 
 ---
 
-## Phase 3: First deploy
+## Phase 2: First deploy
 
-### Task 3 — Build and deploy to production
+### Task 2 — Build and deploy to production
 
 - [ ] Run production build:
   ```bash
@@ -72,9 +160,9 @@ Rename before ANY `wrangler deploy` — renaming after first deploy creates a se
 
 ---
 
-## Phase 4: Cloudflare Git integration (auto-deploy on push)
+## Phase 3: Cloudflare Git integration (auto-deploy on push)
 
-### Task 4 — Connect GitHub repo to Cloudflare Workers via Git integration
+### Task 3 — Connect GitHub repo to Cloudflare Workers via Git integration
 
 Cloudflare natively watches the GitHub repo and triggers build+deploy on every push to `main` — no CI secret or workflow change required.
 
