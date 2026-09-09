@@ -82,10 +82,12 @@ The team ships about-books on the Cloudflare Workers free tier. In week 2, they 
 
 ## Risk Register
 
+> **Scope note (2026-09-09):** the 3-day MVP ships books, characters and relationships only. Rows tied to FR-005, FR-006 and FR-007 stay on the register and are not active risks until phase 2 — see `prd.md` § Scope Triage.
+
 | Risk | Source | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| CPU exceeded (1102) on AI enrich or diagram SSR | Devil's advocate | M | H | Benchmark FR-006 (OpenAI SDK) and FR-007 (graph render) in workerd early. Move diagram render fully client-side (React island) if CPU budget is tight. Upgrade to $5/month paid plan if needed. |
-| AI SDK incompatibility in workerd | Unknown unknowns | M | H | Test the OpenAI JS SDK in a minimal Worker before building FR-006. Check `cloudflare:workers` fetch vs SDK's internal fetch wrapper. |
+| CPU exceeded (1102) on AI enrich or diagram SSR | Devil's advocate | M | H | Benchmark FR-006 (OpenAI SDK) and FR-007 (graph render) in workerd early. Move diagram render fully client-side (React island) if CPU budget is tight. Upgrade to $5/month paid plan if needed. **Phase 2** — FR-006 and FR-007 land after the 3-day MVP; this row waits with them. |
+| AI SDK incompatibility in workerd | Unknown unknowns | M | H | Test the OpenAI JS SDK in a minimal Worker before building FR-006. Check `cloudflare:workers` fetch vs SDK's internal fetch wrapper. **Phase 2** — FR-006 lands after the 3-day MVP; this row waits with it. |
 | Supabase auth cookie failures due to compatibility_date | Unknown unknowns | L | H | Verify `compatibility_date` ≥ 2024-09-23 in `wrangler.jsonc` before first deploy. |
 | Worker deployed under wrong name (10x-astro-starter) | Unknown unknowns | H | M | Rename `"name"` in `wrangler.jsonc` to `about-books` immediately — before any `wrangler deploy`. |
 | Public `workers.dev` URL before auth is wired | Unknown unknowns | M | M | Do not deploy to production until `src/middleware.ts` auth guard covers all data routes. Or: set a Cloudflare Access policy on the subdomain during development. |

@@ -1,7 +1,7 @@
 ---
 project: about-books
-version: 1
-status: draft
+version: 2
+status: active
 created: 2026-06-30
 context_type: greenfield
 product_type: web-app
@@ -10,9 +10,10 @@ target_scale:
   qps: # TODO: not captured during shaping — see Open Questions
   data_volume: # TODO: not captured during shaping — see Open Questions
 timeline_budget:
-  mvp_weeks: 4
-  hard_deadline: "2026-07-31"
+  mvp_days: 3
+  hard_deadline: "2026-09-12"
   after_hours_only: true
+  note: "Original 4-week window lapsed. Scope re-cut on 2026-09-09 — see Scope Triage."
 ---
 
 ## Vision & Problem Statement
@@ -106,16 +107,19 @@ AI-generated character hints reduce the time needed to describe a known characte
 
 ### Books
 
-- FR-002: Reader can search for a book by title or author via an external book metadata API and add it to their collection. Priority: must-have
+- FR-002: Reader can add a book to their collection by entering title and author manually. Priority: must-have
 
   > Socrates: Counter-argument considered: "API data quality is inconsistent — wrong covers, missing authors, duplicates."
-  > Resolution: kept — fallback to manual edit covers this; the API is a starting point, not the source of truth. Specific API provider is a downstream selection (see Open Questions).
+  > Resolution: kept — fallback to manual edit covers this; the API is a starting point, not the source of truth.
+  > Scope triage 2026-09-09: manual entry is now the whole requirement. External metadata lookup kept in full as FR-002b, phase 2.
+
+- FR-002b: Reader can search an external book metadata API (Google Books / Open Library) and add a result to their collection with cover and author prefilled. Priority: **phase 2** — full requirement kept below, unchanged. See Scope Triage.
 
 - FR-009: Each book has a status — active (currently reading) or finished. Reader can mark a book as finished; the app records the date. Books are filterable by status so the reader can distinguish current reads from completed ones. Priority: must-have
 
   > Socrates: No counter-argument surfaced; it stands as written. Status is a simple two-state flag (active / finished) with a timestamp on the finished transition. This is not progress tracking — no page counters, percentages, or timers. The date exists only to orient the reader on whether a book is finished or not.
 
-- FR-008: Reader can browse and search their own book collection. Priority: nice-to-have
+- FR-008: Reader can browse and search their own book collection. Priority: **phase 2** — a plain unsorted list covers phase 1. See Scope Triage.
 
 ### Characters & Relationships
 
@@ -127,20 +131,48 @@ AI-generated character hints reduce the time needed to describe a known characte
 
   > Socrates: No counter-argument surfaced; it stands as written.
 
-- FR-007: Reader can view their characters and relationships as a structured list or table (default view). Reader can optionally switch to a visual relationship diagram (simple graph format; no custom layout engine). Priority: must-have
+- FR-007: Reader can view their characters and relationships as a structured list or table (default view). Priority: must-have. The optional visual relationship diagram is **phase 2** — see Scope Triage.
   > Socrates: Counter-argument considered: "diagram rendering is complex; a list solves the same pain for 80% of books."
   > Resolution: refined — the list/table is the primary readable view; the diagram is an optional alternative for readers who prefer a visual map. Both serve the same goal; the reader picks what works for their book and reading style.
 
 ### Events & Timeline
 
-- FR-005: Reader can add, edit, and delete key plot events or dates and link them to one or more characters (full CRUD). Priority: must-have
+- FR-005: Reader can add, edit, and delete key plot events or dates and link them to one or more characters (full CRUD). Priority: **phase 2** — full requirement kept below, unchanged. See Scope Triage.
   > Socrates: No counter-argument surfaced; it stands as written.
 
 ### AI
 
-- FR-006: A character note is built by the reader over time — name first, description added as reading progresses, updated freely. At any point the reader can invoke "AI enrich" on demand to get a minimal hint (1–2 sentences: essence at first appearance, not arc) as a starting point to accept and edit. AI enrich is not invoked automatically and not applied to every record — the reader decides when and how often to use it. Human interpretation is the primary artifact. Priority: must-have
+- FR-006: A character note is built by the reader over time — name first, description added as reading progresses, updated freely. At any point the reader can invoke "AI enrich" on demand to get a minimal hint (1–2 sentences: essence at first appearance, not arc) as a starting point to accept and edit. AI enrich is not invoked automatically and not applied to every record — the reader decides when and how often to use it. Human interpretation is the primary artifact. Priority: **phase 2** — full requirement kept below, unchanged. See Scope Triage.
   > Socrates: Counter-argument considered: "AI descriptions risk spoilers — the model knows the full arc; the reader is mid-book."
   > Resolution: modified — AI hint is constrained to minimal essence (1–2 sentences, first-impression framing). Full character arc is not surfaced. Spoiler risk is mitigated by design of the prompt. AI enrich is on-demand only, reinforcing that the reader's own notes are the primary source of truth.
+
+## Scope Triage (2026-09-09)
+
+The original 4-week window lapsed. Remaining budget is 3 days of after-hours work, and the
+course modules that follow operate on this codebase, so phase 1 must be small enough to stay
+workable. This section executes the triage plan recorded in Open Questions #1.
+
+**Nothing here is cancelled.** Every requirement below keeps its full text, priority history and
+Socratic reasoning in place. The split is a sequence, not a cut — moving a requirement from
+phase 2 to phase 1 means editing one `Priority:` line, nothing else.
+
+### Phase 1 — ships in the 3-day MVP
+
+FR-001 auth (already live), FR-002 manual book entry, FR-009 book status,
+FR-003 characters CRUD, FR-004 relationships CRUD, FR-007 list/table view.
+
+This is the smallest set that proves the product thesis: a reader returning after a gap
+orients from their own notes. Books, characters and relationships are sufficient for that.
+
+### Phase 2 — returns in this order, as time allows
+
+1. **FR-005** — events and their links to characters. Cheapest to add: one table, one CRUD, one join.
+2. **FR-006** — AI enrich. One endpoint plus one button; carries the PRD's secondary success criterion (65% hint acceptance), so the metric is unmeasurable until this ships.
+3. **FR-002b** — external book metadata API. Largest surface for the least core value.
+4. **FR-007 diagram view** — the list already solves the reader's problem; the diagram is comfort.
+5. **FR-008** — collection browse and search.
+
+**Unchanged:** every Non-Goal stands. The primary success criterion is unchanged.
 
 ## Non-Functional Requirements
 
@@ -173,7 +205,7 @@ The relationship diagram view is generated directly from the reader's recorded d
 
 ## Open Questions
 
-1. **Timeline risk — scope triage plan**: Hard deadline 2026-07-31 is ~4 weeks from PRD creation (2026-06-30). Scope includes auth, external book metadata API integration, AI character hints, character/relationship data model, and a diagram renderer — all after-hours work. User explicitly accepted this as aggressive during shaping. **Recommended triage order if deadline slips**: (1) drop diagram view, default to list only; (2) drop AI enrich; (3) drop book API search, default to manual entry. Owner: user. Revisit: end of week 2.
+1. ~~**Timeline risk — scope triage plan**~~ — **RESOLVED 2026-09-09.** The deadline did slip. The triage was executed and extended (events also deferred); see Scope Triage above for what ships and in what order the rest returns.
 
 2. **Target scale — qps and data_volume**: Not captured during shaping. For a small-user-count web app, ballpark estimates are likely low/small. Owner: user. By: before tech-stack selection.
 
