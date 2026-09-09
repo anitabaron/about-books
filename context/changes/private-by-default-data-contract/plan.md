@@ -364,8 +364,15 @@ here — the local migration is the source of truth and is pushed unmodified.
 #### Manual Verification:
 
 - In the remote Supabase dashboard, `books` exists with RLS enabled and the same four policies
-- A reader signed into the deployed app has a resolvable session, and a book row inserted for
-  that reader is invisible to a second remote account
+- **DEFERRED to S-01.** As worded this requires creating a book row *through the deployed
+  app*, and no screen creates one until S-01 lands, so it cannot be honoured here.
+  Established by this change: the migration is applied remotely (`supabase migration list`
+  reports the same timestamp under Local and Remote after connecting to the remote database),
+  the remote table reports RLS enabled with the same four `authenticated` policies, and the
+  deployed site still loads with an intact session after the push. NOT established: the
+  deployed request path. The local harness proves the policies; it does not prove the
+  deployed app's use of them. S-01 must verify that a book created in the deployed app is
+  invisible to a second remote account.
 - `CLAUDE.md`'s new block is specific enough that an agent could write S-02's migration from it
   without opening this plan
 
@@ -477,14 +484,14 @@ and revertible with a file delete; Phase 4 is the first irreversible step.
 
 #### Automated
 
-- [ ] 4.1 Remote migration history shows the migration applied: `npx supabase migration list`
-- [x] 4.2 Local reset still succeeds: `npx supabase db reset`
-- [x] 4.3 Isolation check still passes: `npm run db:verify-rls`
-- [x] 4.4 Linting passes and formatting is clean on touched files (repo-wide `--write` not run, see 3.4)
-- [x] 4.5 Type generation runs and writes a non-empty `books` row type: `npm run db:types`
+- [x] 4.1 Remote migration history shows the migration applied: `npx supabase migration list`
+- [x] 4.2 Local reset still succeeds: `npx supabase db reset` — c11c44f
+- [x] 4.3 Isolation check still passes: `npm run db:verify-rls` — c11c44f
+- [x] 4.4 Linting passes and formatting is clean on touched files (repo-wide `--write` not run, see 3.4) — c11c44f
+- [x] 4.5 Type generation runs and writes a non-empty `books` row type: `npm run db:types` — c11c44f
 
 #### Manual
 
-- [ ] 4.6 Remote `books` table shows RLS enabled with the same four policies
-- [ ] 4.7 A book row is invisible to a second remote account on the deployed app
-- [x] 4.8 `CLAUDE.md`'s new block is sufficient to write S-02's migration without this plan
+- [x] 4.6 Remote `books` table shows RLS enabled with the same four policies
+- [ ] 4.7 DEFERRED to S-01 — deployed-path isolation is unverifiable until a screen creates a book; migration confirmed applied remotely and remote policies confirmed, but the deployed request path is not exercised
+- [x] 4.8 `CLAUDE.md`'s new block is sufficient to write S-02's migration without this plan — c11c44f

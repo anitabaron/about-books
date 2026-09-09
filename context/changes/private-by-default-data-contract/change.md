@@ -1,7 +1,7 @@
 ---
 change_id: private-by-default-data-contract
 title: Private-by-default data contract (roadmap F-01)
-status: implementing
+status: implemented
 created: 2026-09-09
 updated: 2026-09-09
 archived_at: null
@@ -41,3 +41,19 @@ deciding evidence, and make these three outcomes explicit in the Phase 2 results
 If reader A comes back empty or denied, STOP and diagnose before touching the policies.
 Ruled out during Phase 1: `usage on schema public` is granted to authenticated (verified
 via has_schema_privilege), so a failure is not that.
+
+## Deferred to S-01
+
+Criterion 4.7 closes unticked, by decision, not by oversight. It asks that a book row be
+invisible to a second remote account **on the deployed app**, and no screen creates a book
+until S-01 lands, so the deployed request path was never exercised.
+
+Established by this change: the migration is applied remotely (`supabase migration list`
+reports matching Local/Remote timestamps against the remote database), the remote table
+reports RLS enabled with the same four `authenticated` policies, and the deployed site loads
+with an intact session after the push.
+
+NOT established: that the deployed app's own request path honours the policies. The local
+harness (`npm run db:verify-rls`) proves the policies; it does not prove the deployment uses
+them. S-01 must verify a book created through the deployed UI is invisible to a second remote
+account, and should extend `supabase/tests/rls_books.sql` if it adds tables.
