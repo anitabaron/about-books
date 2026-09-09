@@ -43,7 +43,7 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 
 | ID   | Change ID                       | Outcome (user can …)                                                            | Prerequisites | PRD refs             | Status   |
 | ---- | ------------------------------- | ------------------------------------------------------------------------------- | ------------- | -------------------- | -------- |
-| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | in-progress |
+| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | done |
 | S-01 | `manual-book-entry`             | add a book by title and author and see it in their own collection                | F-01          | FR-001, FR-002, US-01 | proposed |
 | S-02 | `character-notes-crud`          | add, edit and delete a character with a note, fast, on a phone                   | S-01          | FR-003, US-02        | proposed |
 | S-03 | `cast-and-relationships-view`   | name relationships between characters and read the whole cast as a list           | S-02          | FR-004, FR-007, US-01 | proposed |
@@ -65,6 +65,8 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### F-01: Private-by-default data contract
 
+- **O
+
 - **Outcome:** (foundation) the first domain migration exists, with row-level security enabled and granular per-operation, per-role policies, plus the shared entity/DTO types and the request-validation shape that later slices copy — and cross-reader isolation has been checked, not assumed.
 - **Change ID:** `private-by-default-data-contract`
 - **PRD refs:** FR-001; § Non-Functional Requirements ("a reader's books, characters, relationships, and events are visible only to that reader. No cross-user data access is possible"); § Access Control (flat user model, strictly private collections)
@@ -75,9 +77,9 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Does row-level security alone satisfy the PRD's isolation guarantee with the cookie-based SSR session, i.e. does the reader's identity reach the database so policies actually apply? `tech-stack.md` asserts it does "without custom middleware", but no migration exists yet, so nothing has been verified. — Owner: user. Block: no (this foundation exists to answer it).
 - **Risk:** Nothing blocks it — auth is already present per Baseline. Sequenced first because it is the only cross-cutting safety contract in the milestone: if the isolation pattern is wrong, all four slices inherit the same privacy defect and retrofitting it means rewriting every table's policies. Scope is deliberately capped at one table plus the reusable convention — it does not pre-build the character, relationship or event schema, and each later slice still adds and integrates its own tables through real user-facing behaviour.
-- **Status:** in-progress
+- **Status:** done
 
-## Slices
+es
 
 ### S-01: Add a book to your own collection
 
@@ -87,8 +89,19 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Prerequisites:** F-01
 - **Parallel with:** —
 - **Blockers:** —
-- **Unknowns:** —
-- **Risk:** Sequenced immediately after the foundation because every other phase-1 slice hangs off a book row. Deliberately thin: a plain unsorted list is the whole surface, since collection browse and search is FR-008 and external metadata lookup is FR-002b — both phase 2. The failure mode to watch is scope creep back into those two.
+- **Unknowns:**
+  - Does the deployed app's own request path honour the `books` RLS policies end to end?
+    F-01 proved the policies (`npm run db:verify-rls`) and confirmed the migration and the
+    four `authenticated` policies on the remote project, but no screen created a book, so
+    the deployed path was never exercised. This slice must verify that a book created
+    through the deployed UI is invisible to a second remote account — F-01's criterion 4.7,
+    deferred here by decision rather than oversight. — Owner: this slice. Block: no.
+  - UI language is undecided. Validation messages in `src/types.ts` are Polish (following
+    `src/lib/config-status.ts`); the rest of the UI is English ("Sign in", "Dashboard",
+    "This page is only for authenticated users"). S-01 adds the first real screens, so it
+    should settle this rather than inherit the mix. Five strings now, fifty after S-03.
+    — Owner: user. Block: no.
+- **Risk:** Carries the one part of F-01's guarantee still unproven end to end (see Unknowns). Sequenced immediately after the foundation because every other phase-1 slice hangs off a book row. Deliberately thin: a plain unsorted list is the whole surface, since collection browse and search is FR-008 and external metadata lookup is FR-002b — both phase 2. The failure mode to watch is scope creep back into those two.
 - **Status:** proposed
 
 ### S-02: Add a character mid-session, on a phone
@@ -161,3 +174,5 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
 ## Done
 
 (Empty on first generation. `/10x-archive` is the sole writer of this section.)
+
+- **F-01: (foundation) the first domain migration exists, with row-level security enabled and granular per-operation, per-role policies, plus the shared entity/DTO types and the request-validation shape that later slices copy — and cross-reader isolation has been checked, not assumed** — Archived 2026-09-09 → `context/archive/2026-09-09-private-by-default-data-contract/`. Lesson: —.
