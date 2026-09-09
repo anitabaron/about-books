@@ -122,7 +122,7 @@ This plan covers: CLI prerequisites → rename fix → manual first deploy → C
 
 > **Edge case — build fails with workerd module error:** Run `wrangler dev` locally (not `npm run dev`) to reproduce the Workers runtime. Divergence between Node.js and workerd surfaces here before deploy.
 
-- [ ] Commit: `chore: first Cloudflare Workers deploy — about-books`
+- [x] Commit — landed as `ad770ff chore: deployment` (shorter message than the placeholder above).
 
 ---
 
@@ -140,19 +140,21 @@ Cloudflare natively watches the GitHub repo and triggers build+deploy on every p
 - [ ] Save and trigger a manual deploy from the dashboard to confirm the pipeline works end-to-end
 - [ ] Verify the live URL is still healthy after the dashboard-triggered deploy
 
+> **Still open:** the Git-integration pipeline has not yet been exercised by a real push. Pushing the pending local commits to `main` is the natural end-to-end test — watch the build in the Cloudflare dashboard, then re-check the live URL.
+
 ---
 
 ### Task 3b — Set production secrets for Supabase auth
 
 > Originally out of scope for this deploy (see Context) — added because auth is now being wired up: Supabase redirect URL has been configured for this deploy's live URL. Dashboard shows **Variables and secrets: None** for the Git-integration build, and `SUPABASE_URL`/`SUPABASE_KEY` only exist locally in `.dev.vars` — production has no way to authenticate users until these are set as Worker secrets.
 
-- [x] Set Supabase secrets on the production Worker (same values as `.dev.vars`) — set via the Cloudflare dashboard's Git-integration "Variables and secrets" panel rather than `wrangler secret put`. Used the **Publishable (anon) key** for `SUPABASE_KEY`, not the Secret/service_role key — this client relies on RLS, not admin access.
+- [x] Set Supabase secrets on the production Worker (same values as `.dev.vars`). **The first attempt — via the Cloudflare dashboard's Git-integration "Variables and secrets" panel — did not work.** Those entries applied to the *build* step, not the Worker's runtime bindings, so `astro:env/server` still read them as empty and every page kept rendering the "Supabase nie jest skonfigurowany" banner. `wrangler secret list` returned `[]`, which is what finally identified the cause. Fixed 2026-09-09 with `wrangler secret put SUPABASE_URL`, `SUPABASE_KEY` and `OPENAI_API_KEY`; `secret list` now reports all three as `secret_text` and the banner is gone. Used the **Publishable key** (`sb_publishable_…`, successor to the anon key) for `SUPABASE_KEY`, not the Secret/service_role key — this client relies on RLS, not admin access.
 
 > **Edge case — dashboard "Variable" vs "Secret" type:** The dashboard's Git-integration panel defaults new entries to plaintext **Variable** type (visible to anyone with dashboard read access), not encrypted **Secret** type. All three entries (`OPENAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`) were initially added as Variable and had to be converted to Secret type manually. Double-check this when adding new env values here — it's easy to miss since both types "work" functionally.
 
 - [x] Redeploy triggered by the dashboard save — confirmed live site still healthy (`/` and `/auth/signin` both return HTTP 200).
 
-- [ ] Verify auth works end-to-end on the live URL: sign up, confirm email redirect lands correctly, sign in, sign out.
+- [x] Verify auth works end-to-end on the live URL — confirmed 2026-09-09: sign up + email confirmation + sign in all succeed. `/dashboard` renders `Welcome, anita.baron@i4b.pl` for a signed-in session and redirects to `/auth/signin` when signed out.
 
 > **Edge case — secrets set via `wrangler secret put` vs. Git-integration deploys:** Worker secrets are stored per-Worker on Cloudflare, independent of the deploy source (CLI or Git integration) — setting them once via `wrangler secret put` persists across future Git-triggered deploys. They do not need to be re-entered in the dashboard's "Variables and secrets" panel unless rotated.
 
