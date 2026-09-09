@@ -58,11 +58,11 @@ Good CLI + MCP combination, and auto-detects Astro Node SSR without a Dockerfile
 
 ### Pre-Mortem — How This Could Fail
 
-The team ships about-books on the Cloudflare Workers free tier. In week 2, they wire up the AI enrich feature (FR-006) using the OpenAI SDK. The SDK works locally on Node.js. On first deploy, the endpoint returns 1102 CPU exceeded errors — the OpenAI API call itself consumes 15ms of CPU time before the response arrives. The team upgrades to the paid plan ($5/month) for 30ms CPU time. This solves AI enrich, but the relationship diagram endpoint (FR-007) then starts hitting the CPU limit on books with 20+ characters — the graph layout computation runs during SSR. Two weeks into the four-week deadline, the team is debugging runtime-only CPU errors that don't reproduce locally, refactoring hot paths, and reconsidering whether the diagram should be fully client-side. The deadline slips because the platform's CPU model was never stress-tested against the real SSR workload.
+The team ships about-books on the Cloudflare Workers free tier. In week 2, they wire up the AI enrich feature (FR-006) using the Anthropic SDK. The SDK works locally on Node.js. On first deploy, the endpoint returns 1102 CPU exceeded errors — the Anthropic API call itself consumes 15ms of CPU time before the response arrives. The team upgrades to the paid plan ($5/month) for 30ms CPU time. This solves AI enrich, but the relationship diagram endpoint (FR-007) then starts hitting the CPU limit on books with 20+ characters — the graph layout computation runs during SSR. Two weeks into the four-week deadline, the team is debugging runtime-only CPU errors that don't reproduce locally, refactoring hot paths, and reconsidering whether the diagram should be fully client-side. The deadline slips because the platform's CPU model was never stress-tested against the real SSR workload.
 
 ### Unknown Unknowns
 
-1. **AI SDK compatibility in workerd** — the OpenAI JS SDK makes HTTP calls (supported), but internal retry/timeout logic may use `setTimeout` or `AbortController` patterns that behave differently under the 30-second wall-clock limit. Verify SDK compatibility in a Workers context before building FR-006.
+1. **AI SDK compatibility in workerd** — the Anthropic JS SDK makes HTTP calls (supported), but internal retry/timeout logic may use `setTimeout` or `AbortController` patterns that behave differently under the 30-second wall-clock limit. Verify SDK compatibility in a Workers context before building FR-006.
 
 2. **Supabase auth cookie handling** — `@supabase/ssr` with `@astrojs/cloudflare` uses cookie-based sessions. The `nodejs_compat` flag is required for cookie parsing. The `compatibility_date` in `wrangler.jsonc` must be ≥ 2024-09-23 for the flag to work fully; an older date causes silent auth failures in production.
 
@@ -84,8 +84,8 @@ The team ships about-books on the Cloudflare Workers free tier. In week 2, they 
 
 | Risk | Source | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| CPU exceeded (1102) on AI enrich or diagram SSR | Devil's advocate | M | H | Benchmark FR-006 (OpenAI SDK) and FR-007 (graph render) in workerd early. Move diagram render fully client-side (React island) if CPU budget is tight. Upgrade to $5/month paid plan if needed. |
-| AI SDK incompatibility in workerd | Unknown unknowns | M | H | Test the OpenAI JS SDK in a minimal Worker before building FR-006. Check `cloudflare:workers` fetch vs SDK's internal fetch wrapper. |
+| CPU exceeded (1102) on AI enrich or diagram SSR | Devil's advocate | M | H | Benchmark FR-006 (Anthropic SDK) and FR-007 (graph render) in workerd early. Move diagram render fully client-side (React island) if CPU budget is tight. Upgrade to $5/month paid plan if needed. |
+| AI SDK incompatibility in workerd | Unknown unknowns | M | H | Test Anthropic JS SDK in a minimal Worker before building FR-006. Check `cloudflare:workers` fetch vs SDK's internal fetch wrapper. |
 | Supabase auth cookie failures due to compatibility_date | Unknown unknowns | L | H | Verify `compatibility_date` ≥ 2024-09-23 in `wrangler.jsonc` before first deploy. |
 | Worker deployed under wrong name (10x-astro-starter) | Unknown unknowns | H | M | Rename `"name"` in `wrangler.jsonc` to `about-books` immediately — before any `wrangler deploy`. |
 | Public `workers.dev` URL before auth is wired | Unknown unknowns | M | M | Do not deploy to production until `src/middleware.ts` auth guard covers all data routes. Or: set a Cloudflare Access policy on the subdomain during development. |
