@@ -29,16 +29,16 @@ template, and the migration is live on the linked remote project.
 
 ## Key Decisions Made
 
-| Decision            | Choice                                | Why (1 sentence)                                                                                 | Source   |
-| ------------------- | ------------------------------------- | ------------------------------------------------------------------------------------------------ | -------- |
-| Table scope         | `books` only                          | Smallest real instance that proves the pattern, and S-01 exercises it immediately.               | Plan     |
-| Verification        | SQL assertion + one manual token pass | Automates the policy logic with zero new tooling, while still proving the real JWT session path. | Plan     |
-| Migration workflow  | Local first, then push remote         | `db reset` gives a safely destructive harness; the remote only receives a migration that passed. | Plan     |
-| Delete semantics    | Hard delete + cascade                 | Matches the PRD's plain "full CRUD" wording; the guardrail is about leaks and crashes, not undo.  | Plan     |
-| Validation shape    | zod + types, no API route             | Gives S-01 a contract to import without adding an endpoint that has no UI.                       | Plan     |
-| Convention home     | Migration + `CLAUDE.md` section       | `CLAUDE.md` is the file every agent reads first, so the pattern gets picked up automatically.     | Plan     |
-| Sequencing bias     | `speed`                               | Hard deadline 2026-09-12 on 3 after-hours days.                                                  | Roadmap  |
-| Foundation cap      | No layer completion                   | Roadmap Foundation rule: minimal enabler only, later slices still integrate vertically.          | Roadmap  |
+| Decision           | Choice                                | Why (1 sentence)                                                                                 | Source  |
+| ------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------ | ------- |
+| Table scope        | `books` only                          | Smallest real instance that proves the pattern, and S-01 exercises it immediately.               | Plan    |
+| Verification       | SQL assertion + one manual token pass | Automates the policy logic with zero new tooling, while still proving the real JWT session path. | Plan    |
+| Migration workflow | Local first, then push remote         | `db reset` gives a safely destructive harness; the remote only receives a migration that passed. | Plan    |
+| Delete semantics   | Hard delete + cascade                 | Matches the PRD's plain "full CRUD" wording; the guardrail is about leaks and crashes, not undo. | Plan    |
+| Validation shape   | zod + types, no API route             | Gives S-01 a contract to import without adding an endpoint that has no UI.                       | Plan    |
+| Convention home    | Migration + `CLAUDE.md` section       | `CLAUDE.md` is the file every agent reads first, so the pattern gets picked up automatically.    | Plan    |
+| Sequencing bias    | `speed`                               | Hard deadline 2026-09-12 on 3 after-hours days.                                                  | Roadmap |
+| Foundation cap     | No layer completion                   | Roadmap Foundation rule: minimal enabler only, later slices still integrate vertically.          | Roadmap |
 
 ## Scope
 
@@ -62,12 +62,12 @@ forge one if it tried. No custom middleware sits in the path, which is the claim
 
 ## Phases at a Glance
 
-| Phase                                | What it delivers                                             | Key risk                                                                             |
-| ------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
-| 1. Schema + RLS migration (local)    | `books` table with four granular policies, applies cleanly   | Wrong policy granularity here is inherited by every later slice                      |
-| 2. Isolation verification harness    | `npm run db:verify-rls` + the real-session token check       | A SQL simulation can pass while the actual cookie-session path is broken             |
-| 3. Types + validation shape          | `zod` installed; `src/types.ts` with `Book`, DTOs, schemas   | Types drifting from the migration's columns, surfacing only in S-01                  |
-| 4. Convention capture + remote push  | Policy template in `CLAUDE.md`; migration live on remote     | First irreversible step — the remote push touches the only real database             |
+| Phase                               | What it delivers                                           | Key risk                                                                 |
+| ----------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------ |
+| 1. Schema + RLS migration (local)   | `books` table with four granular policies, applies cleanly | Wrong policy granularity here is inherited by every later slice          |
+| 2. Isolation verification harness   | `npm run db:verify-rls` + the real-session token check     | A SQL simulation can pass while the actual cookie-session path is broken |
+| 3. Types + validation shape         | `zod` installed; `src/types.ts` with `Book`, DTOs, schemas | Types drifting from the migration's columns, surfacing only in S-01      |
+| 4. Convention capture + remote push | Policy template in `CLAUDE.md`; migration live on remote   | First irreversible step — the remote push touches the only real database |
 
 **Prerequisites:** Docker running for the local Supabase stack; Supabase CLI installed and
 project linked (both already true); working auth flow (already true).
@@ -83,6 +83,21 @@ share — it is the phase that produces the guarantee rather than the schema.
 - **The SQL check impersonates readers via `request.jwt.claims`**, which exercises the policy
   predicates but not the cookie-to-JWT hop — hence the manual token pass in Phase 2. Neither half
   alone is sufficient.
+- **Zod length caps have no counterpart in the schema.** `createBookSchema` caps title at 300
+  and author at 200 characters, but the columns are unbounded `text`. A longer row written by
+  the harness, a migration, a generated seed or any future script would be readable by the app
+  and then rejected by `updateBookSchema` — visible but not editable. Resolve with a CHECK
+  constraint in a later migration, or accept the asymmetry knowingly; either way it is recorded
+  here rather than discovered from a stuck edit form.
+- **`Book` is kept in step with the migration by a comment, not a mechanism.** Acceptable for
+  six columns; Phase 4 adds a `db:types` script so the regeneration path exists before S-02
+  introduces the second and third tables. The Zod schemas stay hand-written on purpose — they
+  describe accepted user input, not row shape.
+- **Validation messages are in Polish; the rest of the UI is English** ("Sign in", "Dashboard",
+  "This page is only for authenticated users"). `src/lib/config-status.ts` was the only existing
+  precedent for user-facing strings and it is Polish, so this change inherited the minority
+  convention. Not changed here. Worth deciding deliberately at S-01, while it is five strings
+  rather than fifty.
 - **No test runner means no regression net beyond the SQL check** — a future slice editing a
   policy without extending `rls_books.sql` could regress isolation unnoticed. Test fixtures insert
   directly into `auth.users`, which is fine locally; the script refuses a non-local database URL.

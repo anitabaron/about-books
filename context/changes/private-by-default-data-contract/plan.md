@@ -233,7 +233,7 @@ supabase/tests/rls_books.sql`, so a failed assertion produces a non-zero exit.
 - An unauthenticated request is refused at the grant level (HTTP 401 / SQLSTATE 42501),
   not filtered to an empty set. `anon` holds no privilege on `books`, so the denial is
   structural and does not depend on RLS being correct. Contrast the previous item, where
-  authenticated reader B *has* the grant and RLS does the filtering, so the correct result
+  authenticated reader B _has_ the grant and RLS does the filtering, so the correct result
   there is `[]` rather than an error. Do not "fix" a 401 here by granting `anon` SELECT —
   that would trade a structural guarantee for a policy-dependent one.
 
@@ -281,7 +281,12 @@ compile-time type cannot drift. Field names match the SQL columns one-to-one.
 - Type checking passes: `npx astro check`
 - Production build succeeds: `npm run build`
 - Linting passes: `npm run lint`
-- Formatting is clean: `npm run format`
+- Formatting is clean on the files this phase touched:
+  `npx prettier --check src/types.ts package.json`.
+  Do NOT run `npm run format` (= `prettier --write .`). A repo-wide `--check` reports 39
+  pre-existing unformatted files, including `prd.md`, `roadmap.md` and `infrastructure.md`,
+  so writing would bury this phase's diff under whitespace churn in documents nobody
+  touched. A repo-wide reformat is a separate cleanup commit, not part of this change.
 
 #### Manual Verification:
 
@@ -318,7 +323,23 @@ and is denied by default; that `npm run db:verify-rls` must be extended with ass
 new table; and the `service_role`-bypasses-RLS warning. Prose only — the migration remains the
 worked example.
 
-#### 2. Remote migration push
+#### 2. Generated database types
+
+**File**: `package.json`
+
+**Intent**: `Book` in `src/types.ts` is hand-written and kept in step with the migration by a
+comment rather than by a mechanism — the drift risk this plan itself named for Phase 3. Six
+columns are fine, but S-02 and S-03 add `characters` and `relationships`, and S-01 will want a
+typed Supabase client anyway. Establish the regeneration path before the second table exists,
+rather than after the first drift.
+
+**Contract**: New script `db:types` running `supabase gen types typescript --local` with its
+output written to `src/db/database.types.ts`, placed alongside `db:verify-rls`, and its path
+named in the `CLAUDE.md` block from change 1. The Zod schemas stay hand-written — they describe
+accepted user _input_, not row shape, so generation does not apply to them. `Book` may later be
+derived from the generated row type; that swap is S-01's call, not this change's.
+
+#### 3. Remote migration push
 
 **File**: none (CLI operation against the linked project)
 
@@ -335,7 +356,10 @@ here — the local migration is the source of truth and is pushed unmodified.
 - Remote migration history shows the migration applied: `npx supabase migration list`
 - Local reset still succeeds after the doc change: `npx supabase db reset`
 - Isolation check still passes: `npm run db:verify-rls`
-- Linting and formatting pass: `npm run lint` and `npm run format`
+- Type generation runs and writes a non-empty `books` row type: `npm run db:types`
+- Linting passes (`npm run lint`) and formatting is clean on the files this phase
+  touched (`npx prettier --check` on them). Repo-wide `prettier --write .` stays out
+  of this change for the reason given under criterion 3.4.
 
 #### Manual Verification:
 
@@ -424,30 +448,30 @@ and revertible with a file delete; Phase 4 is the first irreversible step.
 
 #### Automated
 
-- [x] 2.1 Isolation check passes: `npm run db:verify-rls`
-- [x] 2.2 Negative control: broadened policy makes the check FAIL, then reverted
-- [x] 2.3 Check is idempotent across two consecutive runs
-- [x] 2.4 Linting passes: `npm run lint`
+- [x] 2.1 Isolation check passes: `npm run db:verify-rls` — c702d59
+- [x] 2.2 Negative control: broadened policy makes the check FAIL, then reverted — c702d59
+- [x] 2.3 Check is idempotent across two consecutive runs — c702d59
+- [x] 2.4 Linting passes: `npm run lint` — c702d59
 
 #### Manual
 
-- [x] 2.5 Two local readers created, each with an `access_token`
-- [x] 2.6 `GET /rest/v1/books` returns reader A's book for A and `[]` for B
-- [x] 2.7 An unauthenticated request is refused at the grant level (HTTP 401 / SQLSTATE 42501), not filtered to an empty set
+- [x] 2.5 Two local readers created, each with an `access_token` — c702d59
+- [x] 2.6 `GET /rest/v1/books` returns reader A's book for A and `[]` for B — c702d59
+- [x] 2.7 An unauthenticated request is refused at the grant level (HTTP 401 / SQLSTATE 42501), not filtered to an empty set — c702d59
 
 ### Phase 3: Types + validation shape
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npx astro check`
-- [ ] 3.2 Production build succeeds: `npm run build`
-- [ ] 3.3 Linting passes: `npm run lint`
-- [ ] 3.4 Formatting is clean: `npm run format`
+- [x] 3.1 Type checking passes: `npx astro check`
+- [x] 3.2 Production build succeeds: `npm run build`
+- [x] 3.3 Linting passes: `npm run lint`
+- [x] 3.4 Formatting is clean on touched files: `npx prettier --check src/types.ts package.json` (repo-wide `--write` deliberately not run — 39 pre-existing offenders)
 
 #### Manual
 
-- [ ] 3.5 Every `Book` field maps one-to-one onto a migration column, no extras
-- [ ] 3.6 Neither DTO accepts `user_id` or `id` from the client
+- [x] 3.5 Every `Book` field maps one-to-one onto a migration column, no extras
+- [x] 3.6 Neither DTO accepts `user_id` or `id` from the client
 
 ### Phase 4: Convention capture + remote push
 
@@ -456,10 +480,11 @@ and revertible with a file delete; Phase 4 is the first irreversible step.
 - [ ] 4.1 Remote migration history shows the migration applied: `npx supabase migration list`
 - [ ] 4.2 Local reset still succeeds: `npx supabase db reset`
 - [ ] 4.3 Isolation check still passes: `npm run db:verify-rls`
-- [ ] 4.4 Linting and formatting pass: `npm run lint` and `npm run format`
+- [ ] 4.4 Linting passes and formatting is clean on touched files (repo-wide `--write` not run, see 3.4)
+- [ ] 4.5 Type generation runs and writes a non-empty `books` row type: `npm run db:types`
 
 #### Manual
 
-- [ ] 4.5 Remote `books` table shows RLS enabled with the same four policies
-- [ ] 4.6 A book row is invisible to a second remote account on the deployed app
-- [ ] 4.7 `CLAUDE.md`'s new block is sufficient to write S-02's migration without this plan
+- [ ] 4.6 Remote `books` table shows RLS enabled with the same four policies
+- [ ] 4.7 A book row is invisible to a second remote account on the deployed app
+- [ ] 4.8 `CLAUDE.md`'s new block is sufficient to write S-02's migration without this plan
