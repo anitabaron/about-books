@@ -463,28 +463,28 @@ and revertible with a file delete; Phase 4 is the first irreversible step.
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npx astro check`
-- [x] 3.2 Production build succeeds: `npm run build`
-- [x] 3.3 Linting passes: `npm run lint`
-- [x] 3.4 Formatting is clean on touched files: `npx prettier --check src/types.ts package.json` (repo-wide `--write` deliberately not run — 39 pre-existing offenders)
+- [x] 3.1 Type checking passes: `npx astro check` — eae8908
+- [x] 3.2 Production build succeeds: `npm run build` — eae8908
+- [x] 3.3 Linting passes: `npm run lint` — eae8908
+- [x] 3.4 Formatting is clean on touched files: `npx prettier --check src/types.ts package.json` (repo-wide `--write` deliberately not run — 39 pre-existing offenders) — eae8908
 
 #### Manual
 
-- [x] 3.5 Every `Book` field maps one-to-one onto a migration column, no extras
-- [x] 3.6 Neither DTO accepts `user_id` or `id` from the client
+- [x] 3.5 Every `Book` field maps one-to-one onto a migration column, no extras — eae8908
+- [x] 3.6 Neither DTO accepts `user_id` or `id` from the client — eae8908
 
 ### Phase 4: Convention capture + remote push
 
 #### Automated
 
 - [ ] 4.1 Remote migration history shows the migration applied: `npx supabase migration list`
-- [ ] 4.2 Local reset still succeeds: `npx supabase db reset`
-- [ ] 4.3 Isolation check still passes: `npm run db:verify-rls`
-- [ ] 4.4 Linting passes and formatting is clean on touched files (repo-wide `--write` not run, see 3.4)
-- [ ] 4.5 Type generation runs and writes a non-empty `books` row type: `npm run db:types`
+- [x] 4.2 Local reset still succeeds: `npx supabase db reset`
+- [x] 4.3 Isolation check still passes: `npm run db:verify-rls`
+- [x] 4.4 Linting passes and formatting is clean on touched files (repo-wide `--write` not run, see 3.4)
+- [x] 4.5 Type generation runs and writes a non-empty `books` row type: `npm run db:types`
 
 #### Manual
 
 - [ ] 4.6 Remote `books` table shows RLS enabled with the same four policies
 - [ ] 4.7 A book row is invisible to a second remote account on the deployed app
-- [ ] 4.8 `CLAUDE.md`'s new block is sufficient to write S-02's migration without this plan
+- [x] 4.8 `CLAUDE.md`'s new block is sufficient to write S-02's migration without this plan

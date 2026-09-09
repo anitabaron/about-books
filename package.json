@@ -8,6 +8,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "db:verify-rls": "psql \"postgresql://postgres:postgres@127.0.0.1:54322/postgres\" -X -q -v ON_ERROR_STOP=1 -v rls_test_ack=local-only -f supabase/tests/rls_books.sql",
+    "db:types": "supabase gen types typescript --local > src/db/database.types.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write ."

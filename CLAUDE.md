@@ -9,7 +9,15 @@ This file provides guidance to AI Agent when working with code in this repositor
 - `npm run preview` — preview production build
 - `npm run lint` — ESLint with type-checked rules
 - `npm run lint:fix` — auto-fix lint issues
-- `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss)
+- `npm run format` — Prettier (includes prettier-plugin-astro + prettier-plugin-tailwindcss).
+  Note: this is `prettier --write .` across the whole repo, and 39 files are currently
+  unformatted. Prefer `npx prettier --check <files you touched>` unless you intend a
+  repo-wide reformat as its own commit.
+- `npm run db:verify-rls` — assert per-user isolation on every RLS table (needs the local
+  stack running). Extend `supabase/tests/rls_books.sql` whenever you add a table. Requires
+  `psql` on PATH: it is **not** an npm dependency, so a fresh clone needs libpq installed
+  separately (`brew install libpq` on macOS) even after `npm install`.
+- `npm run db:types` — regenerate `src/db/database.types.ts` from the local schema
 
 Pre-commit hooks: husky + lint-staged runs `eslint --fix` on `*.{ts,tsx,astro}` and `prettier --write` on `*.{json,css,md}`.
 
@@ -35,7 +43,71 @@ Full server-side rendering (`output: "server"` in astro.config.mjs). All pages a
 - **Tailwind class merging**: use the `cn()` helper from `@/lib/utils` (clsx + tailwind-merge) for conditional/merged class names. Do not concatenate class strings manually.
 - **shadcn/ui**: components live in `src/components/ui/`, "new-york" style variant. Install new ones with `npx shadcn@latest add [name]`.
 - **API routes**: validate all input with Zod before accessing `request.json()`. Use uppercase `GET`, `POST` named exports.
-- **Supabase migrations**: `supabase/migrations/` using naming format `YYYYMMDDHHmmss_short_description.sql`. Always enable RLS on new tables with granular per-operation, per-role policies.
+- **Supabase migrations**: `supabase/migrations/` using naming format `YYYYMMDDHHmmss_short_description.sql`. Always enable RLS on new tables with granular per-operation, per-role policies. Copy the template below; `supabase/migrations/20260909155950_create_books_with_rls.sql` is the worked example.
+
+  ```sql
+  create table public.<table> (
+    id uuid primary key default gen_random_uuid(),
+    -- Ownership column. `default auth.uid()` means the client never sends an owner id,
+    -- and the insert policy below means it could not forge one if it tried.
+    user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+  );
+
+  -- Every policy predicate filters on user_id, so index it.
+  create index <table>_user_id_created_at_idx on public.<table> (user_id, created_at desc);
+
+  -- public.set_updated_at() already exists -- the books migration created it. Attach the
+  -- trigger, and do NOT re-create the function: `create or replace function
+  -- public.set_updated_at()` would overwrite the shared one, including its pinned
+  -- search_path. Omitting this trigger gives you an updated_at that is set on insert and
+  -- never changes again -- a column that exists, looks right, and lies.
+  create trigger <table>_set_updated_at
+    before update on public.<table>
+    for each row
+    execute function public.set_updated_at();
+
+  alter table public.<table> enable row level security;
+
+  create policy "<table>_select_own" on public.<table>
+    for select to authenticated using (auth.uid() = user_id);
+  create policy "<table>_insert_own" on public.<table>
+    for insert to authenticated with check (auth.uid() = user_id);
+  create policy "<table>_update_own" on public.<table>
+    for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  create policy "<table>_delete_own" on public.<table>
+    for delete to authenticated using (auth.uid() = user_id);
+
+  -- REQUIRED, not defensive. This project's default ACLs grant new public tables only
+  -- Dxtm (truncate/references/trigger/maintain) -- no DML. Omit this line and the table
+  -- is unreachable by the app no matter how correct the policies are.
+  grant select, insert, update, delete on public.<table> to authenticated;
+  revoke all on public.<table> from anon;
+  ```
+
+  Rules that go with the template:
+  - **`anon` gets no policy and no grant.** Its denial is therefore structural: an
+    unauthenticated request gets HTTP 401 / SQLSTATE 42501, not an empty set. Studio badges
+    such a table "API DISABLED" — that is the intended state. Do **not** "fix" a 401 by
+    granting `anon` SELECT; that trades a structural guarantee for a policy-dependent one.
+    An authenticated user who lacks rows correctly gets `[]`, because they _do_ hold the grant
+    and RLS does the filtering.
+  - **`service_role` holds no DML on these tables** and nothing in `src/` uses it. If a script
+    or job ever needs it, grant it explicitly — and remember a `service_role` key bypasses RLS
+    entirely, so isolation silently disappears if `SUPABASE_KEY` is ever swapped for a secret key.
+  - **Trigger functions must pin `search_path`.** Use `set search_path = ''` (see
+    `public.set_updated_at()`); a mutable search_path is a hijack vector, flagged by Supabase's
+    linter as `function_search_path_mutable`. Unqualified `now()` still resolves, because
+    `pg_catalog` is always searched.
+  - **Extend `supabase/tests/rls_books.sql`** with a block for each new table, and keep both
+    directions: negative assertions (another reader cannot see, update, delete or forge) _and_
+    positive ones (the owner can act on their own rows). Negatives alone pass happily when a
+    policy is too narrow — `using (false)` breaks the app while every negative still holds.
+  - **Run `npm run db:types`** after every migration so `src/db/database.types.ts` matches the
+    schema. Hand-written types in `src/types.ts` describe user input (Zod commands) and may
+    mirror a row shape; the generated file is the source of truth for row shapes.
+
 - **React**: no Next.js directives ("use client" etc.). Extract hooks to `src/components/hooks/`.
 - **Services/helpers** go in `src/lib/` (or `src/lib/services/` for extracted business logic).
 - **Shared types** (entities, DTOs) go in `src/types.ts`.
