@@ -1,10 +1,10 @@
 ---
 change_id: private-by-default-data-contract
 title: Private-by-default data contract (roadmap F-01)
-status: implemented
+status: archived
 created: 2026-09-09
 updated: 2026-09-09
-archived_at: null
+archived_at: 2026-09-09T17:20:38Z
 ---
 
 ## Notes
