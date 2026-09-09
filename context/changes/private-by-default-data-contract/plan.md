@@ -230,7 +230,12 @@ supabase/tests/rls_books.sql`, so a failed assertion produces a non-zero exit.
 - With reader A's book inserted, `GET /rest/v1/books` using reader A's bearer token returns
   that book, and the same call with reader B's token returns `[]` — proving the real
   cookie-session JWT path resolves `auth.uid()`, not just the SQL simulation
-- The same `GET /rest/v1/books` with no `Authorization` header returns no rows
+- An unauthenticated request is refused at the grant level (HTTP 401 / SQLSTATE 42501),
+  not filtered to an empty set. `anon` holds no privilege on `books`, so the denial is
+  structural and does not depend on RLS being correct. Contrast the previous item, where
+  authenticated reader B *has* the grant and RLS does the filtering, so the correct result
+  there is `[]` rather than an error. Do not "fix" a 401 here by granting `anon` SELECT —
+  that would trade a structural guarantee for a policy-dependent one.
 
 **Implementation Note**: After completing this phase and all automated verification passes,
 pause here for manual confirmation from the human that the manual testing was successful before
@@ -369,7 +374,7 @@ closer to the thing being guaranteed than a mocked unit test would be.
 4. Insert one book for reader A (using reader A's token, so `default auth.uid()` populates
    `user_id`).
 5. `GET /rest/v1/books` with reader A's token → one row. Same call with reader B's token → `[]`.
-6. Repeat step 5 with no `Authorization` header → no rows.
+6. Repeat step 5 with no `Authorization` header → HTTP 401 / SQLSTATE 42501 (grant-level refusal, not an empty set).
 7. After Phase 4, repeat steps 3–6 against the deployed app's Supabase project.
 
 ## Performance Considerations
@@ -405,30 +410,30 @@ and revertible with a file delete; Phase 4 is the first irreversible step.
 
 #### Automated
 
-- [x] 1.1 Local stack starts: `npx supabase start`
-- [x] 1.2 Migration applies from scratch with no error: `npx supabase db reset`
-- [x] 1.3 Migration is listed as applied locally: `npx supabase migration list`
-- [x] 1.4 Linting passes: `npm run lint`
+- [x] 1.1 Local stack starts: `npx supabase start` — 10171ad
+- [x] 1.2 Migration applies from scratch with no error: `npx supabase db reset` — 10171ad
+- [x] 1.3 Migration is listed as applied locally: `npx supabase migration list` — 10171ad
+- [x] 1.4 Linting passes: `npm run lint` — 10171ad
 
 #### Manual
 
-- [x] 1.5 Studio shows `books` with RLS enabled and exactly four `authenticated` policies
-- [x] 1.6 Filename matches `YYYYMMDDHHmmss_short_description.sql`
+- [x] 1.5 Studio shows `books` with RLS enabled and exactly four `authenticated` policies — 10171ad
+- [x] 1.6 Filename matches `YYYYMMDDHHmmss_short_description.sql` — 10171ad
 
 ### Phase 2: Isolation verification harness
 
 #### Automated
 
-- [ ] 2.1 Isolation check passes: `npm run db:verify-rls`
-- [ ] 2.2 Negative control: broadened policy makes the check FAIL, then reverted
-- [ ] 2.3 Check is idempotent across two consecutive runs
-- [ ] 2.4 Linting passes: `npm run lint`
+- [x] 2.1 Isolation check passes: `npm run db:verify-rls`
+- [x] 2.2 Negative control: broadened policy makes the check FAIL, then reverted
+- [x] 2.3 Check is idempotent across two consecutive runs
+- [x] 2.4 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 2.5 Two local readers created, each with an `access_token`
-- [ ] 2.6 `GET /rest/v1/books` returns reader A's book for A and `[]` for B
-- [ ] 2.7 Unauthenticated `GET /rest/v1/books` returns no rows
+- [x] 2.5 Two local readers created, each with an `access_token`
+- [x] 2.6 `GET /rest/v1/books` returns reader A's book for A and `[]` for B
+- [x] 2.7 An unauthenticated request is refused at the grant level (HTTP 401 / SQLSTATE 42501), not filtered to an empty set
 
 ### Phase 3: Types + validation shape
 
