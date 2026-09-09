@@ -405,15 +405,15 @@ and revertible with a file delete; Phase 4 is the first irreversible step.
 
 #### Automated
 
-- [ ] 1.1 Local stack starts: `npx supabase start`
-- [ ] 1.2 Migration applies from scratch with no error: `npx supabase db reset`
-- [ ] 1.3 Migration is listed as applied locally: `npx supabase migration list`
-- [ ] 1.4 Linting passes: `npm run lint`
+- [x] 1.1 Local stack starts: `npx supabase start`
+- [x] 1.2 Migration applies from scratch with no error: `npx supabase db reset`
+- [x] 1.3 Migration is listed as applied locally: `npx supabase migration list`
+- [x] 1.4 Linting passes: `npm run lint`
 
 #### Manual
 
-- [ ] 1.5 Studio shows `books` with RLS enabled and exactly four `authenticated` policies
-- [ ] 1.6 Filename matches `YYYYMMDDHHmmss_short_description.sql`
+- [x] 1.5 Studio shows `books` with RLS enabled and exactly four `authenticated` policies
+- [x] 1.6 Filename matches `YYYYMMDDHHmmss_short_description.sql`
 
 ### Phase 2: Isolation verification harness
 
