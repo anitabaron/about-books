@@ -43,7 +43,7 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 
 | ID   | Change ID                       | Outcome (user can …)                                                            | Prerequisites | PRD refs             | Status   |
 | ---- | ------------------------------- | ------------------------------------------------------------------------------- | ------------- | -------------------- | -------- |
-| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | planning |
+| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | in-progress |
 | S-01 | `manual-book-entry`             | add a book by title and author and see it in their own collection                | F-01          | FR-001, FR-002, US-01 | proposed |
 | S-02 | `character-notes-crud`          | add, edit and delete a character with a note, fast, on a phone                   | S-01          | FR-003, US-02        | proposed |
 | S-03 | `cast-and-relationships-view`   | name relationships between characters and read the whole cast as a list           | S-02          | FR-004, FR-007, US-01 | proposed |
@@ -75,7 +75,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Unknowns:**
   - Does row-level security alone satisfy the PRD's isolation guarantee with the cookie-based SSR session, i.e. does the reader's identity reach the database so policies actually apply? `tech-stack.md` asserts it does "without custom middleware", but no migration exists yet, so nothing has been verified. — Owner: user. Block: no (this foundation exists to answer it).
 - **Risk:** Nothing blocks it — auth is already present per Baseline. Sequenced first because it is the only cross-cutting safety contract in the milestone: if the isolation pattern is wrong, all four slices inherit the same privacy defect and retrofitting it means rewriting every table's policies. Scope is deliberately capped at one table plus the reusable convention — it does not pre-build the character, relationship or event schema, and each later slice still adds and integrates its own tables through real user-facing behaviour.
-- **Status:** planning
+- **Status:** in-progress
 
 ## Slices
 
