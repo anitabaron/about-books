@@ -1,10 +1,10 @@
 ---
 change_id: book-status-and-recall
 title: Book status and finished-book recall (roadmap S-04)
-status: implemented
+status: archived
 created: 2026-09-10
 updated: 2026-09-10
-archived_at: null
+archived_at: 2026-09-10T11:24:20Z
 ---
 
 ## Notes
