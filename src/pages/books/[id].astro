@@ -271,38 +271,34 @@ if (!book && !loadError) {
                       id={`character-${character.id}-relationships`}
                       class="sub"
                     >
-                      <p class="sub-label label">Add a relationship</p>
                       {connectionsErrorFor === character.id && formError && <p class="error-text">{formError}</p>}
-                      {/* Type first, person second: a reader knows WHAT the relationship is before
-                          they pick who it is with -- and the missing-word link belongs next to the
-                          field where the word is missing.
-                          One field, two meanings: a shared literal or a custom type's id. <optgroup>
-                          is native, so the merged list costs no JavaScript and the form still
-                          works with scripting off. The endpoint decides the column by shape. */}
+                      {/* One row, as the mockup has it: label, then both selects and the button
+                          inline in .rel-controls. Two stacked .rel rows with a "Add a relationship"
+                          heading above them read as a second section rather than as one control,
+                          which made adding and editing indistinguishable.
+
+                          Type before person: a reader knows WHAT the relationship is before they
+                          pick who it is with. One field, two meanings -- a shared literal or a
+                          custom type's id; <optgroup> is native, so the merged list costs no
+                          JavaScript and the endpoint decides the column by shape. */}
                       <div class="rel">
-                        <label for={`newrel-type-${character.id}`}>Type</label>
-                        <select id={`newrel-type-${character.id}`} name="type">
-                          <optgroup label="Shared">
-                            {RELATIONSHIP_TYPES.map((relationshipType) => (
-                              <option value={relationshipType}>{relationshipType}</option>
-                            ))}
-                          </optgroup>
-                          {customTypes.length > 0 && (
-                            <optgroup label="Your types for this book">
-                              {customTypes.map((customType) => (
-                                <option value={customType.id}>{customType.name}</option>
+                        <label for={`newrel-type-${character.id}`}>Link</label>
+                        <div class="rel-controls">
+                          <select id={`newrel-type-${character.id}`} name="type">
+                            <optgroup label="Shared">
+                              {RELATIONSHIP_TYPES.map((relationshipType) => (
+                                <option value={relationshipType}>{relationshipType}</option>
                               ))}
                             </optgroup>
-                          )}
-                        </select>
-                      </div>
-                      <a href="#relationship-types-add" class="hint label">
-                        Need another word?
-                      </a>
-                      <div class="rel">
-                        <label for={`newrel-who-${character.id}`}>With</label>
-                        <div class="rel-controls">
-                          <select id={`newrel-who-${character.id}`} name="other_character_id">
+                            {customTypes.length > 0 && (
+                              <optgroup label="Your types for this book">
+                                {customTypes.map((customType) => (
+                                  <option value={customType.id}>{customType.name}</option>
+                                ))}
+                              </optgroup>
+                            )}
+                          </select>
+                          <select name="other_character_id" aria-label={`Character to link with ${character.name}`}>
                             {others.map((other) => (
                               <option value={other.id}>{other.name}</option>
                             ))}
@@ -312,6 +308,11 @@ if (!book && !loadError) {
                           </Button>
                         </div>
                       </div>
+                      {/* A quiet link, not the red label device: as `.label` it carried the same
+                          weight as a section heading and competed with the controls above it. */}
+                      <a href="#relationship-types-add" class="hint">
+                        Need another word?
+                      </a>
                     </form>
                   ) : (
                     <p class="sub note-small">Add another character to this book before creating a relationship.</p>
@@ -368,7 +369,7 @@ if (!book && !loadError) {
                               </div>
                             </div>
                           </form>
-                          <a href="#relationship-types-add" class="hint label">
+                          <a href="#relationship-types-add" class="hint">
                             Need another word?
                           </a>
                           <details class="confirm">
@@ -571,16 +572,23 @@ if (!book && !loadError) {
     margin: var(--space-2xs) 0 0;
     padding: 0;
   }
+  /* A grid, not flex with a min-width. `min-width` is a floor, so any label wider
+     than it pushes the name right and the name column starts at a different x on
+     every row -- which is what a reader-defined type does: the shared five are
+     4-8 characters, but "mieszka z" is 9 and a custom name may be 40. The grid
+     fixes the column, so names align whatever the label, and a long label wraps
+     inside its own column instead of shoving the name out of line. */
   .conns li {
-    display: flex;
+    display: grid;
+    grid-template-columns: 7.2em 1fr;
     gap: var(--space-xs);
     align-items: baseline;
     line-height: 1.5;
   }
   .conn-type {
     color: var(--accent);
-    flex: none;
-    min-width: 7.2em;
+    overflow-wrap: anywhere;
+    min-width: 0;
   }
   .conn-name {
     font-size: 0.9rem;
