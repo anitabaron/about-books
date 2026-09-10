@@ -152,6 +152,27 @@ body {
 .hero-aside .say { color: var(--accent); font-weight: 600; }
 .hero-meta { display: flex; flex-wrap: wrap; gap: var(--sp-md); margin-block-start: var(--sp-xs); }
 
+/* ── A2 · Dashboard stats — a broadsheet prints a figure like this ── */
+.stats {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-xs); padding: var(--sp-md) var(--sp-md) var(--sp-lg);
+}
+.stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat-n {
+  font-family: var(--font-poster); font-weight: 400;
+  font-size: clamp(2.4rem, 11cqi, 4.6rem); line-height: 0.85;
+  letter-spacing: 0.005em; color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+.stat.is-accent .stat-n { color: var(--accent); }
+.stat-n.dash { color: var(--muted-fg); }
+.reading-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 0 var(--sp-md) 5px; border-block-end: 2px solid var(--ink);
+}
+.zero { padding: var(--sp-md); display: flex; flex-direction: column; gap: var(--sp-sm); }
+.zero p { margin: 0; font-size: 1.02rem; max-width: 46ch; }
+
 /* ── B · App shell in the same vocabulary ─────────────────────────── */
 .shell { display: grid; grid-template-columns: minmax(0, 1fr); }
 @container (min-width: 60rem) {
@@ -370,6 +391,91 @@ body {
     </div>
   </div>
 
+  <p class="section-label">A2 · The same route, signed in — dashboard, 390 px</p>
+
+  <div class="frame phone">
+    <div class="bs">
+      <header>
+        <div class="mast">
+          <div>
+            <span class="mast-name">about-books</span>
+            <span class="mast-no">No 01</span>
+          </div>
+        </div>
+        <div class="rule-thick"></div>
+        <div class="rule-thin"></div>
+        <nav class="mast-nav lab">
+          <a href="#">The library</a>
+          <a href="#">Sign out</a>
+        </nav>
+        <div class="rule-thin"></div>
+      </header>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-n">3</span>
+          <span class="lab">Books</span>
+        </div>
+        <div class="stat is-accent">
+          <span class="stat-n">47</span>
+          <span class="lab">Characters</span>
+        </div>
+        <div class="stat">
+          <span class="stat-n">2</span>
+          <span class="lab">Finished</span>
+        </div>
+      </div>
+
+      <div class="reading-head lab"><span>Reading now</span><span>3</span></div>
+      <ul class="cast">
+        <li class="row">
+          <div class="row-title">Dune</div>
+          <p class="row-note">Frank Herbert</p>
+          <ul class="conns"><li><span class="conn-type lab">Cast</span><span class="conn-name">7 characters</span></li></ul>
+        </li>
+        <li class="row">
+          <div class="row-title">The Left Hand of Darkness</div>
+          <p class="row-note">Ursula K. Le Guin</p>
+          <ul class="conns"><li><span class="conn-type lab">Cast</span><span class="conn-name">5 characters</span></li></ul>
+        </li>
+        <li class="row">
+          <div class="row-title">Piranesi</div>
+          <p class="row-note">Susanna Clarke</p>
+          <ul class="conns"><li><span class="conn-type lab">Cast</span><span class="conn-name">2 characters</span></li></ul>
+        </li>
+      </ul>
+      <div style="padding: var(--sp-md)">
+        <a class="btn btn-solid" href="#" style="text-decoration:none">Open the library</a>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">A3 · The zero state — what a brand-new reader sees instead</p>
+
+  <div class="frame phone">
+    <div class="bs">
+      <header>
+        <div class="mast">
+          <div>
+            <span class="mast-name">about-books</span>
+            <span class="mast-no">No 01</span>
+          </div>
+        </div>
+        <div class="rule-thick"></div>
+        <div class="rule-thin"></div>
+        <nav class="mast-nav lab"><a href="#">The library</a><a href="#">Sign out</a></nav>
+        <div class="rule-thin"></div>
+      </header>
+      <div class="zero">
+        <p>Nothing here yet. Add the book you are reading and start writing down who is who.</p>
+        <div class="composer" style="margin:0">
+          <input id="bs-zero" type="text" placeholder="Title" aria-label="Book title">
+          <button class="btn btn-solid" type="button">Add</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <p class="section-label">B · Book page — the same vocabulary at app density, 390 px</p>
 
   <div class="frame phone">
@@ -533,6 +639,26 @@ body {
     <div class="note drop">
       <h3>Stayed · the second colour</h3>
       <p>The pale teal is a poster device, one element, one place. Two saturated hues in a dense list would break both the accent budget and your “no intense colours” brief. It exists as <code>--ghost</code> and the app never reads it.</p>
+    </div>
+    <div class="note keep">
+      <h3>Dashboard · one route, two states</h3>
+      <p><code>/</code> is the only unguarded page in the product — <code>middleware.ts</code> protects <code>/books</code> and <code>/dashboard</code>. Signed out it is the poster; signed in it is A2. The masthead loses <em>Sign in</em> and gains <em>Sign out</em>; a signed-in reader never sees a sign-in control anywhere.</p>
+    </div>
+    <div class="note keep">
+      <h3>Dashboard · why Stat-Led</h3>
+      <p>An Anton numeral over a mono caption is how a broadsheet prints a figure, so the stats need no new vocabulary. It is also a different macrostructure from the poster, so the two states of one route do not read as the same page with the words swapped.</p>
+    </div>
+    <div class="note drop">
+      <h3>Dashboard · three integers, and that is the ceiling</h3>
+      <p><code>idea-notes.md</code> rules out time tracking and reading progress; § Non-Goals rules out counters, percentages and streaks. Collection size is not progress — but this screen is exactly where that line gets crossed. No percentages, no pages, no charts, no “on a roll”. Relationship count is not a fourth stat: nobody asks that question.</p>
+    </div>
+    <div class="note drop">
+      <h3>Dashboard · the zero state is required</h3>
+      <p>A new reader would otherwise meet three giant zeros on their first screen, which reads as failure. Below one book the stats do not render at all — A3 replaces them. A zero <em>character</em> count with a book present is fine and shows as a real zero.</p>
+    </div>
+    <div class="note drop">
+      <h3>Dashboard · known redundancy</h3>
+      <p>At full width the rail already lists the library with counts, so <em>Books</em> and <em>Finished</em> restate what is two inches to the left. It earns its place on three grounds: <em>Characters</em> appears nowhere else, there is no rail below 60 rem, and the bare domain has to lead somewhere. If it still feels redundant after real use, drop the counts on desktop rather than defend them.</p>
     </div>
     <div class="note drop">
       <h3>The honest cost</h3>

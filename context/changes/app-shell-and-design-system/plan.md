@@ -39,9 +39,26 @@ bg-white/10 backdrop-blur-xl` one more time.
   `<details>` with plain `<form method="POST">` inside; S-03's plan records this as
   deliberate. `AddBookForm` / `AddCharacterForm` are `client:load` islands but degrade to a
   native POST.
-- **S-04 is being implemented right now.** `books/[id].astro` already reads `finished_at`,
-  renders a "Finished <date>" line and a finish/reopen form. `books.astro` has not yet grown
-  its filter.
+- **S-04 and S-05 have both landed and been archived** (main at `cd6eb2c`, 25 commits past
+  this plan's original baseline of `796c1a3`; +1505 lines across `src/` and `supabase/`).
+  This plan was written against the old tree and re-verified against main on 2026-09-10.
+  What changed under it:
+  - `src/pages/books/[id].astro` grew by **361 lines**. It now loads per-book custom
+    relationship types from a `relationship_types` table and merges them into every select
+    beside the five built-ins; `finished_at` and the finish/reopen form are in place.
+  - **Two interaction decisions were made there that this change must preserve, not undo:**
+    the "Add a character" form is now itself a collapsed `<details>`, and every destructive
+    action sits behind a *nested* `<details>` confirmation, so a mis-tap costs a click rather
+    than a character. Both are load-bearing on a phone and neither was in this plan.
+  - `src/pages/books.astro` grew its status filter (+66 lines).
+  - `src/lib/connections.ts` was extracted with `buildConnections()`, and
+    `src/lib/connections.test.ts` covers it.
+  - Two migrations, a seed file, and +242 lines of RLS assertions landed.
+- **A test runner now exists.** `vitest` ^5 with `npm run test` (`vitest run`). Every phase's
+  automated criteria must include it; the original draft of this plan asserted there was none.
+- **The UI is already almost entirely English.** Only `src/lib/config-status.ts` still holds
+  Polish strings — `src/types.ts` and every page came across during S-04/S-05. Phase 5 § 4
+  shrinks to one file.
 - **No motion library.** No `framer-motion`, `gsap`, `motion` or `lenis` in `package.json`.
   This is a motion-cut project and stays one.
 - **No fonts are loaded at all.** Nothing declares a `font-family`; every screen renders in
@@ -81,11 +98,13 @@ JavaScript disabled; and all 58 Hallmark slop-test gates pass.
   Renaming them means touching every component forever.
 - `src/pages/books/[id].astro:184` — the `castRows.map` `<li>` is the row primitive to extract.
   It is the same shape as the book row on `/books`, which is why one `Row` component serves both.
-- `src/middleware.ts` `PROTECTED_ROUTES = ["/dashboard"]` — `/books` and `/books/[id]` are
-  **not** in it. They are safe today only because RLS returns nothing to an anonymous client,
-  so the page renders empty rather than redirecting. The redesign makes that visible: an empty
-  library and a signed-out rail. Noted as an observation, not fixed here — it is a routing
-  decision, not a design one.
+- `src/middleware.ts:4` — `PROTECTED_ROUTES = ["/dashboard", "/books"]`. Every app screen is
+  guarded; a signed-out visitor is redirected to `/auth/signin`, so no app screen ever has to
+  render a signed-out state. **`/` is the only unguarded page**, which is why it — and only it
+  — needs two states.
+  *(An earlier revision of this plan claimed `/books` was unguarded. That came from the
+  roadmap's Baseline paragraph, which is stale, and was written as if it were a reading of the
+  file. Corrected 2026-09-10 against `middleware.ts` itself.)*
 - `context/foundation/lessons.md` — a scripted edit reports that it ran, not that it did the
   right thing. This change sweeps repeated class strings across large templates; check the
   rendered structure, not the diff stat.
@@ -99,6 +118,13 @@ JavaScript disabled; and all 58 Hallmark slop-test gates pass.
   screen is verified in dark. Deliberate — see change.md decision 4.
 - **No conversion of any form to a React island.** The `<details>` + native POST pattern on
   `/books/[id]` is load-bearing (S-03 verified it with JavaScript disabled) and survives intact.
+- **No undoing S-04/S-05's interaction decisions.** The collapsed "Add a character"
+  disclosure and the nested confirmation before every destructive action are restyled, never
+  removed. This change owns the visual layer; it does not get to relitigate interaction
+  choices made while the product was in use — and the mockups predate both, so where a mockup
+  shows a bare Delete button, **the shipped nested confirmation wins.**
+- **No merging of built-in and custom relationship types into one flat list in the markup.**
+  S-05 renders them as two `<optgroup>`s. That is a data-shape decision; restyle it, keep it.
 - **No three-pane Finder column view.** Tempting given the reference, but S-03 decided against a
   character detail page — connections render inline precisely so reaching them costs zero
   interactions. A third pane would need that page to exist. Two panes.
@@ -126,14 +152,17 @@ JavaScript disabled; and all 58 Hallmark slop-test gates pass.
 
 ## Implementation Approach
 
-Six phases, each independently shippable and verifiable. Phase 1 lands the system with nothing
-consuming it, so the palette can be judged in isolation before any template is rewritten.
-Phase 2 builds the shell and the three primitives every screen then reuses. Phases 3 and 4 are
-the product itself — the library and the book — and are where the brief is actually satisfied.
-Phase 5 clears the auth and account surfaces. Phase 6 replaces the starter landing page and runs
-the cross-cutting checks that only make sense once every screen exists.
+Seven phases, each independently shippable and verifiable. Phase 1 lands the system with
+nothing consuming it, so the palette can be judged in isolation before any template is
+rewritten. Phase 2 builds the shell and the three primitives every screen then reuses.
+Phases 3 and 4 are the product itself — the library and the book — and are where the brief is
+actually satisfied. Phase 5 clears the auth surfaces. Phase 6 replaces the starter landing
+page with the root route's two states. Phase 7 runs the cross-cutting checks that only make
+sense once every screen exists.
 
-**Phases 3 and 4 are the change.** If time runs short, 5 and 6 can slip; 1–4 cannot be split.
+**Phases 3 and 4 are the change.** If time runs short, 5 and 6 can slip; 1–4 cannot be split,
+and 7 is not optional — it is where the accessibility and responsive floors are actually
+proven rather than assumed.
 
 ---
 
@@ -669,7 +698,7 @@ block with `role="alert"`.
 `/books` becomes the Finder list: grouped, hairline-divided, two lines per book, no cards.
 This is the first screen where the brief is actually visible.
 
-**Depends on S-04 being committed** — the grouping reads `finished_at`.
+**S-04 has landed** — `finished_at` and the status filter are both in `books.astro` already.
 
 ### Changes Required:
 
@@ -734,7 +763,7 @@ library on a phone should not cost a screenful.
 reads as one continuous ruled list with connections inline, and the editing controls stop
 competing with it.
 
-**Depends on S-04 being committed** — the finish/reopen form is already in this template.
+**S-04 and S-05 have both landed** — this template now carries the finish/reopen form, custom relationship types, a collapsed add-character disclosure and nested delete confirmations. Read it before editing.
 
 ### Changes Required:
 
@@ -881,76 +910,154 @@ diffing the schema structure, not the line count (`lessons.md`, third entry).
 
 ---
 
-## Phase 6: Landing page and cross-cutting verification
+## Phase 6: The root route — poster and dashboard
 
 ### Overview
 
-Replace the starter's cosmic landing page, then run the checks that only make sense once every
-screen exists.
+`/` is the only unguarded page in the product, so it is the only one that carries two states.
+Signed out it is the poster. Signed in it is the dashboard: three counts and the way into the
+library. Same masthead, same system, one route.
+
+**S-04 has landed** — `finished_at` exists, so the "finished" count is a plain filtered count.
+
+### Why one route and not two
+
+The reader asked for "the dashboard, meaning the landing page". Collapsing them is the right
+call and it removes a screen rather than adding one: a signed-in reader who types the bare
+domain should land somewhere useful, not on a pitch for a product they already use. The cost
+is that `/` now runs an auth branch and three queries — named below, not hidden.
 
 ### Changes Required:
 
-#### 1. The landing page
+#### 1. The root route splits on `locals.user`
 
-**Files**: `src/pages/index.astro`, `src/components/marketing/Home.astro` (new)
+**File**: `src/pages/index.astro`
 
-**Intent**: A page that explains the product to someone who has not signed up, without
-inventing proof the product does not have.
+**Intent**: One route, two compositions, no duplicated chrome.
 
-**Contract**: Macrostructure **02 Long Document** — continuous prose with inline heads, no
-marketing scaffold. Nav **N6 Newspaper masthead**. Footer **Ft5 Statement**.
+**Contract**: Frontmatter reads `Astro.locals.user` (already resolved by `middleware.ts` on
+every request). When null → render `<Poster />`. Otherwise → load the three counts and render
+`<Dashboard />`. Both are wrapped by the same masthead component so the two states are visibly
+one page in two moods, not two pages.
 
-**This is the one page that goes to poster scale, and the only one that loads Anton.**
+**The masthead is auth-aware.** Signed out it ends with **Sign in · Sign up**. Signed in those
+are gone and the trailing slot holds the reader's email and **Sign out**. A signed-in reader
+must never see a sign-in control — that is an explicit requirement, and it applies to the
+masthead, the mobile disclosure and the rail alike.
 
-- **Masthead**: wordmark in `--font-serif` 700 uppercase, an issue mark in `--accent`, and a
-  right-hand `.label` block. Beneath it a `--rule-w-thick` (3 px) rule, then a 1 px rule — the
-  pair is the device; a single rule reads as an ordinary underline.
-- **Hero**: two stacked lines in `--font-poster` at `--text-poster`, `line-height: 0.9`,
-  uppercase. Each line carries a `::before` clone offset roughly `-0.055em / -0.035em` in
-  `--ghost`. **The clone must be `aria-hidden` / generated content** — it is decorative and
-  must never reach the accessibility tree or be selectable. One of the two lines is
-  `--accent`; the other is `--ink`.
-- **Aside**: the argument in `--font-serif` at ~1 rem on a left-biased two-column grid,
-  collapsing to one column below 52 rem. A `.label` meta row beneath it.
-- **Copy** is the product's real argument, rewritten — not pasted — from
-  `context/foundation/roadmap.md` § Vision recap, which is an internal planning document.
-  Headline ≤ 50 characters across both lines. The meta row states real § Non-Goals
-  ("No streaks · No progress bars · No social"), which are true and verifiable, not invented
-  proof.
+#### 2. The poster (signed out)
 
-`--space-2xl` and a local `--space-3xl` are allowed on this page only.
+**File**: `src/components/marketing/Poster.astro` (new)
 
-The copy is the product's real argument, which already exists in
-`context/foundation/roadmap.md` § Vision recap and must be **rewritten, not pasted** — that
-text is an internal planning document, not page copy. Three or four short sections: the
-problem (losing a cast across a multi-week gap), the bet (structured notes, not free text),
-what it does today, and what it deliberately does not do.
+**Contract**: As specified in § Structure — masthead rule pair, two stacked Anton lines with
+the `--ghost` offset layer, one line in `--accent`, serif argument in a left-biased aside,
+`.label` meta row.
 
-`--space-3xl` and `--space-4xl` are declared **locally on this page only**. Hero headline
-≤ 50 characters at `--text-display`.
+**Copy comes from `idea-notes.md` and the PRD, not from `README.md`.** The README is still the
+unmodified 10x Astro Starter readme — it describes Astro, React and Tailwind and says nothing
+about this product. Anyone reaching for "the description in the README" will find the wrong
+thing. `idea-notes.md` § Główny problem is the real source and is in Polish; it must be
+rewritten in English as page copy, not translated line by line.
 
-**Forbidden here specifically**: any metric, any testimonial, any logo wall, any "trusted by",
-any fake app screenshot or drawn browser chrome (Hallmark gates 19, 46, 47).
+The meta row states real § Non-Goals — "No streaks · No progress bars · No social". These are
+verifiable commitments from `idea-notes.md`, not invented proof (gate 46).
 
-#### 2. Delete the starter artifacts
+#### 3. The dashboard (signed in)
+
+**File**: `src/components/home/Dashboard.astro` (new)
+
+**Intent**: Answer "how much have I got, and where was I" in one screen, then get out of the way.
+
+**Contract**: Macrostructure **04 Stat-Led** — deliberately different from the poster's Long
+Document, so the two states of one route do not read as the same page with words swapped. In
+this system a stat is an Anton numeral over a `.label` caption, which is exactly how a
+broadsheet prints a figure.
+
+Three counts, and only three:
+
+| Label | Source |
+| --- | --- |
+| `BOOKS` | `books`, all rows |
+| `CHARACTERS` | `characters`, all rows — RLS scopes it to the reader, no join needed |
+| `FINISHED` | `books` where `finished_at is not null` |
+
+Beneath them, **Reading now** — the active books as `Row`s linking to `/books/[id]`, plus a
+single `Open the library` action to `/books`. That is the click path the reader asked for.
+Finished books are not listed here; the library has them.
+
+Stats sit inside the `AppLayout` shell, so the rail is present at ≥ 60 rem.
+
+#### 4. The counts
+
+**File**: `src/pages/index.astro` frontmatter
+
+**Contract**: Three `select("*", { count: "exact", head: true })` calls. `head: true` returns
+no rows, only the count, so each is an index-only scan against
+`<table>_user_id_created_at_idx`. No new migration, no RPC, no view, no `db:types` run.
+
+RLS scopes all three; **no `user_id` filter is written by hand** — adding one would duplicate
+the policy rather than reinforce it, the same convention `books.astro` already follows.
+
+If any count errors, render an em dash for that figure and keep the page. One failed count
+must not take down the dashboard.
+
+#### 5. The zero state — required, not a nicety
+
+**File**: same
+
+**Contract**: A reader who has just signed up sees `0 · 0 · 0`. Three giant Anton zeros read
+as failure, and it is the first screen a new reader ever sees.
+
+**When `books === 0`, the stat block does not render at all.** In its place: one serif
+sentence and the add-book composer, inline. No zeros, no empty-state illustration, no
+placeholder rows. The stats appear once there is something to count.
+
+`characters === 0` with `books > 0` is fine and renders as a real zero — the reader has a book
+and has not yet met anyone in it, which is a true and unembarrassing state.
+
+#### 6. `/dashboard` redirects to `/`
+
+**File**: `src/pages/dashboard.astro`
+
+**Intent**: Two dashboards is the confusion this change exists to remove.
+
+**Contract**: The page becomes a redirect to `/`. Its `PROTECTED_ROUTES` entry stays and costs
+nothing. Sign-out keeps its homes: the rail foot, the mobile disclosure, and the masthead.
+If an account screen is ever wanted it should be `/account` with a reason to exist — not this
+stub kept alive out of momentum. **Confirm before deleting the file's contents.**
+
+> Supersedes Phase 5 § 3, which made `/dashboard` the account screen. That was written before
+> `/` became the dashboard.
+
+#### 7. Delete the starter artifacts
 
 **Files**: `src/components/Welcome.astro`, `src/components/Topbar.astro`,
 `src/components/ui/LibBadge.astro`
 
-**Intent**: Remove the cosmic orbs, the star field and the two glass demo components. Nothing
-in the product imports them once Phases 2 and 6 land.
-
 **Contract**: **Deletion requires explicit confirmation at implementation time.** Confirm
-`grep -rn 'Welcome\|Topbar\|LibBadge' src/` returns nothing first. If the user prefers, they
-stay on disk unimported — the change works either way.
+`grep -rn 'Welcome\|Topbar\|LibBadge' src/` returns nothing first. The change works either way
+— they can stay on disk unimported.
 
-#### 3. Cross-cutting verification
+### What this phase does NOT add
 
-**Files**: none
+- **No progress tracking of any kind.** `idea-notes.md` § "Co NIE wchodzi w zakres MVP" rules
+  out time tracking and reading-progress tracking, and § Non-Goals rules out page counters,
+  percentages and streaks. **Three integers describing collection size are not progress** —
+  but the line is thin and this screen is exactly where it gets crossed. Forbidden here and in
+  any follow-up: percentages, "X % through", pages, time, streaks, charts, sparklines,
+  week-over-week deltas, "you're on a roll".
+- **No fourth stat.** Relationship count is tempting and would be one more query for no
+  question anybody asks.
+- **No activity feed, no "recently added", no recommendations.**
 
-**Contract**: The four-width sweep, the gate run, and the reduced-motion pass across every
-screen. Then update `context/foundation/lessons.md` if this change produced a rule worth
-keeping.
+### Known redundancy, named rather than hidden
+
+At ≥ 60 rem the rail already lists the library grouped by status with counts, so `BOOKS` and
+`FINISHED` restate what is on screen two inches to the left. The dashboard earns its place on
+three grounds: `CHARACTERS` appears nowhere else in the product; there is no rail below 60 rem,
+which is the primary viewport; and the bare domain has to lead somewhere. If it still feels
+redundant on a wide screen after real use, the honest fix is to drop the counts on desktop
+rather than to justify them.
 
 ### Success Criteria:
 
@@ -958,29 +1065,72 @@ keeping.
 - [ ] 6.1 `npx astro check` passes
 - [ ] 6.2 `npm run lint` passes
 - [ ] 6.3 `npm run build` succeeds
-- [ ] 6.4 `npm run db:verify-rls` passes, unchanged from before the whole change
-- [ ] 6.5 `grep -rnE 'purple|blue-100|white/1[05]|backdrop-blur|rounded-2xl|bg-cosmic|bg-clip-text' src/`
-      returns nothing
-- [ ] 6.6 `grep -rn 'oklch(0\?\.\?[0-9.]* 0 0)' src/styles/` returns nothing — no zero-chroma token
-- [ ] 6.7 `npx prettier --check` clean on every file this change touched
+- [ ] 6.4 `npm run db:verify-rls` passes, unchanged
+- [ ] 6.5 `npx prettier --check` clean on touched files
 
 #### Manual
-- [ ] 6.8 Every screen renders correctly at **320 / 375 / 414 / 768 px** — no horizontal
-      scroll, no two-line clickable text, no element narrower than its content
-- [ ] 6.9 All 58 Hallmark slop-test gates pass; gates 19, 23, 34, 38a, 43, 46, 47, 49–54
-      checked by name
-- [ ] 6.10 `prefers-reduced-motion: reduce` collapses the disclosure to a ≤ 150 ms crossfade
-      and removes the row-press transition
-- [ ] 6.11 Keyboard-only pass over every screen: focus is always visible, never trapped, and
-      the order matches the visual order
-- [ ] 6.12 Greyscale pass: no state is communicated by colour alone anywhere
-- [ ] 6.13 The landing page contains no number the product cannot substantiate
-- [ ] 6.14 A cold load on a throttled connection shows fallback type, then swaps — no invisible
-      text, no layout jump
-- [ ] 6.15 The whole product read on an actual phone, in an actual reading session — the only
-      test that matters for this brief
+- [ ] 6.6 Signed out, `/` renders the poster and offers Sign in / Sign up
+- [ ] 6.7 Signed in, `/` renders the dashboard and **no sign-in control appears anywhere** —
+      masthead, rail, or mobile disclosure
+- [ ] 6.8 The three counts match reality: add a book, a character, mark one finished, reload
+- [ ] 6.9 A second reader's rows are counted nowhere — `rb@t.test` sees only their own totals
+- [ ] 6.10 A brand-new account sees the zero state, **not** `0 · 0 · 0`
+- [ ] 6.11 `characters === 0` with one book renders a real zero, not the zero state
+- [ ] 6.12 A failed count renders an em dash and the rest of the page still works
+- [ ] 6.13 `Open the library` and every "Reading now" row navigate correctly
+- [ ] 6.14 `/dashboard` redirects to `/`
+- [ ] 6.15 Both states render at 320 / 375 / 414 / 768 px with no horizontal scroll; the three
+      stats stay on one row at 320 px or stack cleanly
+- [ ] 6.16 The poster hero's ghost layer is absent from the accessibility tree and cannot be
+      selected as text
+- [ ] 6.17 No number on the page is anything but a real count of the reader's own rows
 
 ---
+
+## Phase 7: Cross-cutting verification
+
+### Overview
+
+The checks that only make sense once every screen exists.
+
+### Changes Required:
+
+**Files**: none — this phase changes nothing. If it finds something, the fix belongs to the
+phase that owns the file.
+
+**Contract**: The four-width sweep, the 58-gate run, the contrast measurements, the
+reduced-motion pass and a keyboard pass across every screen. Then update
+`context/foundation/lessons.md` if this change produced a rule worth keeping.
+
+### Success Criteria:
+
+#### Automated
+- [ ] 7.1 `npx astro check`, `npm run lint`, `npm run build` all clean
+- [ ] 7.2 `npm run db:verify-rls` passes, unchanged from before the whole change
+- [ ] 7.3 `grep -rnE 'purple|blue-100|white/1[05]|backdrop-blur|rounded-|bg-cosmic|bg-clip-text' src/`
+      returns nothing — note `rounded-` unanchored, since radius is zero product-wide
+- [ ] 7.4 `grep -rn 'oklch(0\?\.\?[0-9.]* 0 0)' src/styles/` returns nothing — no zero-chroma token
+- [ ] 7.5 `grep -rn 'Anton' src/` matches only `tokens.css` and the poster
+- [ ] 7.6 `grep -rn 'ghost' src/pages src/components` matches only the poster
+- [ ] 7.7 `npx prettier --check` clean on every file this change touched
+
+#### Manual
+- [ ] 7.8 Every screen at **320 / 375 / 414 / 768 px** — no horizontal scroll, no two-line
+      clickable text, no element narrower than its content
+- [ ] 7.9 All 58 Hallmark slop-test gates pass; gates 19, 23, 34, 38a, 43, 46, 47, 49–54
+      checked by name
+- [ ] 7.10 Measured contrast on the cream ground: `--ink` ≥ 7:1, `--ink-2` / `--muted-fg` /
+      `--accent` ≥ 4.5:1, `--rule-strong` / `--focus` ≥ 3:1; `--faint` confirmed **below**
+      4.5:1 and absent from all text
+- [ ] 7.11 `prefers-reduced-motion: reduce` collapses the disclosure to a ≤ 150 ms crossfade
+      and removes the row-press transition
+- [ ] 7.12 Keyboard-only pass: focus always visible, never trapped, order matches visual order
+- [ ] 7.13 Greyscale pass: no state communicated by colour alone — including Delete, which
+      shares the accent hue
+- [ ] 7.14 A cold load on a throttled connection shows fallback type, then swaps — no invisible
+      text, no layout jump
+- [ ] 7.15 The whole product read on an actual phone, in an actual reading session — the only
+      test that matters for this brief
 
 ## Progress
 
@@ -999,7 +1149,10 @@ _not started_
 ### Phase 5: Auth and account
 _not started_
 
-### Phase 6: Landing page and cross-cutting verification
+### Phase 6: The root route — poster and dashboard
+_not started_
+
+### Phase 7: Cross-cutting verification
 _not started_
 
 ## Open Questions
@@ -1009,10 +1162,12 @@ _not started_
    Phase 3 depends on its `finished_at` filter. — Owner: user. **Block: yes, for Phases 3–4.**
 2. **The three deletions** (`Welcome.astro`, `Topbar.astro`, `LibBadge.astro`) need explicit
    confirmation before Phase 6 runs. — Owner: user. Block: Phase 6 only.
-3. **`/books` and `/books/[id]` are not in `PROTECTED_ROUTES`.** Signed out, they render as an
-   empty library rather than redirecting to sign-in. The redesign makes this more visible, not
-   less. Out of scope here — flagged so it is a decision rather than an oversight. — Owner:
-   user. Block: no.
+3. ~~`/books` is not in `PROTECTED_ROUTES`.~~ **Withdrawn** — it is. The claim came from the
+   roadmap's stale Baseline paragraph rather than from `middleware.ts`. There is no routing
+   gap.
+4. **Does `/dashboard` survive?** With `/` becoming the signed-in dashboard, `/dashboard` is a
+   second dashboard. The plan proposes redirecting it to `/`; an account screen, if one is
+   ever wanted, should be `/account`. — Owner: user. Block: Phase 6 only.
 
 ## Mockup Log
 

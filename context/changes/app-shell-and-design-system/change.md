@@ -1,7 +1,7 @@
 ---
 change_id: app-shell-and-design-system
 title: Reading-room UI — token system, app shell, and every screen off the starter
-status: new
+status: implementing
 created: 2026-09-10
 updated: 2026-09-10
 archived_at: null
@@ -68,7 +68,22 @@ mono dev-tool register. The choice was not between rich options.
   domestic fiction." That argument assumed a Polish UI. With English chosen, the five read as
   themselves and the map is dead requirement. The rest of S-05 (custom types, the two-column
   shape, `on delete restrict`) is untouched. **S-05 planning should not inherit it.**
-- **S-04 is mid-flight and owns two of the four files this change rewrites.**
+- **Update 2026-09-10 — the S-04 blocker is cleared, and S-05 went with it.** Both slices landed
+and were archived while this plan was being written; main moved 25 commits and +1505 lines.
+The branch is rebased onto `cd6eb2c` and the plan re-verified against it. Two findings worth
+carrying:
+
+- **S-05 did not ship the Polish display map**, exactly as predicted below — and it went
+  further: `src/types.ts` and every page are already English. Only `src/lib/config-status.ts`
+  still holds Polish strings, so decision 1 is nearly already true and Phase 5 § 4 shrinks to
+  one file.
+- **S-04/S-05 made two interaction decisions this change must preserve:** the "Add a
+  character" form is now a collapsed `<details>`, and every destructive action sits behind a
+  nested `<details>` confirmation. The mockups predate both. Where they disagree, the shipped
+  behaviour wins — this change owns the visual layer, not the interaction model.
+
+**(Superseded, kept for the record.) S-04 is mid-flight and owns two of the four files this
+change rewrites.**
   `book-status-and-recall` is `status: implementing`; `src/pages/books/[id].astro` already
   carries `finished_at`, the finish/reopen form and a date line, and `/books` is expected to
   grow the active/finished filter. **This change must not start until S-04 is committed** —

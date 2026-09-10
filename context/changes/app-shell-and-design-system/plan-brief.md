@@ -4,7 +4,9 @@
 > Mockup: `context/changes/app-shell-and-design-system/mockup.html` — four decisions were
 > settled on it before any template was touched; see plan.md § Mockup Log.
 > Roadmap item: **none** — cross-cutting, like F-01. Sits between S-04 and S-05.
-> Blocking prerequisite: `book-status-and-recall` (S-04) must be committed first.
+> Prerequisite: **cleared.** S-04 and S-05 both landed and were archived on 2026-09-10; the
+> branch is rebased onto `cd6eb2c`. The plan was re-verified against that tree — see
+> plan.md § Current State Analysis for what moved under it.
 
 ## What & Why
 
