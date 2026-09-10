@@ -9,14 +9,15 @@ type BookRow = Pick<Book, "id" | "title" | "author" | "created_at" | "finished_a
 
 const formError = Astro.url.searchParams.get("error");
 
-// Only these two narrow the list. Anything else — including a nonsense value typed into the
-// URL — falls back to showing everything: a filter is not worth an error page, and an empty
-// list would read as data loss rather than as a bad parameter.
-const STATUS_FILTERS = ["active", "finished"] as const;
+// "Currently reading" is the default, because that is the shelf a reader opening the app is
+// almost always looking at; the whole collection is one click away under "All". Anything
+// unrecognised — including a nonsense value typed into the URL — falls back to that same
+// default rather than an error page.
+const STATUS_FILTERS = ["active", "finished", "all"] as const;
 type StatusFilter = (typeof STATUS_FILTERS)[number];
 
 const requestedStatus = Astro.url.searchParams.get("status");
-const status: StatusFilter | null = STATUS_FILTERS.find((f) => f === requestedStatus) ?? null;
+const status: StatusFilter = STATUS_FILTERS.find((f) => f === requestedStatus) ?? "active";
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 
@@ -48,6 +49,16 @@ if (supabase) {
   loadError = "Supabase is not configured";
 }
 
+// Only asked when the default view comes back empty, to tell "nothing in progress" apart from
+// "nothing at all" — the two need different sentences, and getting it wrong tells a reader
+// with no books that all their books are finished.
+let totalBooks = books.length;
+
+if (supabase && !loadError && books.length === 0 && status !== "all") {
+  const { count } = await supabase.from("books").select("id", { count: "exact", head: true });
+  totalBooks = count ?? 0;
+}
+
 const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
 const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
 
@@ -58,11 +69,13 @@ const filterLinkClass = (isCurrent: boolean) =>
 // ?status=finished, "Add your first one above" would be wrong twice over: they may have
 // plenty of books, and adding one would not put it in this view.
 const emptyMessage =
-  status === "finished"
-    ? "No finished books yet. Open a book and mark it finished."
-    : status === "active"
-      ? "Nothing currently reading — every book in your collection is finished."
-      : "No books yet. Add your first one above.";
+  totalBooks === 0
+    ? "No books yet. Add your first one above."
+    : status === "finished"
+      ? "No finished books yet. Open a book and mark it finished."
+      : status === "active"
+        ? "Nothing currently reading — every book in your collection is finished."
+        : "No books yet. Add your first one above.";
 ---
 
 <Layout title="My books">
@@ -87,9 +100,9 @@ const emptyMessage =
         </h2>
 
         <nav class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <a href="/books" class:list={filterLinkClass(status === null)}>All</a>
-          <a href="/books?status=active" class:list={filterLinkClass(status === "active")}>Currently reading</a>
+          <a href="/books" class:list={filterLinkClass(status === "active")}>Currently reading</a>
           <a href="/books?status=finished" class:list={filterLinkClass(status === "finished")}>Finished</a>
+          <a href="/books?status=all" class:list={filterLinkClass(status === "all")}>All</a>
         </nav>
 
         {
