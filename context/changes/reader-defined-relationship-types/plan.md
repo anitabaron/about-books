@@ -337,6 +337,12 @@ relationships query it describes.
   longer lives in frontmatter
 - Unit tests pass: `npm test` — covering both type sources, a missing type-map entry, and the
   index-under-both-characters invariant
+- Migration reaches production: `npx supabase db push` applied, and `relationship_types`
+  present in the remote schema. Deliberately deferred out of Phase 1 — the two-column shape
+  is not proven by real use yet, and a corrective migration against production costs more
+  than waiting one phase. It is a checkbox because this project has twice shipped code
+  against an unpushed schema, both times surfacing on the live app as
+  "Could not find the table ... in the schema cache"
 
 #### Manual Verification:
 
@@ -469,16 +475,16 @@ restore `not null` on `type`, which is only safe while no custom type is in use.
 
 #### Automated
 
-- [x] 1.1 Migration applies from scratch: `npx supabase db reset` succeeds
-- [x] 1.2 Isolation and structural assertions pass: `npm run db:verify-rls`
-- [x] 1.3 Generated types match the schema: `npm run db:types` leaves no diff on a second run
-- [x] 1.4 Type checking passes: `npx astro check`
-- [x] 1.5 Linting passes: `npm run lint`
-- [x] 1.6 Seeded accounts survive the reset
+- [x] 1.1 Migration applies from scratch: `npx supabase db reset` succeeds — 037a9e3
+- [x] 1.2 Isolation and structural assertions pass: `npm run db:verify-rls` — 037a9e3
+- [x] 1.3 Generated types match the schema: `npm run db:types` leaves no diff on a second run — 037a9e3
+- [x] 1.4 Type checking passes: `npx astro check` — 037a9e3
+- [x] 1.5 Linting passes: `npm run lint` — 037a9e3
+- [x] 1.6 Seeded accounts survive the reset — 037a9e3
 
 #### Manual
 
-- [x] 1.7 Catalog confirms RLS on, four `{authenticated}` policies, no `anon` grant, FK `confdeltype = a`
+- [x] 1.7 Catalog confirms RLS on, four `{authenticated}` policies, no `anon` grant, FK `confdeltype = a` — 037a9e3
 
 ### Phase 2: Define a type and use it
 
@@ -490,15 +496,16 @@ restore `not null` on `type`, which is only safe while no custom type is in use.
 - [ ] 2.4 Isolation still green: `npm run db:verify-rls`
 - [ ] 2.5 `src/lib/connections.ts` exports the resolution function and the page imports it
 - [ ] 2.6 Unit tests pass: `npm test` (both type sources, missing map entry, both-ends indexing)
+- [ ] 2.7 Migration reaches production: `npx supabase db push` applied, `relationship_types` in the remote schema
 
 #### Manual
 
-- [ ] 2.7 A type added on one book appears only in that book's forms
-- [ ] 2.8 A connection with a custom type renders under both characters
-- [ ] 2.9 A connection with a shared type renders exactly as before
-- [ ] 2.10 An edit can move a connection between a shared and a custom type, both ways
-- [ ] 2.11 A character with no connections renders no relationship section at all
-- [ ] 2.12 Whole flow works at 364px; a reader ignoring the disclosure sees no change
+- [ ] 2.8 A type added on one book appears only in that book's forms
+- [ ] 2.9 A connection with a custom type renders under both characters
+- [ ] 2.10 A connection with a shared type renders exactly as before
+- [ ] 2.11 An edit can move a connection between a shared and a custom type, both ways
+- [ ] 2.12 A character with no connections renders no relationship section at all
+- [ ] 2.13 Whole flow works at 364px; a reader ignoring the disclosure sees no change
 
 ### Phase 3: Rename and delete a type
 
