@@ -174,4 +174,124 @@ begin
   raise notice 'PASS: reader A can act on own rows (incl. default auth.uid()); reader B isolated on select/insert/update/delete; anon denied at grant level';
 end $$;
 
+-- ============================================================================
+-- characters -- roadmap S-02 (character-notes-crud)
+-- Same shape as the books block above: negative assertions that reader B cannot
+-- act on reader A's rows, and positive ones that reader A can act on their own.
+-- ============================================================================
+
+do $$
+declare
+  a_id   uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  b_id   uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  a_book uuid := 'a0000000-0000-4000-8000-000000000001';
+  b_book uuid := 'b0000000-0000-4000-8000-000000000001';
+  a_char uuid;
+  b_char uuid;
+  a_own  uuid;
+  owner  uuid;
+  n      int;
+  denied boolean;
+begin
+  -- Fixtures as superuser, one character per reader.
+  insert into public.characters (user_id, book_id, name)
+    values (a_id, a_book, 'Reader A character') returning id into a_char;
+  insert into public.characters (user_id, book_id, name)
+    values (b_id, b_book, 'Reader B character') returning id into b_char;
+
+  select count(*) into n from public.characters where user_id in (a_id, b_id);
+  if n <> 2 then
+    raise exception 'FIXTURE FAIL: expected 2 fixture characters as superuser, saw %', n;
+  end if;
+
+  ----------------------------------------------------------------- reader A
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', a_id, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+
+  select count(*) into n from public.characters;
+  if n <> 1 then
+    raise exception 'FAIL select: reader A sees % characters, expected exactly 1', n;
+  end if;
+
+  select count(*) into n from public.characters where user_id = b_id;
+  if n <> 0 then
+    raise exception 'FAIL select: reader A can see % of reader B''s characters', n;
+  end if;
+
+  -- Positive controls: guard against a policy that is too NARROW, which every negative
+  -- assertion below would pass happily. Also exercises `default auth.uid()`, which the
+  -- fixtures above bypass. Uses a second row so B's assertions keep a live target.
+  insert into public.characters (book_id, name) values (a_book, 'A self-insert')
+    returning id, user_id into a_own, owner;
+  if owner is distinct from a_id then
+    raise exception 'FAIL insert default: character owned by %, expected reader A % '
+      '(is `default auth.uid()` still on user_id?)', owner, a_id;
+  end if;
+
+  update public.characters set description = 'set by A' where id = a_own;
+  get diagnostics n = row_count;
+  if n <> 1 then
+    raise exception 'FAIL update own: reader A updated % of their own characters, expected 1 '
+      '(is characters_update_own too narrow?)', n;
+  end if;
+
+  delete from public.characters where id = a_own;
+  get diagnostics n = row_count;
+  if n <> 1 then
+    raise exception 'FAIL delete own: reader A deleted % of their own characters, expected 1 '
+      '(is characters_delete_own too narrow?)', n;
+  end if;
+
+  ----------------------------------------------------------------- reader B
+  perform set_config('role', 'postgres', true);
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', b_id, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+
+  select count(*) into n from public.characters;
+  if n <> 1 then
+    raise exception 'FAIL select: reader B sees % characters, expected exactly 1', n;
+  end if;
+
+  update public.characters set name = 'hijacked' where id = a_char;
+  get diagnostics n = row_count;
+  if n <> 0 then
+    raise exception 'FAIL update: reader B updated % of reader A''s characters', n;
+  end if;
+
+  delete from public.characters where id = a_char;
+  get diagnostics n = row_count;
+  if n <> 0 then
+    raise exception 'FAIL delete: reader B deleted % of reader A''s characters', n;
+  end if;
+
+  denied := false;
+  begin
+    insert into public.characters (user_id, book_id, name) values (a_id, a_book, 'forged');
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL insert: reader B inserted a character owned by reader A';
+  end if;
+
+  ----------------------------------------------------------------- anon
+  perform set_config('role', 'postgres', true);
+  perform set_config('role', 'anon', true);
+  denied := false;
+  begin
+    select count(*) into n from public.characters;
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL anon: anon read characters (saw % rows) -- expected permission denied', n;
+  end if;
+
+  perform set_config('role', 'postgres', true);
+  raise notice 'PASS characters: reader A can act on own rows (incl. default auth.uid()); '
+    'reader B isolated on select/insert/update/delete; anon denied at grant level';
+end $$;
+
 rollback;
