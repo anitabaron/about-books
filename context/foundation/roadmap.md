@@ -3,7 +3,7 @@ project: about-books
 version: 1
 status: draft
 created: 2026-09-09
-updated: 2026-09-09
+updated: 2026-09-10
 prd_version: 2
 main_goal: speed
 top_blocker: time
@@ -44,7 +44,7 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 | ID   | Change ID                          | Outcome (user can …)                                                                | Prerequisites | PRD refs                            | Status   |
 | ---- | ---------------------------------- | ----------------------------------------------------------------------------------- | ------------- | ----------------------------------- | -------- |
 | F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | done     |
-| S-01 | `manual-book-entry`                | add a book by title and author and see it in their own collection                   | F-01          | FR-001, FR-002, US-01               | in-progress |
+| S-01 | `manual-book-entry`                | add a book by title and author and see it in their own collection                   | F-01          | FR-001, FR-002, US-01               | done |
 | S-02 | `character-notes-crud`             | add, edit and delete a character with a note, fast, on a phone                      | S-01          | FR-003, US-02                       | proposed |
 | S-03 | `cast-and-relationships-view`      | name relationships between characters and read the whole cast as a list             | S-02          | FR-004, FR-007, US-01               | proposed |
 | S-04 | `book-status-and-recall`           | mark a book finished, filter active vs finished, and read a finished book back      | S-01          | FR-009, US-04                       | proposed |
@@ -79,7 +79,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Nothing blocks it — auth is already present per Baseline. Sequenced first because it is the only cross-cutting safety contract in the milestone: if the isolation pattern is wrong, all four slices inherit the same privacy defect and retrofitting it means rewriting every table's policies. Scope is deliberately capped at one table plus the reusable convention — it does not pre-build the character, relationship or event schema, and each later slice still adds and integrates its own tables through real user-facing behaviour.
 - **Status:** done
 
-es
+## Slices
 
 ### S-01: Add a book to your own collection
 
@@ -102,7 +102,7 @@ es
     should settle this rather than inherit the mix. Five strings now, fifty after S-03.
     — Owner: user. Block: no.
 - **Risk:** Carries the one part of F-01's guarantee still unproven end to end (see Unknowns). Sequenced immediately after the foundation because every other phase-1 slice hangs off a book row. Deliberately thin: a plain unsorted list is the whole surface, since collection browse and search is FR-008 and external metadata lookup is FR-002b — both phase 2. The failure mode to watch is scope creep back into those two.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-02: Add a character mid-session, on a phone
 
@@ -187,3 +187,5 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
   (manual dashboard deploy to confirm the pipeline end to end, and the post-deploy health
   check) are satisfied as of 2026-09-10 — commit 96bd1cd built through the Cloudflare Git
   integration and deployed automatically. Recorded here because archived changes are immutable.
+
+- **S-01: user can add a book by typing title and author, and see it listed in a collection nobody else can read** — Archived 2026-09-10 → `context/archive/2026-09-09-manual-book-entry/`. Lesson: —.
