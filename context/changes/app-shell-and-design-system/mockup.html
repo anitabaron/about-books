@@ -1,0 +1,758 @@
+<title>Reading Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   Hallmark · genre: modern-minimal · app-shell (N3 side-rail, no footer)
+   theme: custom · vibe: "warm paper, hairline-dense, quiet, library-ordered"
+   paper: oklch(98.5% 0.004 85) · accent: see [data-accent]
+   display: Newsreader · body: IBM Plex Sans
+   axes: light / roman-serif / chromatic-spruce ~168°
+   enrichment: none · studied: no
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Page chrome (NOT the design — the harness around it) ─────────── */
+:root {
+  --ui-bg:     oklch(96% 0.004 85);
+  --ui-panel:  oklch(99% 0.003 85);
+  --ui-ink:    oklch(24% 0.008 75);
+  --ui-ink-2:  oklch(46% 0.008 78);
+  --ui-rule:   oklch(87% 0.006 82);
+  --ui-mark:   oklch(43% 0.115 168);
+  --ui-font:   "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --ui-serif:  "Newsreader", ui-serif, Georgia, serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ui-bg:    oklch(15% 0.006 80);
+    --ui-panel: oklch(19% 0.007 80);
+    --ui-ink:   oklch(92% 0.006 82);
+    --ui-ink-2: oklch(66% 0.006 80);
+    --ui-rule:  oklch(29% 0.008 80);
+    --ui-mark:  oklch(62% 0.09 168);
+  }
+}
+:root[data-theme="dark"] {
+  --ui-bg:    oklch(15% 0.006 80);
+  --ui-panel: oklch(19% 0.007 80);
+  --ui-ink:   oklch(92% 0.006 82);
+  --ui-ink-2: oklch(66% 0.006 80);
+  --ui-rule:  oklch(29% 0.008 80);
+  --ui-mark:  oklch(62% 0.09 168);
+}
+
+html, body { overflow-x: clip; }
+body {
+  background: var(--ui-bg);
+  color: var(--ui-ink);
+  font-family: var(--ui-font);
+  padding-inline: 16px;
+  padding-block: 20px 56px;
+  margin: 0;
+}
+.page { max-width: 78rem; margin-inline: auto; }
+
+.masthead { display: flex; flex-direction: column; gap: 4px; margin-block-end: 20px; }
+.masthead h1 {
+  font-family: var(--ui-serif);
+  font-weight: 700;
+  font-size: 1.44rem;
+  letter-spacing: -0.015em;
+  margin: 0;
+  text-wrap: balance;
+}
+.masthead p { margin: 0; font-size: 0.833rem; color: var(--ui-ink-2); max-width: 62ch; line-height: 1.55; }
+
+/* ── Control bar ──────────────────────────────────────────────────── */
+.controls {
+  display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: flex-start;
+  background: var(--ui-panel);
+  border: 1px solid var(--ui-rule);
+  border-radius: 6px;
+  padding: 14px 16px;
+  margin-block-end: 22px;
+}
+.ctrl { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.ctrl > span {
+  font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.09em;
+  font-weight: 600; color: var(--ui-ink-2);
+}
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg label {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 7px;
+  border: 1px solid var(--ui-rule);
+  border-radius: 5px;
+  padding: 7px 11px;
+  font-size: 0.833rem;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  background: transparent;
+  color: var(--ui-ink);
+}
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg label:hover { border-color: var(--ui-ink-2); }
+.seg label:has(input:focus-visible) { outline: 2px solid var(--ui-mark); outline-offset: 2px; }
+.seg label:has(input:checked) { border-color: var(--ui-ink); box-shadow: inset 0 0 0 1px var(--ui-ink); font-weight: 500; }
+.swatch { width: 11px; height: 11px; border-radius: 2px; border: 1px solid oklch(50% 0.01 80 / 0.35); flex: none; }
+.sw-spruce   { background: oklch(43% 0.115 168); }
+.sw-burgundy { background: oklch(38% 0.115 15); }
+.sw-none     { background: oklch(21% 0.008 75); }
+
+/* ── Mockup frame ─────────────────────────────────────────────────── */
+.frame-wrap { display: flex; flex-direction: column; gap: 8px; }
+.frame-note { font-size: 0.75rem; color: var(--ui-ink-2); letter-spacing: 0.02em; }
+.frame {
+  container-type: inline-size;
+  border: 1px solid var(--ui-rule);
+  border-radius: 6px;
+  overflow: hidden;
+  width: 100%;
+  transition: max-width 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.frame[data-width="phone"] { max-width: 390px; }
+@media (prefers-reduced-motion: reduce) { .frame { transition: none; } }
+
+/* ══════════════════════════════════════════════════════════════════
+   THE DESIGN SYSTEM — everything below is the actual proposal
+   ══════════════════════════════════════════════════════════════════ */
+.mock {
+  /* Light ramp */
+  --paper:       oklch(98.5% 0.004 85);
+  --paper-2:     oklch(96.5% 0.007 85);
+  --paper-3:     oklch(94.5% 0.009 85);
+  --ink:         oklch(21%   0.008 75);
+  --ink-2:       oklch(43%   0.008 75);
+  --muted-fg:    oklch(46%   0.008 78);
+  --faint:       oklch(60%   0.007 80);
+  --rule:        oklch(88%   0.006 82);
+  --rule-strong: oklch(58%   0.008 80);
+  --danger:      oklch(47%   0.145 27);
+
+  /* Type */
+  --font-display: "Newsreader", ui-serif, Georgia, serif;
+  --font-body:    "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --text-xs:   0.833rem;
+  --text-base: 1rem;
+  --text-md:   1.2rem;
+  --text-lg:   1.44rem;
+
+  /* Space + metrics */
+  --space-3xs: 0.125rem; --space-2xs: 0.25rem; --space-xs: 0.5rem;
+  --space-sm:  0.75rem;  --space-md:  1rem;    --space-lg: 1.5rem;
+  --space-xl:  2.5rem;
+  --row-h: 2.75rem;
+  --radius-sm: 3px; --radius: 5px;
+  --dur-fast: 90ms; --dur-base: 140ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+@media (pointer: fine) { .mock { --row-h: 2.25rem; } }
+
+/* Dark ramp */
+.mock[data-mock-theme="dark"] {
+  --paper:       oklch(17%   0.007 80);
+  --paper-2:     oklch(20.5% 0.008 80);
+  --paper-3:     oklch(24.5% 0.008 80);
+  --ink:         oklch(93%   0.006 82);
+  --ink-2:       oklch(75%   0.006 80);
+  --muted-fg:    oklch(66%   0.006 80);
+  --faint:       oklch(52%   0.006 80);
+  --rule:        oklch(30%   0.008 80);
+  --rule-strong: oklch(46%   0.008 80);
+  --danger:      oklch(64%   0.12  27);
+}
+
+/* Accent candidates */
+.mock[data-accent="spruce"]   { --accent: oklch(43% 0.115 168); --focus: oklch(48% 0.15 168); }
+.mock[data-accent="burgundy"] { --accent: oklch(38% 0.115 15);  --focus: oklch(44% 0.15 15); }
+.mock[data-accent="none"]     { --accent: oklch(21% 0.008 75);  --focus: oklch(34% 0.02 75); }
+.mock[data-mock-theme="dark"][data-accent="spruce"]   { --accent: oklch(60% 0.09 168); --focus: oklch(66% 0.11 168); }
+.mock[data-mock-theme="dark"][data-accent="burgundy"] { --accent: oklch(62% 0.10 15);  --focus: oklch(68% 0.12 15); }
+.mock[data-mock-theme="dark"][data-accent="none"]     { --accent: oklch(93% 0.006 82); --focus: oklch(80% 0.02 82); }
+
+.mock *:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-radius: var(--radius-sm); }
+
+/* ── Shell ────────────────────────────────────────────────────────── */
+.shell { display: grid; grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 60rem) {
+  .shell { grid-template-columns: 264px minmax(0, 1fr); }
+  .topbar { display: none; }
+  .rail { display: flex; }
+}
+
+/* ── Rail (desktop) ───────────────────────────────────────────────── */
+.rail {
+  display: none;
+  flex-direction: column;
+  gap: var(--space-md);
+  background: var(--paper-2);
+  border-inline-end: 1px solid var(--rule);
+  padding: var(--space-md) 0 var(--space-sm);
+  min-height: 34rem;
+}
+.wordmark {
+  font-family: var(--font-display); font-weight: 700; font-size: var(--text-md);
+  letter-spacing: -0.02em; padding-inline: var(--space-md); color: var(--ink);
+}
+.rail-group { display: flex; flex-direction: column; gap: var(--space-2xs); }
+.group-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-inline: var(--space-md);
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em;
+  font-weight: 600; color: var(--muted-fg);
+}
+.rail ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.rail a {
+  display: flex; align-items: center;
+  min-height: var(--row-h);
+  padding-inline: var(--space-md);
+  border-inline-start: 2px solid transparent;
+  color: var(--ink-2); text-decoration: none;
+  font-size: var(--text-xs);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (hover: hover) and (pointer: fine) { .rail a:hover { background: var(--paper-3); color: var(--ink); } }
+.rail a[aria-current="page"] {
+  background: var(--paper-3);
+  border-inline-start-color: var(--accent);
+  color: var(--ink);
+  font-weight: 600;
+}
+.rail a.done { color: var(--muted-fg); }
+.rail-foot {
+  margin-block-start: auto;
+  border-block-start: 1px solid var(--rule);
+  padding: var(--space-sm) var(--space-md) 0;
+  display: flex; flex-direction: column; gap: var(--space-2xs);
+  font-size: var(--text-xs);
+}
+.rail-foot .who { color: var(--muted-fg); overflow: hidden; text-overflow: ellipsis; }
+
+/* ── Top bar (mobile) ─────────────────────────────────────────────── */
+.topbar {
+  position: relative;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-sm);
+  min-height: 48px;
+  padding-inline: var(--space-md);
+  background: var(--paper-2);
+  border-block-end: 1px solid var(--rule);
+}
+.topbar .wordmark { padding-inline: 0; font-size: var(--text-base); }
+.menu > summary {
+  list-style: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px;
+  margin-inline-end: -10px;
+  cursor: pointer; color: var(--ink-2); font-size: var(--text-xs);
+}
+.menu > summary::-webkit-details-marker { display: none; }
+.menu[open] > summary { color: var(--ink); }
+.menu-panel {
+  position: absolute; top: 100%; inset-inline: 0; z-index: 100;
+  background: var(--paper-2);
+  border-block-end: 1px solid var(--rule);
+  padding-block: var(--space-xs) var(--space-sm);
+  animation: drop var(--dur-base) var(--ease-out);
+}
+.menu-panel ul { list-style: none; margin: 0; padding: 0; }
+.menu-panel a, .menu-panel button {
+  display: flex; align-items: center; min-height: var(--row-h);
+  padding-inline: var(--space-md);
+  border-inline-start: 2px solid transparent;
+  font-size: var(--text-xs); color: var(--ink-2);
+  text-decoration: none; background: none; border-block: 0; border-inline-end: 0;
+  width: 100%; font-family: inherit; cursor: pointer; text-align: start;
+}
+.menu-panel a[aria-current="page"] { border-inline-start-color: var(--accent); color: var(--ink); font-weight: 600; background: var(--paper-3); }
+@keyframes drop { from { opacity: 0; transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .menu-panel { animation: fade 120ms; } @keyframes fade { from { opacity: 0; } } }
+
+/* ── Main ─────────────────────────────────────────────────────────── */
+.main { padding: var(--space-md) 0 var(--space-xl); min-width: 0; }
+.pad { padding-inline: var(--space-md); }
+
+.crumb { font-size: var(--text-xs); color: var(--muted-fg); margin-block-end: var(--space-xs); }
+.crumb a { color: var(--accent); text-decoration: none; }
+.crumb a:hover { text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1.5px; }
+
+.book-title {
+  font-family: var(--font-display); font-weight: 700;
+  font-size: var(--text-lg); line-height: 1.15; letter-spacing: -0.015em;
+  margin: 0; overflow-wrap: anywhere; min-width: 0;
+}
+.book-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs) var(--space-sm);
+  margin-block-start: var(--space-2xs);
+  font-size: var(--text-xs); color: var(--muted-fg);
+}
+.book-meta .sep { color: var(--faint); }
+
+/* ── Buttons ──────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--space-2xs);
+  font-family: var(--font-body); font-size: var(--text-xs); font-weight: 500;
+  line-height: 1; white-space: nowrap;
+  padding: 0 var(--space-sm); min-height: 34px;
+  border-radius: var(--radius); border: 1px solid transparent;
+  cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+@media (pointer: coarse) { .btn { min-height: 44px; } }
+.btn-solid { background: var(--ink); color: var(--paper); }
+.btn-outline { background: transparent; color: var(--ink); border-color: var(--rule-strong); }
+.btn-ghost { background: transparent; color: var(--ink-2); }
+.btn-danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+@media (hover: hover) and (pointer: fine) {
+  .btn-solid:hover { background: var(--ink-2); }
+  .btn-outline:hover, .btn-ghost:hover { background: var(--paper-3); }
+  .btn-danger:hover { background: color-mix(in oklch, var(--danger) 8%, transparent); }
+}
+.btn:active { transform: translateY(0.5px); }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active { transform: none; } }
+
+/* ── Composer ─────────────────────────────────────────────────────── */
+.composer {
+  display: flex; gap: var(--space-xs);
+  margin-block: var(--space-md);
+}
+.composer input {
+  flex: 1 1 auto; min-width: 0;
+  font-family: var(--font-body); font-size: var(--text-base);
+  color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: var(--radius);
+  padding: 0 var(--space-sm); min-height: 40px;
+}
+@media (pointer: coarse) { .composer input { min-height: 44px; } }
+.composer input::placeholder { color: var(--muted-fg); }
+.composer input:focus-visible { border-color: var(--focus); }
+
+/* ── Section head ─────────────────────────────────────────────────── */
+.sec-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding-inline: var(--space-md);
+  padding-block-end: var(--space-2xs);
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em;
+  font-weight: 600; color: var(--muted-fg);
+  border-block-end: 1px solid var(--rule);
+}
+
+/* ── Rows ─────────────────────────────────────────────────────────── */
+.cast { list-style: none; margin: 0; padding: 0; }
+.row {
+  border-block-end: 1px solid var(--rule);
+  padding: var(--space-xs) var(--space-md);
+  min-height: var(--row-h);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) { .row:hover { background: var(--paper-3); } }
+@media (prefers-reduced-motion: reduce) { .row { transition: none; } }
+.row-title {
+  font-family: var(--font-display); font-weight: 500; font-size: var(--text-base);
+  line-height: 1.3; overflow-wrap: anywhere; min-width: 0; color: var(--ink);
+}
+.row-note {
+  font-size: var(--text-xs); color: var(--ink-2); line-height: 1.45;
+  margin-block-start: 1px; max-width: 62ch;
+}
+.conns { list-style: none; margin: var(--space-2xs) 0 0; padding: 0; display: flex; flex-direction: column; gap: 1px; }
+.conns li { font-size: var(--text-xs); line-height: 1.4; }
+.conn-type {
+  font-variant-caps: all-small-caps; letter-spacing: 0.05em;
+  color: var(--accent); font-weight: 600;
+  display: inline-block; min-width: 6.5em;
+}
+.conn-name { color: var(--ink-2); overflow-wrap: anywhere; }
+
+/* ── Disclosure ───────────────────────────────────────────────────── */
+.edit { margin-block-start: var(--space-2xs); }
+.edit > summary {
+  list-style: none;
+  display: inline-flex; align-items: center;
+  min-height: 44px; padding-inline-end: var(--space-sm);
+  font-size: var(--text-xs); color: var(--muted-fg);
+  cursor: pointer;
+}
+@media (pointer: fine) { .edit > summary { min-height: 26px; } }
+.edit > summary::-webkit-details-marker { display: none; }
+.edit > summary::before { content: "▸"; display: inline-block; margin-inline-end: 6px; transition: transform var(--dur-base) var(--ease-out); }
+.edit[open] > summary::before { transform: rotate(90deg); }
+.edit[open] > summary { color: var(--ink-2); }
+@media (prefers-reduced-motion: reduce) { .edit > summary::before { transition: none; } }
+.edit-body {
+  border-block-start: 1px solid var(--rule);
+  margin-block-start: var(--space-2xs);
+  padding-block: var(--space-xs) var(--space-sm);
+  display: flex; flex-direction: column; gap: 6px;
+  animation: drop var(--dur-base) var(--ease-out);
+}
+@media (prefers-reduced-motion: reduce) { .edit-body { animation: fade 120ms; } }
+
+/* Inspector rows: label in a narrow left column, control fills the rest.
+   Four short rows instead of nine stacked blocks. */
+.field {
+  display: grid; grid-template-columns: 3.6rem minmax(0, 1fr);
+  align-items: center; gap: var(--space-xs);
+}
+.field > label { font-size: 0.75rem; color: var(--muted-fg); font-weight: 500; }
+.field input, .field select, .rel select {
+  font-family: var(--font-body); font-size: 0.875rem; line-height: 1.2; color: var(--ink);
+  background: var(--paper); border: 1px solid var(--rule-strong);
+  border-radius: var(--radius); padding: 0 6px;
+  min-height: 30px; height: 30px; min-width: 0; max-width: 100%;
+}
+/* Selects: strip the native chrome, which is what actually sets their height. */
+.field select, .rel select {
+  appearance: none;
+  padding-inline-end: 1.15rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23888' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+}
+/* Underline fields: a writable line, not a box. Same 3:1 boundary contrast on the one
+   edge that remains, three-quarters less weight, and it speaks the page's hairline language
+   instead of fighting it. Capture controls stay boxed — see .composer. */
+.mock[data-fields="underline"] .field input,
+.mock[data-fields="underline"] .field select,
+.mock[data-fields="underline"] .rel select {
+  border: 0;
+  border-block-end: 1px solid var(--rule-strong);
+  border-radius: 0;
+  background-color: transparent;
+  padding-inline: 2px;
+}
+.mock[data-fields="underline"] .field select,
+.mock[data-fields="underline"] .rel select { padding-inline-end: 1.05rem; background-position: right 1px center; }
+.mock[data-fields="underline"] .field input:focus-visible,
+.mock[data-fields="underline"] .field select:focus-visible,
+.mock[data-fields="underline"] .rel select:focus-visible { border-block-end-color: var(--focus); }
+
+/* 16px on touch only: below it, iOS zooms the viewport on focus. Fine pointers don't. */
+@media (pointer: coarse) {
+  .field input, .field select, .rel select {
+    font-size: 1rem; min-height: 36px; height: 36px; padding-inline: var(--space-xs);
+  }
+  .field select, .rel select { padding-inline-end: 1.3rem; }
+}
+.field input:focus-visible, .field select:focus-visible, .rel select:focus-visible { border-color: var(--focus); }
+
+/* Relationship: two self-describing selects share one row with their button. */
+.rel { display: grid; grid-template-columns: 3.6rem minmax(0, 1fr); align-items: center; gap: var(--space-xs); }
+.rel > label { font-size: 0.75rem; color: var(--muted-fg); font-weight: 500; }
+.rel-controls { display: flex; gap: 6px; min-width: 0; }
+.rel-controls select { flex: 1 1 0; }
+.rel-controls .btn { flex: none; padding-inline: var(--space-xs); }
+
+.edit-actions {
+  display: flex; justify-content: space-between; align-items: center; gap: var(--space-xs);
+  margin-block-start: var(--space-2xs);
+}
+.sub-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; font-weight: 600; color: var(--muted-fg); }
+.btn-sm { min-height: 30px; font-size: 0.78rem; padding-inline: var(--space-xs); }
+@media (pointer: coarse) { .btn-sm { min-height: 36px; } }
+.btn-text { background: none; border-color: transparent; color: var(--danger); }
+.empty { font-size: var(--text-xs); color: var(--muted-fg); padding: var(--space-sm) var(--space-md); }
+
+/* ── Callout under the mockup ─────────────────────────────────────── */
+.notes { margin-block-start: 26px; display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 52rem) { .notes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.note {
+  border: 1px solid var(--ui-rule); border-radius: 6px;
+  background: var(--ui-panel); padding: 13px 15px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.note h3 {
+  margin: 0; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em;
+  font-weight: 600; color: var(--ui-ink-2);
+}
+.note p { margin: 0; font-size: 0.833rem; line-height: 1.55; color: var(--ui-ink); }
+.note code { font-size: 0.78rem; background: var(--ui-bg); padding: 1px 4px; border-radius: 3px; }
+</style>
+
+<div class="page">
+
+  <div class="masthead">
+    <h1>Reading Room</h1>
+    <p>Mockup of <code>/books/[id]</code> for about-books. Example cast, not your data. Open it on your phone — the layout is real, not a picture of one.</p>
+    <p><strong>Where the accent is:</strong> the relationship types (<em>family · ally · romantic</em>) down the cast, the <em>Books</em> breadcrumb, the focus ring, and the active book’s marker in the rail at full width. Switch between the three below and watch the type column.</p>
+  </div>
+
+  <div class="controls">
+    <div class="ctrl">
+      <span>Accent</span>
+      <div class="seg" role="radiogroup" aria-label="Accent colour">
+        <label><input type="radio" name="accent" id="acc-spruce" value="spruce" checked><span class="swatch sw-spruce"></span>Spruce ✓</label>
+        <label><input type="radio" name="accent" id="acc-burgundy" value="burgundy"><span class="swatch sw-burgundy"></span>Burgundy</label>
+        <label><input type="radio" name="accent" id="acc-none" value="none"><span class="swatch sw-none"></span>Ink only</label>
+      </div>
+    </div>
+    <div class="ctrl">
+      <span>Width</span>
+      <div class="seg" role="radiogroup" aria-label="Viewport width">
+        <label><input type="radio" name="width" id="w-phone" value="phone" checked>Phone 390</label>
+        <label><input type="radio" name="width" id="w-full" value="full">Full</label>
+      </div>
+    </div>
+    <div class="ctrl">
+      <span>Edit fields</span>
+      <div class="seg" role="radiogroup" aria-label="Field treatment">
+        <label><input type="radio" name="fields" id="f-underline" value="underline" checked>Underline</label>
+        <label><input type="radio" name="fields" id="f-boxed" value="boxed">Boxed</label>
+      </div>
+    </div>
+    <div class="ctrl">
+      <span>Ramp</span>
+      <div class="seg" role="radiogroup" aria-label="Colour ramp">
+        <label><input type="radio" name="ramp" id="r-light" value="light" checked>Light</label>
+        <label><input type="radio" name="ramp" id="r-dark" value="dark">Dark</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="frame-wrap">
+    <p class="frame-note" id="frameNote">Phone — 390 px. The rail collapses to a top bar and a native disclosure.</p>
+    <div class="frame" id="frame" data-width="phone">
+      <div class="mock" id="mock" data-accent="spruce" data-mock-theme="light" data-fields="underline">
+        <div class="shell">
+
+          <!-- Mobile top bar -->
+          <div class="topbar">
+            <span class="wordmark">about-books</span>
+            <details class="menu">
+              <summary aria-label="Library menu">Library</summary>
+              <div class="menu-panel">
+                <div class="group-head" style="margin-block:6px 2px"><span>Reading</span><span>3</span></div>
+                <ul>
+                  <li><a href="#" aria-current="page">Dune</a></li>
+                  <li><a href="#">The Left Hand of Darkness</a></li>
+                  <li><a href="#">Piranesi</a></li>
+                </ul>
+                <div class="group-head" style="margin-block:10px 2px"><span>Finished</span><span>2</span></div>
+                <ul>
+                  <li><a href="#" class="done">Solaris</a></li>
+                  <li><a href="#" class="done">The Dispossessed</a></li>
+                </ul>
+                <div style="border-block-start:1px solid var(--rule);margin-block-start:10px">
+                  <button type="button">Sign out</button>
+                </div>
+              </div>
+            </details>
+          </div>
+
+          <!-- Desktop rail -->
+          <nav class="rail" aria-label="Library">
+            <span class="wordmark">about-books</span>
+
+            <div class="rail-group">
+              <div class="group-head"><span>Reading</span><span>3</span></div>
+              <ul>
+                <li><a href="#" aria-current="page">Dune</a></li>
+                <li><a href="#">The Left Hand of Darkness</a></li>
+                <li><a href="#">Piranesi</a></li>
+              </ul>
+            </div>
+
+            <div class="rail-group">
+              <div class="group-head"><span>Finished</span><span>2</span></div>
+              <ul>
+                <li><a href="#" class="done">Solaris</a></li>
+                <li><a href="#" class="done">The Dispossessed</a></li>
+              </ul>
+            </div>
+
+            <div class="rail-foot">
+              <span class="who">anita.baron@i4b.pl</span>
+              <a href="#" style="color:var(--ink-2);text-decoration:none;min-height:auto;padding:0;border:0">Account</a>
+            </div>
+          </nav>
+
+          <!-- Main -->
+          <main class="main">
+            <div class="pad">
+              <p class="crumb"><a href="#">Books</a> / Dune</p>
+              <h1 class="book-title">Dune</h1>
+              <div class="book-meta">
+                <span>Frank Herbert</span>
+                <span class="sep">·</span>
+                <span>Added 2 Sep 2026</span>
+                <button class="btn btn-outline" type="button">Mark as finished</button>
+              </div>
+
+              <div class="composer">
+                <input id="add-character" type="text" placeholder="Add a character" aria-label="Character name">
+                <button class="btn btn-solid" type="button">Add</button>
+              </div>
+            </div>
+
+            <div class="sec-head"><span>Cast</span><span>7</span></div>
+
+            <ul class="cast">
+
+              <li class="row">
+                <div class="row-title">Paul Atreides</div>
+                <p class="row-note">Heir to Caladan. Sees futures he cannot step out of.</p>
+                <ul class="conns">
+                  <li><span class="conn-type">family</span><span class="conn-name">Lady Jessica</span></li>
+                  <li><span class="conn-type">romantic</span><span class="conn-name">Chani</span></li>
+                  <li><span class="conn-type">ally</span><span class="conn-name">Duncan Idaho</span></li>
+                  <li><span class="conn-type">antagonist</span><span class="conn-name">Baron Harkonnen</span></li>
+                </ul>
+                <details class="edit">
+                  <summary>Edit</summary>
+                  <div class="edit-body">
+                    <div class="field">
+                      <label for="e-name">Name</label>
+                      <input id="e-name" type="text" value="Paul Atreides">
+                    </div>
+                    <div class="field">
+                      <label for="e-note">Note</label>
+                      <input id="e-note" type="text" value="Heir to Caladan. Sees futures he cannot step out of.">
+                    </div>
+                    <div class="rel">
+                      <label for="e-who">Link</label>
+                      <div class="rel-controls">
+                        <select id="e-who" aria-label="Character to link"><option>Chani</option><option>Stilgar</option><option>Gurney Halleck</option></select>
+                        <select id="e-type" aria-label="Relationship type"><option>family</option><option>ally</option><option>antagonist</option><option>romantic</option><option>other</option></select>
+                        <button class="btn btn-outline btn-sm" type="button" aria-label="Add relationship">Add</button>
+                      </div>
+                    </div>
+                    <div class="edit-actions">
+                      <button class="btn btn-solid btn-sm" type="button">Save</button>
+                      <button class="btn btn-text btn-sm" type="button">Delete</button>
+                    </div>
+                  </div>
+                </details>
+              </li>
+
+              <li class="row">
+                <div class="row-title">Lady Jessica</div>
+                <p class="row-note">Bene Gesserit. Bore a son when she was told to bear a daughter.</p>
+                <ul class="conns">
+                  <li><span class="conn-type">family</span><span class="conn-name">Paul Atreides</span></li>
+                  <li><span class="conn-type">other</span><span class="conn-name">Stilgar</span></li>
+                </ul>
+                <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="sub-label">Same controls as above</span></div></details>
+              </li>
+
+              <li class="row">
+                <div class="row-title">Chani</div>
+                <p class="row-note">Fremen, of Sietch Tabr. Knows the desert the way Paul knows the future.</p>
+                <ul class="conns">
+                  <li><span class="conn-type">romantic</span><span class="conn-name">Paul Atreides</span></li>
+                  <li><span class="conn-type">family</span><span class="conn-name">Duncan Idaho</span></li>
+                </ul>
+                <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="sub-label">Same controls as above</span></div></details>
+              </li>
+
+              <li class="row">
+                <div class="row-title">Duncan Idaho</div>
+                <p class="row-note">Swordmaster. Went to the Fremen first and came back changed.</p>
+                <ul class="conns">
+                  <li><span class="conn-type">ally</span><span class="conn-name">Paul Atreides</span></li>
+                  <li><span class="conn-type">family</span><span class="conn-name">Chani</span></li>
+                </ul>
+                <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="sub-label">Same controls as above</span></div></details>
+              </li>
+
+              <li class="row">
+                <div class="row-title">Stilgar</div>
+                <p class="row-note">Naib of Sietch Tabr.</p>
+                <ul class="conns">
+                  <li><span class="conn-type">other</span><span class="conn-name">Lady Jessica</span></li>
+                </ul>
+                <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="sub-label">Same controls as above</span></div></details>
+              </li>
+
+              <li class="row">
+                <div class="row-title">Baron Vladimir Harkonnen</div>
+                <p class="row-note">The debt is older than Paul.</p>
+                <ul class="conns">
+                  <li><span class="conn-type">antagonist</span><span class="conn-name">Paul Atreides</span></li>
+                </ul>
+                <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="sub-label">Same controls as above</span></div></details>
+              </li>
+
+              <!-- No connections: renders nothing at all. No heading, no "None". -->
+              <li class="row">
+                <div class="row-title">Gurney Halleck</div>
+                <p class="row-note">Warmaster and baliset player. Added on page 61, nothing since.</p>
+                <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="sub-label">Same controls as above</span></div></details>
+              </li>
+
+            </ul>
+          </main>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <h3>Spruce · oklch(43% 0.115 168)</h3>
+      <p>Bookbinding cloth. Cross-wheel from the warm paper, so the active book separates cleanly. Low chroma, low lightness — deep rather than bright. Risk: green can read as “done”, which is why status here is grey, never green.</p>
+    </div>
+    <div class="note">
+      <h3>Burgundy · oklch(38% 0.115 15)</h3>
+      <p>Leather binding. Analogous to the paper, so the page reads warmer and quieter overall. Risk: it sits close to <code>--danger</code>, so delete controls have to carry an outline and a word, never colour alone.</p>
+    </div>
+    <div class="note">
+      <h3>Ink only · no accent</h3>
+      <p>Colour has to earn its place. Types read as small caps in ink, the active book is carried by weight and a wash. Nothing is lost functionally. Risk: the type column stops being a column your eye can skip to.</p>
+    </div>
+    <div class="note">
+      <h3>Edit — inspector, not a form</h3>
+      <p>Labels in a 3.6 rem left column, both relationship selects on one row, delete beside save. Four rows instead of nine blocks: about 180 px instead of 460 px.</p>
+    </div>
+    <div class="note">
+      <h3>Why underline, not a lighter box</h3>
+      <p>The border can’t just be softened: WCAG 1.4.11 wants 3:1 on a control’s boundary, and <code>--rule-strong</code> at L 58% is already the lightest that clears it. Dropping three of the four edges keeps that contrast on the edge that remains and removes the weight — and a hairline is what the rest of the page is made of. Toggle <em>Boxed</em> to compare.</p>
+    </div>
+    <div class="note">
+      <h3>Gurney Halleck</h3>
+      <p>He has no relationships, so that part of his row renders <em>nothing</em> — no heading, no “None”, no empty separator. Check it does not read as broken; that rule came from S-03.</p>
+    </div>
+    <div class="note">
+      <h3>Why inputs grow on a phone</h3>
+      <p>30 px tall at 14 px type with a mouse; 36 px at 16 px type under a thumb. Not inconsistency — iOS zooms the whole viewport when a focused input is under 16 px, and S-02 accepted “no zooming” as a criterion. Fine pointers have no such rule, so they get the tighter set.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  const mock = document.getElementById("mock");
+  const frame = document.getElementById("frame");
+  const note = document.getElementById("frameNote");
+
+  const NOTES = {
+    phone: "Phone — 390 px. The rail collapses to a top bar and a native disclosure.",
+    full: "Full width. Above 60 rem the library rail appears beside the book — two panes, not three."
+  };
+
+  document.querySelectorAll('input[name="accent"]').forEach((el) => {
+    el.addEventListener("change", () => { if (el.checked) mock.dataset.accent = el.value; });
+  });
+  document.querySelectorAll('input[name="ramp"]').forEach((el) => {
+    el.addEventListener("change", () => { if (el.checked) mock.dataset.mockTheme = el.value; });
+  });
+  document.querySelectorAll('input[name="fields"]').forEach((el) => {
+    el.addEventListener("change", () => { if (el.checked) mock.dataset.fields = el.value; });
+  });
+  document.querySelectorAll('input[name="width"]').forEach((el) => {
+    el.addEventListener("change", () => {
+      if (!el.checked) return;
+      frame.dataset.width = el.value;
+      note.textContent = NOTES[el.value];
+    });
+  });
+</script>

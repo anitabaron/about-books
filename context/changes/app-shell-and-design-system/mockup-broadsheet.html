@@ -1,0 +1,542 @@
+<title>Broadsheet Track</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   Hallmark · route: custom (tuned) · EXPLORATION, not the accepted system
+   vibe: "letterpress broadsheet, cream stock, one brick red"
+   paper: oklch(93% 0.014 84) · accent: oklch(43% 0.15 30)
+   display: Anton (poster only) · serif: Newsreader · label: IBM Plex Mono
+   axes: light / display-condensed-bold / warm ~30°
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Page chrome ──────────────────────────────────────────────────── */
+:root {
+  --ui-bg: oklch(96% 0.004 85); --ui-panel: oklch(99% 0.003 85);
+  --ui-ink: oklch(24% 0.008 75); --ui-ink-2: oklch(46% 0.008 78);
+  --ui-rule: oklch(87% 0.006 82); --ui-mark: oklch(46% 0.15 30);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ui-bg: oklch(15% 0.006 80); --ui-panel: oklch(19% 0.007 80);
+    --ui-ink: oklch(92% 0.006 82); --ui-ink-2: oklch(66% 0.006 80);
+    --ui-rule: oklch(29% 0.008 80); --ui-mark: oklch(68% 0.13 30);
+  }
+}
+:root[data-theme="dark"] {
+  --ui-bg: oklch(15% 0.006 80); --ui-panel: oklch(19% 0.007 80);
+  --ui-ink: oklch(92% 0.006 82); --ui-ink-2: oklch(66% 0.006 80);
+  --ui-rule: oklch(29% 0.008 80); --ui-mark: oklch(68% 0.13 30);
+}
+html, body { overflow-x: clip; }
+body {
+  background: var(--ui-bg); color: var(--ui-ink); margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  padding-inline: 16px; padding-block: 20px 56px;
+}
+.page { max-width: 78rem; margin-inline: auto; }
+.masthead-ui { margin-block-end: 18px; display: flex; flex-direction: column; gap: 5px; }
+.masthead-ui h1 {
+  font-family: "Newsreader", ui-serif, Georgia, serif; font-weight: 700;
+  font-size: 1.44rem; margin: 0; letter-spacing: -0.015em; text-wrap: balance;
+}
+.masthead-ui p {
+  margin: 0; font-size: 0.8rem; line-height: 1.6; color: var(--ui-ink-2);
+  max-width: 66ch; font-family: "Newsreader", ui-serif, Georgia, serif;
+}
+.warn {
+  border-inline-start: 3px solid var(--ui-mark);
+  padding: 9px 13px; background: var(--ui-panel);
+  font-family: "Newsreader", ui-serif, Georgia, serif;
+  font-size: 0.85rem; line-height: 1.6; max-width: 66ch;
+  margin-block: 14px 22px;
+}
+.section-label {
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.14em;
+  font-weight: 600; color: var(--ui-ink-2);
+  border-block-end: 1px solid var(--ui-rule); padding-block-end: 5px;
+  margin-block: 34px 12px;
+}
+.frame {
+  container-type: inline-size;
+  border: 1px solid var(--ui-rule); border-radius: 4px; overflow: hidden;
+}
+.frame.phone { max-width: 390px; }
+
+/* ══════════════════════════════════════════════════════════════════
+   THE BROADSHEET SYSTEM
+   ══════════════════════════════════════════════════════════════════ */
+.bs {
+  --paper:    oklch(93%  0.014 84);   /* cream stock, not near-white */
+  --paper-2:  oklch(90.5% 0.016 84);
+  --paper-3:  oklch(88%  0.018 84);
+  --ink:      oklch(20%  0.012 60);   /* warm printing black */
+  --ink-2:    oklch(41%  0.012 62);
+  --muted-fg: oklch(48%  0.012 66);   /* 4.6:1 on cream */
+  --faint:    oklch(62%  0.010 70);
+  --rule:     oklch(74%  0.014 80);   /* hairline — darker than on white paper */
+  --rule-strong: oklch(52% 0.014 78);
+  --accent:   oklch(43%  0.150 30);   /* brick — 4.8:1 on cream */
+  --ghost:    oklch(78%  0.055 205);  /* the offset layer. POSTER ONLY. */
+
+  --font-poster: "Anton", "Arial Narrow", sans-serif;
+  --font-serif:  "Newsreader", ui-serif, Georgia, serif;
+  --font-label:  "IBM Plex Mono", ui-monospace, monospace;
+
+  --sp-2xs: 0.25rem; --sp-xs: 0.5rem; --sp-sm: 0.75rem;
+  --sp-md: 1rem; --sp-lg: 1.5rem; --sp-xl: 2.5rem;
+  --row-h: 2.75rem;
+
+  background: var(--paper); color: var(--ink);
+  font-family: var(--font-serif);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+@media (pointer: fine) { .bs { --row-h: 2.25rem; } }
+.bs *:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* The one shared device: mono uppercase, letterspaced. */
+.lab {
+  font-family: var(--font-label); font-size: 0.66rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted-fg);
+}
+
+/* ── A · Poster masthead ──────────────────────────────────────────── */
+.mast {
+  display: flex; flex-wrap: wrap; justify-content: space-between;
+  align-items: baseline; gap: var(--sp-xs) var(--sp-md);
+  padding: var(--sp-md) var(--sp-md) var(--sp-xs);
+}
+.mast-name {
+  font-family: var(--font-serif); font-weight: 700; font-size: 1.15rem;
+  letter-spacing: 0.02em; text-transform: uppercase;
+}
+.mast-no { color: var(--accent); font-family: var(--font-label); font-weight: 600; font-size: 0.8rem; letter-spacing: 0.08em; }
+.mast-right { text-align: end; line-height: 1.65; }
+.rule-thick { height: 3px; background: var(--ink); margin-inline: var(--sp-md); }
+.rule-thin  { height: 1px; background: var(--ink); margin-inline: var(--sp-md); margin-block-start: 2px; }
+.mast-nav { display: flex; flex-wrap: wrap; gap: var(--sp-md); padding: var(--sp-xs) var(--sp-md); }
+.mast-nav a { color: var(--ink); text-decoration: none; }
+.mast-nav a:hover { color: var(--accent); }
+
+/* ── A · Poster hero ──────────────────────────────────────────────── */
+.hero { padding: var(--sp-lg) var(--sp-md) var(--sp-xl); display: grid; gap: var(--sp-lg); grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 52rem) { .hero { grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr); align-items: end; } }
+.hero-eyebrow { margin-block-end: var(--sp-md); display: block; }
+
+.poster { margin: 0; display: flex; flex-direction: column; gap: 0.04em; }
+.pline {
+  position: relative;
+  font-family: var(--font-poster); font-weight: 400;
+  font-size: clamp(3.1rem, 13cqi, 7rem);
+  line-height: 0.9; letter-spacing: 0.005em;
+  text-transform: uppercase;
+  color: var(--ink);
+  overflow-wrap: anywhere; min-width: 0;
+}
+/* Offset ghost layer — decorative, hidden from the accessibility tree. */
+.pline::before {
+  content: attr(data-t);
+  position: absolute; inset-block-start: -0.055em; inset-inline-start: -0.035em;
+  color: var(--ghost); z-index: 0;
+  pointer-events: none;
+}
+.pline > span { position: relative; z-index: 1; }
+.pline.red > span { color: var(--accent); }
+
+.hero-aside { display: flex; flex-direction: column; gap: var(--sp-sm); max-width: 44ch; }
+.hero-aside p { margin: 0; font-size: 1.02rem; line-height: 1.55; }
+.hero-aside strong { font-weight: 700; }
+.hero-aside .say { color: var(--accent); font-weight: 600; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: var(--sp-md); margin-block-start: var(--sp-xs); }
+
+/* ── B · App shell in the same vocabulary ─────────────────────────── */
+.shell { display: grid; grid-template-columns: minmax(0, 1fr); }
+@container (min-width: 60rem) {
+  .shell { grid-template-columns: 260px minmax(0, 1fr); }
+  .topbar { display: none; }
+  .rail { display: flex; }
+}
+.rail {
+  display: none; flex-direction: column; gap: var(--sp-md);
+  background: var(--paper-2); border-inline-end: 1px solid var(--rule);
+  padding-block: var(--sp-md) var(--sp-sm); min-height: 32rem;
+}
+.rail .wm, .topbar .wm {
+  font-family: var(--font-serif); font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.03em; font-size: 0.95rem; padding-inline: var(--sp-md);
+}
+.grp { display: flex; flex-direction: column; }
+.grp-head {
+  display: flex; justify-content: space-between; padding: 0 var(--sp-md) 4px;
+  border-block-end: 1px solid var(--rule); margin-block-end: 2px;
+}
+.rail ul, .menu-panel ul { list-style: none; margin: 0; padding: 0; }
+.rail a {
+  display: flex; align-items: center; min-height: var(--row-h);
+  padding-inline: var(--sp-md); border-inline-start: 3px solid transparent;
+  color: var(--ink-2); text-decoration: none; font-size: 0.9rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+@media (hover: hover) and (pointer: fine) { .rail a:hover { background: var(--paper-3); color: var(--ink); } }
+.rail a[aria-current="page"] { background: var(--paper-3); border-inline-start-color: var(--accent); color: var(--ink); font-weight: 600; }
+.rail a.done { color: var(--muted-fg); }
+.rail-foot { margin-block-start: auto; border-block-start: 1px solid var(--rule); padding: var(--sp-sm) var(--sp-md) 0; }
+
+.topbar {
+  position: relative; display: flex; align-items: center; justify-content: space-between;
+  min-height: 48px; padding-inline: var(--sp-md);
+  background: var(--paper-2); border-block-end: 2px solid var(--ink);
+}
+.topbar .wm { padding-inline: 0; }
+.menu > summary {
+  list-style: none; display: inline-flex; align-items: center; justify-content: center;
+  min-width: 44px; min-height: 44px; margin-inline-end: -10px; cursor: pointer;
+}
+.menu > summary::-webkit-details-marker { display: none; }
+.menu-panel {
+  position: absolute; top: 100%; inset-inline: 0; z-index: 100;
+  background: var(--paper-2); border-block-end: 1px solid var(--ink); padding-block-end: var(--sp-xs);
+}
+.menu-panel a {
+  display: flex; align-items: center; min-height: var(--row-h); padding-inline: var(--sp-md);
+  border-inline-start: 3px solid transparent; color: var(--ink-2); text-decoration: none; font-size: 0.9rem;
+}
+.menu-panel a[aria-current="page"] { border-inline-start-color: var(--accent); color: var(--ink); font-weight: 600; background: var(--paper-3); }
+
+.main { padding-block: var(--sp-md) var(--sp-xl); min-width: 0; }
+.pad { padding-inline: var(--sp-md); }
+.crumb { margin-block-end: var(--sp-xs); }
+.crumb a { color: var(--accent); text-decoration: none; }
+.crumb a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+.bk-title {
+  font-family: var(--font-serif); font-weight: 700; font-size: 1.5rem;
+  line-height: 1.12; letter-spacing: -0.012em; margin: 0;
+  overflow-wrap: anywhere; min-width: 0;
+}
+.bk-meta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-xs) var(--sp-sm); margin-block-start: 3px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-label); font-size: 0.68rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap;
+  padding: 0 var(--sp-sm); min-height: 32px; cursor: pointer;
+  border: 1px solid var(--ink); border-radius: 0; background: transparent; color: var(--ink);
+  transition: background 90ms cubic-bezier(0.22,1,0.36,1);
+}
+@media (pointer: coarse) { .btn { min-height: 40px; } }
+.btn-solid { background: var(--ink); color: var(--paper); }
+.btn-red { border-color: var(--accent); color: var(--accent); }
+.btn-plain { border-color: transparent; }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { background: var(--paper-3); }
+  .btn-solid:hover { background: var(--ink-2); }
+}
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } }
+
+.composer { display: flex; gap: var(--sp-xs); margin-block: var(--sp-md); }
+.composer input {
+  flex: 1 1 auto; min-width: 0; font-family: var(--font-serif); font-size: 1rem;
+  color: var(--ink); background: var(--paper);
+  border: 1px solid var(--rule-strong); border-radius: 0;
+  padding: 0 var(--sp-xs); min-height: 40px;
+}
+@media (pointer: coarse) { .composer input { min-height: 44px; } }
+.composer input::placeholder { color: var(--muted-fg); }
+
+.sec-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 0 var(--sp-md) 5px;
+  border-block-end: 2px solid var(--ink);
+}
+
+.cast { list-style: none; margin: 0; padding: 0; }
+.row { border-block-end: 1px solid var(--rule); padding: var(--sp-xs) var(--sp-md); min-height: var(--row-h); }
+@media (hover: hover) and (pointer: fine) { .row:hover { background: var(--paper-3); } }
+.row-title {
+  font-family: var(--font-serif); font-weight: 600; font-size: 1.02rem; line-height: 1.28;
+  overflow-wrap: anywhere; min-width: 0;
+}
+.row-note { font-size: 0.9rem; color: var(--ink-2); line-height: 1.45; margin: 1px 0 0; max-width: 62ch; }
+.conns { list-style: none; margin: var(--sp-2xs) 0 0; padding: 0; }
+.conns li { display: flex; gap: var(--sp-xs); align-items: baseline; line-height: 1.5; }
+.conn-type { color: var(--accent); flex: none; min-width: 7.2em; }
+.conn-name { font-size: 0.9rem; color: var(--ink-2); overflow-wrap: anywhere; min-width: 0; }
+
+.edit { margin-block-start: var(--sp-2xs); }
+.edit > summary {
+  list-style: none; display: inline-flex; align-items: center; min-height: 44px;
+  cursor: pointer; color: var(--muted-fg);
+  font-family: var(--font-label); font-size: 0.66rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.14em;
+}
+@media (pointer: fine) { .edit > summary { min-height: 26px; } }
+.edit > summary::-webkit-details-marker { display: none; }
+.edit > summary::before { content: "+"; margin-inline-end: 6px; }
+.edit[open] > summary::before { content: "–"; }
+.edit-body {
+  border-block-start: 1px solid var(--rule); margin-block-start: 3px;
+  padding-block: var(--sp-xs) var(--sp-sm);
+  display: flex; flex-direction: column; gap: 7px;
+}
+.field, .rel { display: grid; grid-template-columns: 3.9rem minmax(0, 1fr); align-items: center; gap: var(--sp-xs); }
+.field > label, .rel > label {
+  font-family: var(--font-label); font-size: 0.62rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted-fg);
+}
+.field input, .field select, .rel select {
+  font-family: var(--font-serif); font-size: 0.9rem; line-height: 1.2; color: var(--ink);
+  background: transparent; border: 0; border-block-end: 1px solid var(--rule-strong);
+  border-radius: 0; padding: 0 2px; min-height: 28px; height: 28px; min-width: 0; max-width: 100%;
+}
+.field select, .rel select {
+  appearance: none; padding-inline-end: 1.05rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23807060' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 1px center;
+}
+.field input:focus-visible, .field select:focus-visible, .rel select:focus-visible { border-block-end-color: var(--accent); }
+@media (pointer: coarse) {
+  .field input, .field select, .rel select { font-size: 1rem; min-height: 34px; height: 34px; }
+}
+.rel-controls { display: flex; gap: 6px; min-width: 0; }
+.rel-controls select { flex: 1 1 0; }
+.edit-actions { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-xs); margin-block-start: 3px; }
+
+/* ── Notes ────────────────────────────────────────────────────────── */
+.notes { margin-block-start: 26px; display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 52rem) { .notes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.note { border: 1px solid var(--ui-rule); background: var(--ui-panel); padding: 13px 15px; display: flex; flex-direction: column; gap: 5px; }
+.note h3 { margin: 0; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.14em; font-weight: 600; color: var(--ui-ink-2); }
+.note p { margin: 0; font-size: 0.85rem; line-height: 1.6; font-family: "Newsreader", ui-serif, Georgia, serif; }
+.note.keep { border-inline-start: 3px solid oklch(48% 0.11 160); }
+.note.drop { border-inline-start: 3px solid var(--ui-mark); }
+</style>
+
+<div class="page">
+
+  <div class="masthead-ui">
+    <h1>Broadsheet Track</h1>
+    <p>An exploration of the letterpress direction, not a replacement for the system you accepted. Two surfaces, because this aesthetic behaves completely differently on each one.</p>
+  </div>
+
+  <div class="warn">
+    <strong>Read this first.</strong> The poster below can go all the way, because the landing page is already planned as a Long Document with a newspaper masthead — it has scale and emptiness to spend. The book page cannot: heavy condensed display, offset colour layers and two saturated hues all need room, and at 390&nbsp;px with seven characters there is none. So the app takes the <em>vocabulary</em> — mono&nbsp;caps, rule pairs, cream stock, one brick red — and leaves the <em>scale</em> on the poster. Judge the two separately.
+  </div>
+
+  <p class="section-label">A · Landing page — the poster, full strength</p>
+
+  <div class="frame">
+    <div class="bs">
+      <header>
+        <div class="mast">
+          <div>
+            <span class="mast-name">about-books</span>
+            <span class="mast-no">No 01</span>
+          </div>
+          <div class="mast-right lab">Private by default<br>Your notes, nobody else’s</div>
+        </div>
+        <div class="rule-thick"></div>
+        <div class="rule-thin"></div>
+        <nav class="mast-nav lab">
+          <a href="#">The problem</a>
+          <a href="#">What it does</a>
+          <a href="#">What it won’t do</a>
+          <a href="#">Sign in</a>
+        </nav>
+        <div class="rule-thin"></div>
+      </header>
+
+      <div class="hero">
+        <div>
+          <span class="lab hero-eyebrow">A reading companion for books put down and picked up again</span>
+          <h1 class="poster">
+            <span class="pline" data-t="PUT IT DOWN."><span>Put it down.</span></span>
+            <span class="pline red" data-t="PICK IT UP."><span>Pick it up.</span></span>
+          </h1>
+        </div>
+        <div class="hero-aside">
+          <p>Three weeks pass. You open the book and you have <strong>no idea who she is</strong>, or why he owes her anything. That is not a comprehension problem — you understood it fine at the time. It is a recall problem, and it only shows up on the way back in.</p>
+          <p>So write the cast down as you go. Names, a line each, and <span class="say">who is what to whom</span>. Then the way back in is a glance.</p>
+          <div class="hero-meta lab">
+            <span>No streaks</span>
+            <span>No progress bars</span>
+            <span>No social</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">B · Book page — the same vocabulary at app density, 390 px</p>
+
+  <div class="frame phone">
+    <div class="bs">
+      <div class="shell">
+
+        <div class="topbar">
+          <span class="wm">about-books</span>
+          <details class="menu">
+            <summary class="lab" aria-label="Library menu">Library</summary>
+            <div class="menu-panel">
+              <div class="grp-head lab" style="margin-block-start:8px"><span>Reading</span><span>3</span></div>
+              <ul>
+                <li><a href="#" aria-current="page">Dune</a></li>
+                <li><a href="#">The Left Hand of Darkness</a></li>
+                <li><a href="#">Piranesi</a></li>
+              </ul>
+              <div class="grp-head lab" style="margin-block-start:10px"><span>Finished</span><span>2</span></div>
+              <ul>
+                <li><a href="#" class="done">Solaris</a></li>
+                <li><a href="#" class="done">The Dispossessed</a></li>
+              </ul>
+            </div>
+          </details>
+        </div>
+
+        <nav class="rail" aria-label="Library">
+          <span class="wm">about-books</span>
+          <div class="grp">
+            <div class="grp-head lab"><span>Reading</span><span>3</span></div>
+            <ul>
+              <li><a href="#" aria-current="page">Dune</a></li>
+              <li><a href="#">The Left Hand of Darkness</a></li>
+              <li><a href="#">Piranesi</a></li>
+            </ul>
+          </div>
+          <div class="grp">
+            <div class="grp-head lab"><span>Finished</span><span>2</span></div>
+            <ul>
+              <li><a href="#" class="done">Solaris</a></li>
+              <li><a href="#" class="done">The Dispossessed</a></li>
+            </ul>
+          </div>
+          <div class="rail-foot lab">anita.baron@i4b.pl</div>
+        </nav>
+
+        <main class="main">
+          <div class="pad">
+            <p class="crumb lab"><a href="#">Books</a> / Dune</p>
+            <h1 class="bk-title">Dune</h1>
+            <div class="bk-meta">
+              <span class="lab">Frank Herbert</span>
+              <span class="lab">Added 2 Sep 2026</span>
+              <button class="btn" type="button">Mark finished</button>
+            </div>
+            <div class="composer">
+              <input id="bs-add" type="text" placeholder="Add a character" aria-label="Character name">
+              <button class="btn btn-solid" type="button">Add</button>
+            </div>
+          </div>
+
+          <div class="sec-head lab"><span>Cast</span><span>7</span></div>
+
+          <ul class="cast">
+            <li class="row">
+              <div class="row-title">Paul Atreides</div>
+              <p class="row-note">Heir to Caladan. Sees futures he cannot step out of.</p>
+              <ul class="conns">
+                <li><span class="conn-type lab">Family</span><span class="conn-name">Lady Jessica</span></li>
+                <li><span class="conn-type lab">Romantic</span><span class="conn-name">Chani</span></li>
+                <li><span class="conn-type lab">Ally</span><span class="conn-name">Duncan Idaho</span></li>
+                <li><span class="conn-type lab">Antagonist</span><span class="conn-name">Baron Harkonnen</span></li>
+              </ul>
+              <details class="edit" open>
+                <summary>Edit</summary>
+                <div class="edit-body">
+                  <div class="field">
+                    <label for="bs-name">Name</label>
+                    <input id="bs-name" type="text" value="Paul Atreides">
+                  </div>
+                  <div class="field">
+                    <label for="bs-note">Note</label>
+                    <input id="bs-note" type="text" value="Heir to Caladan.">
+                  </div>
+                  <div class="rel">
+                    <label for="bs-who">Link</label>
+                    <div class="rel-controls">
+                      <select id="bs-who" aria-label="Character to link"><option>Chani</option><option>Stilgar</option></select>
+                      <select id="bs-type" aria-label="Relationship type"><option>family</option><option>ally</option><option>romantic</option></select>
+                      <button class="btn" type="button">Add</button>
+                    </div>
+                  </div>
+                  <div class="edit-actions">
+                    <button class="btn btn-solid" type="button">Save</button>
+                    <button class="btn btn-red btn-plain" type="button">Delete</button>
+                  </div>
+                </div>
+              </details>
+            </li>
+
+            <li class="row">
+              <div class="row-title">Lady Jessica</div>
+              <p class="row-note">Bene Gesserit. Bore a son when she was told to bear a daughter.</p>
+              <ul class="conns">
+                <li><span class="conn-type lab">Family</span><span class="conn-name">Paul Atreides</span></li>
+                <li><span class="conn-type lab">Other</span><span class="conn-name">Stilgar</span></li>
+              </ul>
+              <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="lab">Same controls as above</span></div></details>
+            </li>
+
+            <li class="row">
+              <div class="row-title">Chani</div>
+              <p class="row-note">Fremen, of Sietch Tabr. Knows the desert the way Paul knows the future.</p>
+              <ul class="conns">
+                <li><span class="conn-type lab">Romantic</span><span class="conn-name">Paul Atreides</span></li>
+                <li><span class="conn-type lab">Family</span><span class="conn-name">Duncan Idaho</span></li>
+              </ul>
+              <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="lab">Same controls as above</span></div></details>
+            </li>
+
+            <li class="row">
+              <div class="row-title">Duncan Idaho</div>
+              <p class="row-note">Swordmaster. Went to the Fremen first and came back changed.</p>
+              <ul class="conns">
+                <li><span class="conn-type lab">Ally</span><span class="conn-name">Paul Atreides</span></li>
+                <li><span class="conn-type lab">Family</span><span class="conn-name">Chani</span></li>
+              </ul>
+              <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="lab">Same controls as above</span></div></details>
+            </li>
+
+            <li class="row">
+              <div class="row-title">Gurney Halleck</div>
+              <p class="row-note">Warmaster and baliset player. Added on page 61, nothing since.</p>
+              <details class="edit"><summary>Edit</summary><div class="edit-body"><span class="lab">Same controls as above</span></div></details>
+            </li>
+          </ul>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-label">What carried across, and what stayed on the poster</p>
+
+  <div class="notes">
+    <div class="note keep">
+      <h3>Carried · mono caps</h3>
+      <p>Every label is now IBM Plex Mono, uppercase, letterspaced 0.14–0.16em. This is the single loudest signal of the reference and it costs nothing at density — labels are short by nature. Relationship types are the biggest win: they read as a printed index.</p>
+    </div>
+    <div class="note keep">
+      <h3>Carried · cream stock</h3>
+      <p>Paper moved from <code>oklch(98.5%)</code> to <code>oklch(93% 0.014 84)</code> — a real cream rather than a barely-warm white. Every neutral moved with it, so the hairlines had to darken to L 74% to stay visible on the darker ground.</p>
+    </div>
+    <div class="note keep">
+      <h3>Carried · brick red + rule pairs</h3>
+      <p>Accent swaps spruce for <code>oklch(43% 0.15 30)</code>, 4.8:1 on cream. Section heads gain a 2 px rule and the masthead a 3 px + 1 px pair. Buttons lose their radius entirely — square corners are letterpress, rounded ones are software.</p>
+    </div>
+    <div class="note drop">
+      <h3>Stayed · Anton and the offset layer</h3>
+      <p>The poster face appears on the landing hero and nowhere else. A condensed 7 rem display cannot live in a list, and the offset ghost layer needs the letters to be enormous or it reads as a rendering fault. Anton is not loaded by the app screens at all.</p>
+    </div>
+    <div class="note drop">
+      <h3>Stayed · the second colour</h3>
+      <p>The pale teal is a poster device, one element, one place. Two saturated hues in a dense list would break both the accent budget and your “no intense colours” brief. It exists as <code>--ghost</code> and the app never reads it.</p>
+    </div>
+    <div class="note drop">
+      <h3>The honest cost</h3>
+      <p>Cream at L 93% is 5.5 points darker than the accepted paper — closer to “light” than to “bright”. Body serif at 0.9 rem in a dense list is more work to read than a UI sans. Both are defensible; neither is free. Compare against the other mockup on the same phone before choosing.</p>
+    </div>
+  </div>
+</div>
