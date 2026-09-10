@@ -174,10 +174,22 @@ if (!book && !loadError) {
               </form>
             </header>
 
-            <section class="rounded-2xl border border-white/10 bg-white/10 p-6 text-white backdrop-blur-xl">
-              <h2 class="mb-4 text-lg font-semibold">Add a character</h2>
-              <AddCharacterForm bookId={book.id} serverError={addCharacterError} client:load />
-            </section>
+            {/* Closed by default: mid-read a reader is at least as likely to be editing a
+                description as adding a name, and an always-open form owned the top of the screen
+                on every visit. Adding still costs one tap, which US-02's 30-second bar affords.
+
+                `open` when there is an error to show -- otherwise a rejected name would land in
+                a collapsed section, which is exactly the defect fixed for the vocabulary and
+                connection forms. Server-rendered attribute, so no JavaScript decides it. */}
+            <details
+              open={addCharacterError !== null}
+              class="rounded-2xl border border-white/10 bg-white/10 text-white backdrop-blur-xl"
+            >
+              <summary class="cursor-pointer px-6 py-4 text-lg font-semibold">Add a character</summary>
+              <div class="border-t border-white/10 px-6 py-4">
+                <AddCharacterForm bookId={book.id} serverError={addCharacterError} client:load />
+              </div>
+            </details>
 
             <section class="space-y-3">
               <h2 class="text-lg font-semibold text-white">
