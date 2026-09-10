@@ -1,8 +1,56 @@
 ---
-import Welcome from "@/components/Welcome.astro";
 import Layout from "@/layouts/Layout.astro";
+import AppLayout from "@/layouts/AppLayout.astro";
+import Poster from "@/components/marketing/Poster.astro";
+import Dashboard from "@/components/home/Dashboard.astro";
+import { createClient } from "@/lib/supabase";
+import { loadLibrary } from "@/lib/library";
+
+// `/` is the only unguarded route in the product — middleware.ts protects
+// /books and /dashboard — so it is the only page that carries two states.
+const { user } = Astro.locals;
+
+let books: number | null = null;
+let characters: number | null = null;
+let finished: number | null = null;
+let reading: { id: string; title: string; finished_at: string | null }[] = [];
+let statsError: string | null = null;
+
+if (user) {
+  const supabase = createClient(Astro.request.headers, Astro.cookies);
+
+  if (!supabase) {
+    statsError = "Supabase is not configured";
+  } else {
+    // `head: true` returns the count and no rows, so each of these is an
+    // index-only scan against <table>_user_id_created_at_idx. RLS scopes all
+    // three; no user_id filter is written here, because adding one would
+    // duplicate the policy rather than reinforce it.
+    const [booksRes, charactersRes, finishedRes, library] = await Promise.all([
+      supabase.from("books").select("id", { count: "exact", head: true }),
+      supabase.from("characters").select("id", { count: "exact", head: true }),
+      supabase.from("books").select("id", { count: "exact", head: true }).not("finished_at", "is", null),
+      loadLibrary(supabase),
+    ]);
+
+    // A failed count renders an em dash; it must not take the dashboard down.
+    books = booksRes.error ? null : (booksRes.count ?? 0);
+    characters = charactersRes.error ? null : (charactersRes.count ?? 0);
+    finished = finishedRes.error ? null : (finishedRes.count ?? 0);
+    reading = library.reading;
+    statsError = library.error;
+  }
+}
 ---
 
-<Layout>
-  <Welcome />
-</Layout>
+{
+  user ? (
+    <AppLayout title="about-books" poster>
+      <Dashboard books={books} characters={characters} finished={finished} reading={reading} error={statsError} />
+    </AppLayout>
+  ) : (
+    <Layout title="about-books" poster>
+      <Poster />
+    </Layout>
+  )
+}

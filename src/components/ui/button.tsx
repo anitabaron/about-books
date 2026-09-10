@@ -4,25 +4,28 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+/* A button here is a stamped block, not a pill: square corners, mono uppercase
+ * label, one hairline boundary. `destructive` shares the accent hue with links
+ * and relationship types, so it always carries an explicit verb — the colour is
+ * never the only signal, and every destructive action additionally sits behind
+ * a nested <details> confirmation in the markup that uses it. */
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
+  "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap border font-[family-name:var(--font-label)] text-[length:var(--text-label)] font-semibold tracking-[0.1em] uppercase transition-[background-color,border-color,color] duration-[var(--dur-fast)] ease-[var(--ease-out)] outline-none select-none disabled:pointer-events-none disabled:opacity-45 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-xs hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
-        outline:
-          "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
-        secondary: "bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "border-ink bg-ink text-paper hover:bg-ink-2",
+        destructive: "border-signal bg-transparent text-signal hover:bg-paper-3",
+        outline: "border-ink bg-transparent text-ink hover:bg-paper-3",
+        secondary: "border-rule bg-paper-2 text-ink hover:bg-paper-3",
+        ghost: "border-transparent bg-transparent text-ink-2 hover:bg-paper-3 hover:text-ink",
+        link: "border-transparent bg-transparent text-signal underline decoration-1 underline-offset-4 hover:decoration-2",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
+        default: "min-h-8 px-3 pointer-coarse:min-h-11",
+        sm: "min-h-7 px-2 pointer-coarse:min-h-9",
+        lg: "min-h-10 px-4 pointer-coarse:min-h-12",
+        icon: "size-8 px-0 pointer-coarse:size-11",
       },
     },
     defaultVariants: {

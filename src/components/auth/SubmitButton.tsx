@@ -12,21 +12,18 @@ export function SubmitButton({ pendingText, icon, children }: SubmitButtonProps)
   const { pending } = useFormStatus();
 
   return (
-    <Button
-      type="submit"
-      disabled={pending}
-      className="w-full rounded-lg bg-purple-600 px-4 py-2 font-medium text-white transition-colors hover:bg-purple-500"
-    >
+    <Button type="submit" size="lg" disabled={pending} aria-busy={pending} className="w-full">
       {pending ? (
-        <span className="flex items-center gap-2">
-          <span className="size-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+        <>
+          {/* motion-reduce:animate-none — a spinner is spatial motion like any other. */}
+          <span className="border-paper/30 border-t-paper size-3.5 animate-spin border-2 motion-reduce:animate-none" />
           {pendingText}
-        </span>
+        </>
       ) : (
-        <span className="flex items-center gap-2">
+        <>
           {icon}
           {children}
-        </span>
+        </>
       )}
     </Button>
   );

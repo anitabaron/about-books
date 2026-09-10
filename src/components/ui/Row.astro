@@ -1,0 +1,99 @@
+---
+interface Props {
+  /** When set the whole title becomes the link — one target, not a nested pair. */
+  href?: string;
+  title: string;
+  /** Rendered in the label device: mono, uppercase, tracked. Short strings only. */
+  meta?: (string | null | undefined)[];
+  note?: string | null;
+  dim?: boolean;
+}
+
+const { href, title, meta = [], note, dim = false } = Astro.props;
+const metaParts = meta.filter((m): m is string => Boolean(m));
+---
+
+<li class:list={["row", { dim }]}>
+  <div class="head">
+    {
+      href ? (
+        <a class="title" href={href}>
+          {title}
+        </a>
+      ) : (
+        <p class="title">{title}</p>
+      )
+    }
+    {metaParts.length > 0 && <p class="meta label">{metaParts.join(" · ")}</p>}
+  </div>
+  {note && <p class="note">{note}</p>}
+  <slot />
+</li>
+
+<style>
+  /* No radius, no background, no shadow, no box. The hairline is the whole
+     visual language of every list in the product. */
+  .row {
+    border-block-end: var(--rule-w) solid var(--rule);
+    padding: var(--space-xs) var(--space-md);
+    min-height: var(--row-h);
+    transition: background var(--dur-fast) var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .row:hover {
+      background: var(--paper-3);
+    }
+  }
+  .row:active {
+    background: var(--paper-3);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .row {
+      transition: none;
+    }
+  }
+
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 2px var(--space-xs);
+    min-width: 0;
+  }
+
+  /* Same size as body copy: the FAMILY marks it as a title, not the size.
+     That is why four type sizes are enough for the whole app. */
+  .title {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 600;
+    font-size: var(--text-base);
+    line-height: 1.28;
+    color: var(--ink);
+    text-decoration: none;
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  a.title:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .meta {
+    margin: 0;
+  }
+
+  .note {
+    margin: 1px 0 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--ink-2);
+    max-width: 62ch;
+    overflow-wrap: anywhere;
+  }
+
+  .dim .title,
+  .dim .note {
+    color: var(--muted-fg);
+  }
+</style>

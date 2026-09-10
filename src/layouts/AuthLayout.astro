@@ -1,0 +1,79 @@
+---
+import Layout from "@/layouts/Layout.astro";
+
+interface Props {
+  title: string;
+  heading: string;
+}
+
+const { title, heading } = Astro.props;
+---
+
+<Layout title={title}>
+  <main id="main" class="auth">
+    <a class="wordmark" href="/">about-books</a>
+    <div class="rule-thick"></div>
+    <div class="rule-thin"></div>
+
+    <h1 class="heading">{heading}</h1>
+    <slot />
+
+    <p class="alt label"><slot name="alt" /></p>
+  </main>
+</Layout>
+
+<style>
+  /* A narrow centred column is right here and nowhere else: signed out there
+     is no library, so the rail would be an empty pane. */
+  .auth {
+    width: 100%;
+    max-width: 24rem;
+    margin-inline: auto;
+    padding-inline: max(var(--space-md), env(safe-area-inset-left));
+    padding-block: var(--space-xl) var(--space-2xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .wordmark {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: var(--text-md);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    color: var(--ink);
+  }
+
+  /* The masthead device, at page scale: thick over thin. */
+  .rule-thick {
+    height: var(--rule-w-thick);
+    background: var(--ink);
+  }
+  .rule-thin {
+    height: var(--rule-w);
+    background: var(--ink);
+    margin-block-start: 2px;
+  }
+
+  .heading {
+    font-size: var(--text-lg);
+    margin-block-start: var(--space-md);
+  }
+
+  .alt {
+    margin: var(--space-md) 0 0;
+    text-transform: none;
+    letter-spacing: 0.02em;
+    font-size: var(--text-xs);
+  }
+  .alt :global(a) {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .alt :global(a:hover) {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+</style>

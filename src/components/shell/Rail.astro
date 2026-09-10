@@ -1,0 +1,164 @@
+---
+import type { Library } from "@/lib/library";
+
+interface Props {
+  library: Library;
+  activeBookId?: string;
+  email?: string;
+  /** The rail is the desktop pane; the same markup is reused inside the mobile
+   *  disclosure, where it must not be a second <nav> landmark. */
+  variant?: "rail" | "sheet";
+}
+
+const { library, activeBookId, email, variant = "rail" } = Astro.props;
+const groups = [
+  { label: "Reading", entries: library.reading },
+  { label: "Finished", entries: library.finished },
+];
+---
+
+<div class:list={["lib", variant]}>
+  {
+    groups.map(
+      (group) =>
+        /* A group with no books renders nothing at all — no header, no "None".
+           Same discipline as a character with no connections. */
+        group.entries.length > 0 && (
+          <div class="grp">
+            <p class="grp-head label">
+              <span>{group.label}</span>
+              <span>{group.entries.length}</span>
+            </p>
+            <ul>
+              {group.entries.map((book) => (
+                <li>
+                  <a
+                    href={`/books/${book.id}`}
+                    aria-current={book.id === activeBookId ? "page" : undefined}
+                    class:list={{ done: book.finished_at !== null }}
+                  >
+                    {book.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ),
+    )
+  }
+
+  {library.error && <p class="lib-error">{library.error}</p>}
+
+  <div class="foot">
+    {email && <p class="who label">{email}</p>}
+    <form method="POST" action="/api/auth/signout">
+      <button type="submit" class="signout label">Sign out</button>
+    </form>
+  </div>
+</div>
+
+<style>
+  .lib {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    min-height: 0;
+  }
+  .rail {
+    height: 100dvh;
+    overflow-y: auto;
+    padding-block: var(--space-md) var(--space-sm);
+  }
+  .sheet {
+    padding-block: var(--space-xs) var(--space-sm);
+  }
+
+  .grp-head {
+    display: flex;
+    justify-content: space-between;
+    padding-inline: var(--space-md);
+    padding-block-end: 4px;
+    border-block-end: var(--rule-w) solid var(--rule);
+    margin-block-end: 2px;
+  }
+
+  ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  a {
+    display: flex;
+    align-items: center;
+    min-height: var(--row-h);
+    padding-inline: var(--space-md);
+    border-inline-start: var(--rule-w-thick) solid transparent;
+    color: var(--ink-2);
+    text-decoration: none;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  a.done {
+    color: var(--muted-fg);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    a:hover {
+      background: var(--paper-3);
+      color: var(--ink);
+    }
+  }
+  /* Marked three ways — wash, weight and a rule — so the state survives a
+     greyscale pass and does not depend on the accent alone. */
+  a[aria-current="page"] {
+    background: var(--paper-3);
+    border-inline-start-color: var(--accent);
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .lib-error {
+    margin: 0;
+    padding-inline: var(--space-md);
+    font-size: var(--text-xs);
+    color: var(--accent);
+  }
+
+  .foot {
+    margin-block-start: auto;
+    border-block-start: var(--rule-w) solid var(--rule);
+    padding: var(--space-sm) var(--space-md) 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    align-items: flex-start;
+  }
+  .who {
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-transform: none;
+    letter-spacing: 0.02em;
+  }
+  /* Not `font: inherit` — the shorthand resets font-family and quietly drops
+     the mono the .label utility just set, so the button came out in serif. */
+  .signout {
+    background: none;
+    border: 0;
+    padding: 0;
+    min-height: 44px;
+    cursor: pointer;
+    color: var(--ink-2);
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .signout:hover {
+    color: var(--accent);
+  }
+</style>

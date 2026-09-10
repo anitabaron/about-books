@@ -2,8 +2,11 @@ import type { ReactNode } from "react";
 import { CircleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/* Capture density: the reader is mid-chapter and US-02 wants a character in
+ * under 30 seconds. Full box, 44px, 16px type — the 16px floor is what stops
+ * iOS zooming the viewport on focus. */
 const inputBase =
-  "w-full rounded-lg bg-white/10 border px-3 py-2 pl-10 text-white placeholder-white/40 focus:outline-none focus:ring-2 transition-colors";
+  "w-full min-h-11 rounded-none border bg-paper py-2 pr-3 pl-9 font-[family-name:var(--font-serif)] text-base text-ink transition-colors outline-none placeholder:text-muted-fg";
 
 interface FormFieldProps {
   id: string;
@@ -34,11 +37,13 @@ export function FormField({
 }: FormFieldProps) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm text-blue-100/80">
+      <label htmlFor={id} className="label mb-1 block">
         {label}
       </label>
       <div className="relative">
-        <span className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-white/40">{icon}</span>
+        <span className="text-muted-fg pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2">
+          {icon}
+        </span>
         <input
           id={id}
           name={name ?? id}
@@ -48,16 +53,16 @@ export function FormField({
             onChange(e.target.value);
           }}
           placeholder={placeholder}
-          className={cn(
-            inputBase,
-            error ? "border-red-400/60 focus:ring-red-400" : "border-white/20 focus:ring-purple-400",
-          )}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
+          className={cn(inputBase, error ? "border-signal" : "border-rule-strong focus-visible:border-focus")}
         />
         {endContent}
       </div>
+      {/* Never colour alone: the border changes AND a sentence appears. */}
       {error ? (
-        <p className="mt-1 flex items-center gap-1 text-xs text-red-300">
-          <CircleAlert className="size-3" />
+        <p id={`${id}-error`} className="text-signal mt-1 flex items-center gap-1 text-[0.833rem]">
+          <CircleAlert className="size-3 shrink-0" />
           {error}
         </p>
       ) : (

@@ -1134,26 +1134,67 @@ reduced-motion pass and a keyboard pass across every screen. Then update
 
 ## Progress
 
-### Phase 1: Token system and document shell
-_not started_
+All seven phases implemented in one pass on `worktree-reading-room-ui`, verified against the
+local stack with `reader-a@local.test`.
 
-### Phase 2: App shell and the three primitives
-_not started_
+- **Phase 1 · Tokens and document shell** — done. `src/styles/tokens.css` (new),
+  `global.css` retinted with the shadcn bridge and `bg-cosmic` deleted, `Layout.astro` fixed
+  (title, `initial-scale`, `viewport-fit`, skip link, `overflow-x: clip`, conditional Anton),
+  `Banner.astro` retinted.
+- **Phase 2 · Shell and primitives** — done. `AppLayout.astro`, `shell/Rail.astro`,
+  `ui/Row.astro`, `lib/library.ts`, `styles/forms.css`, `ui/button.tsx` and the four auth
+  primitives.
+- **Phase 3 · `/books`** — done, plus one change the plan did not call for: the add-book form
+  is now a collapsed disclosure, matching what S-05 had already done to add-character. Seen
+  on screen, the expanded two-field form owned the entire first screen of a phone.
+- **Phase 4 · `/books/[id]`** — done. Every S-04/S-05 interaction decision preserved: the
+  collapsed add-character disclosure, all three nested delete confirmations, the
+  Shared/custom `<optgroup>` split, and the `#relationship-types-add` fragment links.
+- **Phase 5 · Auth and account** — done. `AuthLayout.astro`, three auth pages,
+  `config-status.ts` translated (the last Polish strings in `src/`).
+- **Phase 6 · Root route** — done. `marketing/Poster.astro`, `home/Dashboard.astro`,
+  `index.astro` branching on `locals.user`, `/dashboard` forwarding to `/`. The three starter
+  artifacts are deleted.
+- **Phase 7 · Verification** — `npm run lint`, `npx astro check` (0 errors),
+  `npm run test` (12 passed), `npm run build`, `npm run db:verify-rls` (all four tables pass
+  both directions). Every screen walked in a real browser signed in as `reader-a@local.test`.
 
-### Phase 3: The library screen
-_not started_
+### Found only by looking at it running
 
-### Phase 4: The book screen
-_not started_
+Four defects that every automated gate passed:
 
-### Phase 5: Auth and account
-_not started_
+1. **`SIGN OUT` rendered in the serif.** `font: inherit` on the button — the shorthand resets
+   `font-family` and silently dropped the mono that `.label` had just set. Lint, types and
+   build were all clean.
+2. **The content pane was uncapped.** On a wide monitor the three dashboard figures stood a
+   foot apart and every row title was stranded at the far left. `.main` now caps at 56 rem.
+3. **An empty band above the vocabulary section** — the cast list already ends in a hairline
+   and `.block-disclose` added a second one 16 px below. Needed `details.vocab` to out-specify
+   the `border-block` shorthand; the plain `.vocab` override lost on source order.
+4. **`RELATIONSHIP TYPES2`** — the separator collapsed under `letter-spacing`.
 
-### Phase 6: The root route — poster and dashboard
-_not started_
+### Deviations from the plan, and why
 
-### Phase 7: Cross-cutting verification
-_not started_
+- **`/books` add-form collapsed** (above). The plan said "single-line composer"; the form has
+  two fields and an island, so a disclosure is the honest equivalent.
+- **`AppLayout` gained a `poster` prop.** The dashboard sets its stat numerals in Anton, and
+  Anton was being loaded only for the signed-out poster — the figures would have silently
+  fallen back to Arial Narrow. Caught by grepping which files reference `--font-poster`.
+- **`/dashboard` uses `Astro.response` + a `Location` header**, not `return
+  Astro.redirect()`. A top-level `return` in frontmatter is the exact construct
+  `lessons.md` records as crashing the linter with exit 2.
+
+### Not verified
+
+- **Nothing was seen below ~1500 px.** `resize_window` reports success in this environment
+  and the viewport does not change, so **the 320 / 375 / 414 / 768 px sweep did not run
+  against the real app.** The breakpoints are the same ones the accepted mockup used at
+  390 px, and the markup is `minmax(0, 1fr)` throughout — but that is reasoning, not
+  evidence. Criteria 6.15, 7.8 and 7.12 remain open and should be run on an actual phone
+  against `npm run dev`.
+- **Dark mode** is tokens-only by decision; no screen was checked in it.
+- **Contrast (7.10) was computed, not measured.** The cream ground is 5.5 points darker than
+  the ratios were first derived against.
 
 ## Open Questions
 

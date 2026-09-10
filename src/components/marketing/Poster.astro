@@ -1,0 +1,325 @@
+---
+// Signed-out `/`. Macrostructure 02 Long Document, nav N6 Newspaper masthead,
+// footer Ft5 Statement. This is the one page that loads Anton.
+//
+// Copy is rewritten from idea-notes.md § Główny problem and the PRD. It is NOT
+// from README.md — that file is still the unmodified 10x Astro Starter readme
+// and describes Astro, not this product.
+//
+// Every claim below is checkable. There are no metrics, no testimonials and no
+// logos, because the product has none and inventing them is the fastest way to
+// make a page read as generated.
+---
+
+<main id="main" class="poster">
+  <header>
+    <div class="mast">
+      <p class="mast-name">about-books<span class="mast-no">No 01</span></p>
+      <p class="mast-right label">Private by default<br />Your notes, nobody else’s</p>
+    </div>
+    <div class="rule-thick"></div>
+    <div class="rule-thin"></div>
+    <nav class="mast-nav label" aria-label="Main">
+      <a href="#problem">The problem</a>
+      <a href="#what">What it does</a>
+      <a href="#wont">What it won’t do</a>
+      <a href="/auth/signin">Sign in</a>
+      <a href="/auth/signup">Sign up</a>
+    </nav>
+    <div class="rule-thin"></div>
+  </header>
+
+  <div class="hero">
+    <div>
+      <p class="label eyebrow">A reading companion for books put down and picked up again</p>
+      <h1 class="head">
+        {
+          /* The ghost layer is generated content, so it never reaches the
+            accessibility tree and cannot be selected as text. */
+        }
+        <span class="line" data-t="Put it down."><span>Put it down.</span></span>
+        <span class="line red" data-t="Pick it up."><span>Pick it up.</span></span>
+      </h1>
+    </div>
+
+    <div class="aside">
+      <p>
+        Three weeks pass. You open the book and you have <strong>no idea who she is</strong>, or why he owes her
+        anything. That is not a comprehension problem — you understood it perfectly at the time. It is a recall problem,
+        and it only shows up on the way back in.
+      </p>
+      <p>
+        So write the cast down as you go: names, a line each, and <span class="say">who is what to whom</span>. Then the
+        way back in is a glance instead of a search.
+      </p>
+      <p class="cta">
+        <a class="cta-link" href="/auth/signup">Start a library</a>
+      </p>
+    </div>
+  </div>
+
+  <section id="problem" class="band">
+    <h2 class="band-head">The problem is the gap, not the book</h2>
+    <p>
+      Reading gets interrupted. A chapter on Tuesday, three pages on Sunday, nothing for a fortnight. The plot survives
+      that. The cast does not — the second cousin introduced on page 40 is gone by page 200, and the only way back is to
+      flick through looking for a name you cannot quite remember.
+    </p>
+    <p>
+      Note-taking apps do not help, because in a note the relationships are prose. You cannot look up who is whose
+      sister when the answer is buried in a paragraph you wrote a month ago.
+    </p>
+  </section>
+
+  <section id="what" class="band">
+    <h2 class="band-head">What it does</h2>
+    <ul class="does">
+      <li><span class="label">Books</span> A list of what you are reading, and what you have finished.</li>
+      <li><span class="label">Cast</span> Every character, with a line about who they are, added in seconds.</li>
+      <li>
+        <span class="label">Relations</span> Named connections between them — family, ally, antagonist, romantic, or a word
+        you invent for one particular book.
+      </li>
+      <li>
+        <span class="label">Recall</span> The whole cast and its connections on one screen, so returning after a gap is a
+        glance.
+      </li>
+    </ul>
+  </section>
+
+  <section id="wont" class="band">
+    <h2 class="band-head">What it won’t do</h2>
+    <p>
+      There is no progress tracking, no page counter, no percentage and no streak. Nothing here measures how much you
+      read or how often. It is a notebook for a cast, not a fitness tracker for books.
+    </p>
+    <p>There is no feed, nothing shared and nothing public. Your library is visible to you and to nobody else.</p>
+  </section>
+
+  <footer class="close">
+    <div class="rule-thin"></div>
+    <p class="statement">Write the cast down. Come back whenever you like.</p>
+    <p class="label">
+      <a href="/auth/signup">Sign up</a> · <a href="/auth/signin">Sign in</a>
+    </p>
+  </footer>
+</main>
+
+<style>
+  .poster {
+    --gutter: max(var(--space-md), env(safe-area-inset-left));
+    max-width: 72rem;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    padding-block-end: var(--space-2xl);
+    container-type: inline-size;
+  }
+
+  /* ── Masthead ─────────────────────────────────────────────────────── */
+  .mast {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-xs) var(--space-md);
+    padding-block: var(--space-md) var(--space-xs);
+  }
+  .mast-name {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: var(--text-md);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .mast-no {
+    margin-inline-start: var(--space-xs);
+    color: var(--accent);
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    letter-spacing: 0.08em;
+  }
+  .mast-right {
+    margin: 0;
+    text-align: end;
+    line-height: 1.65;
+  }
+
+  /* The pair is the device. A single rule reads as an ordinary underline. */
+  .rule-thick {
+    height: var(--rule-w-thick);
+    background: var(--ink);
+  }
+  .rule-thin {
+    height: var(--rule-w);
+    background: var(--ink);
+    margin-block-start: 2px;
+  }
+
+  .mast-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-md);
+    padding-block: var(--space-xs);
+  }
+  .mast-nav a {
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .mast-nav a:hover {
+    color: var(--accent);
+  }
+
+  /* ── Hero ─────────────────────────────────────────────────────────── */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-lg);
+    padding-block: var(--space-lg) var(--space-xl);
+  }
+  @container (min-width: 52rem) {
+    .hero {
+      grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+      align-items: end;
+    }
+  }
+
+  .eyebrow {
+    display: block;
+    margin-block-end: var(--space-md);
+  }
+
+  .head {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    letter-spacing: 0;
+  }
+  .line {
+    position: relative;
+    font-family: var(--font-poster);
+    font-weight: 400;
+    font-size: var(--text-poster);
+    line-height: 0.9;
+    text-transform: uppercase;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+  .line::before {
+    content: attr(data-t);
+    position: absolute;
+    inset-block-start: -0.055em;
+    inset-inline-start: -0.035em;
+    color: var(--ghost);
+    z-index: 0;
+    pointer-events: none;
+    user-select: none;
+  }
+  .line > span {
+    position: relative;
+    z-index: 1;
+  }
+  .line.red > span {
+    color: var(--accent);
+  }
+
+  .aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    max-width: 46ch;
+  }
+  .aside p {
+    margin: 0;
+    font-size: 1.02rem;
+    line-height: 1.55;
+  }
+  .aside strong {
+    font-weight: 700;
+  }
+  .say {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .cta {
+    margin-block-start: var(--space-xs);
+  }
+  .cta-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: var(--space-md);
+    background: var(--ink);
+    color: var(--paper);
+    text-decoration: none;
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .cta-link:hover {
+    background: var(--ink-2);
+  }
+
+  /* ── Bands ────────────────────────────────────────────────────────── */
+  .band {
+    border-block-start: var(--rule-w) solid var(--rule);
+    padding-block: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    max-width: 62ch;
+  }
+  .band-head {
+    font-size: var(--text-md);
+  }
+  .band p {
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  .does {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  .does li {
+    line-height: 1.55;
+  }
+  .does .label {
+    display: block;
+    color: var(--accent);
+    margin-block-end: 2px;
+  }
+
+  /* ── Ft5 Statement ────────────────────────────────────────────────── */
+  .close {
+    padding-block-start: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+  .statement {
+    margin: var(--space-md) 0 0;
+    font-size: var(--text-md);
+    font-weight: 600;
+    max-width: 32ch;
+  }
+  .close .label {
+    margin: 0;
+  }
+  .close a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .close a:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+</style>

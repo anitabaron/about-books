@@ -44,7 +44,7 @@ export default function AddBookForm({ serverError }: Props) {
   }
 
   return (
-    <form method="POST" action="/api/books" className="space-y-4" onSubmit={handleSubmit} noValidate>
+    <form method="POST" action="/api/books" className="flex flex-col gap-3 px-4" onSubmit={handleSubmit} noValidate>
       <FormField
         id="title"
         label="Title"
@@ -69,7 +69,7 @@ export default function AddBookForm({ serverError }: Props) {
         placeholder="Frank Herbert"
         error={errors.author}
         icon={<User className="size-4" />}
-        hint={<p className="mt-1 text-xs text-blue-100/50">Optional — leave blank if you don&apos;t know it.</p>}
+        hint={<p className="text-muted-fg mt-1 text-[0.833rem]">Optional — leave blank if you don&apos;t know it.</p>}
       />
 
       <ServerError message={serverError} />

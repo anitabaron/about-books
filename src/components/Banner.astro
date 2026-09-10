@@ -13,30 +13,38 @@ const { variant = "info" } = Astro.props;
 </div>
 
 <style>
+  /* The one place a third and fourth hue is justified — status semantics on a
+   * misconfigured deploy. None of them appear in normal use, so the accent
+   * budget is untouched. Both are held to the same L/C discipline as --accent. */
   .banner {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
+    padding: var(--space-xs) var(--space-md);
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
     text-align: center;
-    border-bottom: 1px solid;
+    border-block-end: var(--rule-w-mid) solid;
+    background: var(--paper-2);
   }
   .banner :global(a) {
     color: inherit;
     text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .banner :global(strong) {
     font-weight: 600;
   }
   .banner--info {
-    background: #dbeafe;
-    color: #1e3a8a;
-    border-color: #3b82f6;
+    color: oklch(43% 0.1 250);
+    border-color: oklch(43% 0.1 250);
   }
   .banner--warning {
-    background: #fef3c7;
-    color: #78350f;
-    border-color: #f59e0b;
+    color: oklch(45% 0.1 75);
+    border-color: oklch(45% 0.1 75);
   }
   .banner--error {
-    background: #fee2e2;
-    color: #7f1d1d;
-    border-color: #dc2626;
+    color: var(--accent);
+    border-color: var(--accent);
   }
 </style>

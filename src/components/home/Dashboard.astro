@@ -1,0 +1,150 @@
+---
+import Row from "@/components/ui/Row.astro";
+import type { LibraryEntry } from "@/lib/library";
+
+interface Props {
+  books: number | null;
+  characters: number | null;
+  finished: number | null;
+  reading: LibraryEntry[];
+  error: string | null;
+}
+
+const { books, characters, finished, reading, error } = Astro.props;
+
+// A brand-new reader would otherwise meet three giant zeros on their first
+// screen, which reads as failure rather than as a beginning. Below one book the
+// stat block does not render at all.
+//
+// `characters === 0` with a book present is a different thing entirely: it is a
+// true and unembarrassing state, and it renders as a real zero.
+const isEmpty = books === 0;
+
+// An em dash rather than a crash: one failed count must not take the page down.
+const show = (n: number | null) => (n === null ? "—" : String(n));
+
+const stats = [
+  { label: "Books", value: books },
+  { label: "Characters", value: characters, accent: true },
+  { label: "Finished", value: finished },
+];
+---
+
+{error && <p class="error-text pad">{error}</p>}
+
+{
+  isEmpty ? (
+    <div class="zero">
+      <h1 class="zero-head">Nothing here yet</h1>
+      <p class="note-text">Add the book you are reading, then start writing down who is who.</p>
+      <a class="cta" href="/books">
+        Add your first book
+      </a>
+    </div>
+  ) : (
+    <>
+      <h1 class="sr-head">Your library</h1>
+      <div class="stats">
+        {stats.map((stat) => (
+          <p class="stat">
+            <span class:list={["stat-n", { accent: stat.accent, dash: stat.value === null }]}>{show(stat.value)}</span>
+            <span class="label">{stat.label}</span>
+          </p>
+        ))}
+      </div>
+
+      {reading.length > 0 && (
+        <>
+          <p class="sec-head">
+            <span class="label">Reading now</span>
+            <span class="label">{reading.length}</span>
+          </p>
+          <ul class="list">
+            {reading.map((book) => (
+              <Row href={`/books/${book.id}`} title={book.title} />
+            ))}
+          </ul>
+        </>
+      )}
+
+      <p class="pad open">
+        <a class="cta" href="/books">
+          Open the library
+        </a>
+      </p>
+    </>
+  )
+}
+
+<style>
+  .sr-head {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* An Anton numeral over a mono caption is how a broadsheet prints a figure,
+     so the stats need no vocabulary the rest of the system does not have. */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-xs);
+    padding: var(--space-md) var(--space-md) var(--space-lg);
+  }
+  .stat {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+  .stat-n {
+    font-family: var(--font-poster);
+    font-weight: 400;
+    font-size: clamp(2.4rem, 13vw, 4.6rem);
+    line-height: 0.85;
+    color: var(--ink);
+  }
+  .stat-n.accent {
+    color: var(--accent);
+  }
+  .stat-n.dash {
+    color: var(--muted-fg);
+  }
+
+  .zero {
+    padding: var(--space-lg) var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    align-items: flex-start;
+  }
+  .zero-head {
+    font-size: var(--text-lg);
+  }
+
+  .open {
+    margin-block-start: var(--space-lg);
+  }
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: var(--space-md);
+    background: var(--ink);
+    color: var(--paper);
+    text-decoration: none;
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+  .cta:hover {
+    background: var(--ink-2);
+  }
+</style>

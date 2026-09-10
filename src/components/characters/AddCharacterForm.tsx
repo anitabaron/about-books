@@ -49,7 +49,7 @@ export default function AddCharacterForm({ bookId, serverError }: Props) {
     <form
       method="POST"
       action={`/api/books/${bookId}/characters`}
-      className="space-y-4"
+      className="flex flex-col gap-3"
       onSubmit={handleSubmit}
       noValidate
     >
@@ -78,7 +78,9 @@ export default function AddCharacterForm({ bookId, serverError }: Props) {
         error={errors.description}
         icon={<PenLine className="size-4" />}
         hint={
-          <p className="mt-1 text-xs text-blue-100/50">Optional — a name alone is enough. Fill this in as you read.</p>
+          <p className="text-muted-fg mt-1 text-[0.833rem]">
+            Optional — a name alone is enough. Fill this in as you read.
+          </p>
         }
       />
 

@@ -1,0 +1,112 @@
+/* Hallmark · genre: editorial · app-shell (N3 side-rail, no footer)
+ *            landing (02 Long Document, N6 masthead, Ft5 statement)
+ * theme: custom · vibe: "letterpress broadsheet, cream stock, one brick red"
+ * paper: oklch(93% 0.014 84) · accent: oklch(43% 0.15 30)
+ * poster: Anton (/ only) · serif: Newsreader · label: IBM Plex Mono
+ * axes: light / display-condensed-bold / warm ~30°
+ * enrichment: none · studied: no
+ *
+ * Source of truth for the design system. global.css imports this, then maps the
+ * shadcn token names onto it so button.tsx and any future `shadcn add` keep working.
+ */
+
+:root {
+  /* ── Paper ─────────────────────────────────────────────────────────── */
+  --paper: oklch(93% 0.014 84); /* cream stock                       */
+  --paper-2: oklch(90.5% 0.016 84); /* rail, sticky heads                */
+  --paper-3: oklch(88% 0.018 84); /* row hover / selected wash         */
+
+  /* ── Ink ───────────────────────────────────────────────────────────── */
+  --ink: oklch(20% 0.012 60); /* warm printing black               */
+  --ink-2: oklch(41% 0.012 62); /* secondary text                    */
+  --muted-fg: oklch(48% 0.012 66); /* meta, labels, placeholder         */
+  --faint: oklch(62% 0.01 70); /* DECORATIVE ONLY — never body copy */
+
+  /* ── Rules ─────────────────────────────────────────────────────────── */
+  --rule: oklch(74% 0.014 80); /* hairline                          */
+  --rule-strong: oklch(52% 0.014 78); /* control boundaries — WCAG 1.4.11  */
+
+  /* ── Signal. One red, doing accent and destructive duty both. ──────── */
+  --accent: oklch(43% 0.15 30); /* brick                             */
+  --accent-ink: var(--paper);
+  --focus: oklch(48% 0.17 30);
+  --ghost: oklch(78% 0.055 205); /* POSTER ONLY — landing hero layer  */
+
+  /* ── Type ──────────────────────────────────────────────────────────── */
+  --font-poster: "Anton", "Arial Narrow", sans-serif; /* landing page only */
+  --font-serif: "Newsreader", ui-serif, Georgia, serif;
+  --font-label: "IBM Plex Mono", ui-monospace, monospace;
+
+  --text-label: 0.66rem; /* 10.6px — mono caps ONLY, never a sentence */
+  --text-xs: 0.833rem; /* 13.3px — meta                             */
+  --text-base: 1rem; /* 16px   — body, notes, inputs on touch     */
+  --text-md: 1.2rem; /* 19.2px — section h2                       */
+  --text-lg: 1.44rem; /* 23px   — page h1                          */
+  --text-poster: clamp(3.1rem, 11vw, 6.5rem); /* landing hero only  */
+
+  /* ── Space ─────────────────────────────────────────────────────────── */
+  --space-3xs: 0.125rem;
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+
+  /* ── Metrics ───────────────────────────────────────────────────────── */
+  --row-h: 2.75rem; /* touch floor; tightened under (pointer: fine) */
+  --rule-w: 1px; /* hairline dividers            */
+  --rule-w-mid: 2px; /* section heads, mobile top bar */
+  --rule-w-thick: 3px; /* masthead pair, active marker  */
+
+  /* ── Motion ────────────────────────────────────────────────────────── */
+  --dur-fast: 90ms;
+  --dur-base: 140ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+
+  /* ── Z-index. Six named levels; never freestyle a number. ──────────── */
+  --z-base: 1;
+  --z-raised: 10;
+  --z-dropdown: 100;
+  --z-sticky: 200;
+  --z-modal: 400;
+  --z-toast: 500;
+  --z-tooltip: 600;
+}
+
+@media (pointer: fine) {
+  :root {
+    --row-h: 2.25rem;
+  }
+}
+
+/* Dark ramp — computed with the light one so the two stay coherent. Nothing
+ * switches it on yet; that is a deliberate, separate change.
+ *
+ * Two deviations from the usual recipe, both load-bearing:
+ *  - the NEUTRAL hue is 60, not 84. Cream at 84° inverts to a muddy olive.
+ *    The ACCENT hue never moves (30° in both ramps).
+ *  - the accent lifts 19 points, not the recipe's 5–10. At L 53% it measures
+ *    ~3.6:1 on this ground and fails the 4.5:1 body floor. Contrast wins.
+ */
+.dark {
+  --paper: oklch(18% 0.012 60);
+  --paper-2: oklch(21.5% 0.013 60); /* elevation goes LIGHTER, not darker */
+  --paper-3: oklch(25.5% 0.014 60);
+
+  --ink: oklch(92% 0.01 82);
+  --ink-2: oklch(74% 0.01 78);
+  --muted-fg: oklch(65% 0.01 72);
+  --faint: oklch(52% 0.009 70);
+
+  --rule: oklch(32% 0.012 78);
+  --rule-strong: oklch(48% 0.012 78);
+
+  --accent: oklch(62% 0.125 30);
+  --accent-ink: oklch(18% 0.012 60);
+  --focus: oklch(68% 0.14 30);
+  --ghost: oklch(48% 0.05 205);
+}

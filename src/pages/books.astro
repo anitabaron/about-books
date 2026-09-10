@@ -1,9 +1,9 @@
 ---
-import Layout from "@/layouts/Layout.astro";
+import AppLayout from "@/layouts/AppLayout.astro";
+import Row from "@/components/ui/Row.astro";
 import AddBookForm from "@/components/books/AddBookForm";
 import { createClient } from "@/lib/supabase";
 import type { Book } from "@/types";
-import { Library } from "lucide-react";
 
 type BookRow = Pick<Book, "id" | "title" | "author" | "created_at" | "finished_at">;
 
@@ -62,9 +62,6 @@ if (supabase && !loadError && books.length === 0 && status !== "all") {
 const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
 const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
 
-const filterLinkClass = (isCurrent: boolean) =>
-  isCurrent ? "text-white underline" : "text-purple-300 hover:underline";
-
 // The empty state has to answer the filter the reader is actually looking at. Under
 // ?status=finished, "Add your first one above" would be wrong twice over: they may have
 // plenty of books, and adding one would not put it in this view.
@@ -78,65 +75,124 @@ const emptyMessage =
         : "No books yet. Add your first one above.";
 ---
 
-<Layout title="My books">
-  <div class="bg-cosmic min-h-screen px-4 py-10">
-    <div class="mx-auto w-full max-w-2xl space-y-8">
-      <header class="text-center">
-        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
-          My books
-        </h1>
-        <p class="mt-2 text-sm text-blue-100/60">Add a book, then build up its characters as you read.</p>
-      </header>
-
-      <section class="rounded-2xl border border-white/10 bg-white/10 p-6 text-white backdrop-blur-xl">
-        <h2 class="mb-4 text-lg font-semibold">Add a book</h2>
-        <AddBookForm serverError={formError} client:load />
-      </section>
-
-      <section class="space-y-3">
-        <h2 class="text-lg font-semibold text-white">
-          Your collection
-          {books.length > 0 && <span class="text-blue-100/50">({books.length})</span>}
-        </h2>
-
-        <nav class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
-          <a href="/books" class:list={filterLinkClass(status === "active")}>Currently reading</a>
-          <a href="/books?status=finished" class:list={filterLinkClass(status === "finished")}>Finished</a>
-          <a href="/books?status=all" class:list={filterLinkClass(status === "all")}>All</a>
-        </nav>
-
-        {
-          loadError && (
-            <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">{loadError}</p>
-          )
-        }
-
-        {
-          !loadError && books.length === 0 && (
-            <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/60 backdrop-blur-xl">
-              <Library className="mx-auto mb-3 size-8 text-white/30" />
-              <p>{emptyMessage}</p>
-            </div>
-          )
-        }
-
-        <ul class="space-y-3">
-          {
-            books.map((book) => (
-              <li class="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
-                <a href={`/books/${book.id}`} class="font-medium break-words hover:underline">
-                  {book.title}
-                </a>
-                <p class="mt-1 text-sm break-words text-blue-100/70">{book.author ?? "Author unknown"}</p>
-                <p class="mt-2 text-xs text-blue-100/40">
-                  {book.finished_at ? `Finished ${formatDate(book.finished_at)}` : "Currently reading"}
-                  <span class="text-blue-100/30"> &middot; added {formatDate(book.created_at)}</span>
-                </p>
-              </li>
-            ))
-          }
-        </ul>
-      </section>
-    </div>
+<AppLayout title="Your books">
+  <div class="pad">
+    <h1 class="page-title">Your books</h1>
   </div>
-</Layout>
+
+  {
+    /* Collapsed by default, for the same reason the cast's add-character form is:
+      the reader opening this screen is far more often looking for a book than
+      adding one, and an always-open two-field form owned the whole first screen
+      of a phone. Adding still costs one tap.
+
+      `open` when the server rejected a submission — otherwise the error would
+      land inside a collapsed section. Server-rendered, so no JavaScript decides it. */
+  }
+  <details class="disclose block-disclose" open={formError !== null}>
+    <summary>Add a book</summary>
+    <div class="disclose-body">
+      <AddBookForm serverError={formError} client:load />
+    </div>
+  </details>
+
+  <nav class="filters" aria-label="Filter by status">
+    <a
+      href="/books"
+      class:list={["filter", "label", { on: status === "active" }]}
+      aria-current={status === "active" ? "page" : undefined}>Reading</a
+    >
+    <a
+      href="/books?status=finished"
+      class:list={["filter", "label", { on: status === "finished" }]}
+      aria-current={status === "finished" ? "page" : undefined}>Finished</a
+    >
+    <a
+      href="/books?status=all"
+      class:list={["filter", "label", { on: status === "all" }]}
+      aria-current={status === "all" ? "page" : undefined}>All</a
+    >
+  </nav>
+
+  <p class="sec-head">
+    <span class="label">Collection</span>
+    <span class="label">{books.length}</span>
+  </p>
+
+  {loadError && <p class="error-text pad">{loadError}</p>}
+
+  {!loadError && books.length === 0 && <p class="note-text empty">{emptyMessage}</p>}
+
+  <ul class="list">
+    {
+      books.map((book) => (
+        <Row
+          href={`/books/${book.id}`}
+          title={book.title}
+          dim={book.finished_at !== null}
+          meta={[
+            book.author ?? "Author unknown",
+            book.finished_at ? `Finished ${formatDate(book.finished_at)}` : `Added ${formatDate(book.created_at)}`,
+          ]}
+        />
+      ))
+    }
+  </ul>
+</AppLayout>
+
+<style>
+  .page-title {
+    font-size: var(--text-lg);
+    line-height: 1.15;
+  }
+
+  /* A page-level disclosure reads as a band across the page, not as a row. */
+  .block-disclose {
+    border-block: var(--rule-w) solid var(--rule);
+    margin-block: var(--space-md);
+    padding-inline: var(--space-md);
+  }
+  .block-disclose > summary {
+    padding-block: var(--space-xs);
+  }
+  .block-disclose > .disclose-body {
+    border-block-start: 0;
+    padding-block-end: var(--space-md);
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    padding-inline: var(--space-md);
+    margin-block-end: var(--space-md);
+  }
+  .filter {
+    text-decoration: none;
+    white-space: nowrap;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+  @media (pointer: fine) {
+    .filter {
+      min-height: 0;
+    }
+  }
+  .filter:hover {
+    color: var(--ink);
+  }
+  /* Underline as well as colour, so the current filter survives a greyscale pass. */
+  .filter.on {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 4px;
+  }
+
+  /* One sentence, not a panel. An empty library on a phone should not cost a
+     screenful of centred box and icon. */
+  .empty {
+    padding: var(--space-md);
+  }
+</style>

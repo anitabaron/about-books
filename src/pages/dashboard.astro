@@ -1,27 +1,13 @@
 ---
-import Layout from "@/layouts/Layout.astro";
-
-const { user } = Astro.locals;
+// `/` is the dashboard now: signed out it is the poster, signed in it is the
+// stats and the way into the library. Two dashboards was the confusion this
+// change exists to remove, so this route keeps its PROTECTED_ROUTES entry and
+// forwards. If an account screen is ever wanted it should be /account, with a
+// reason to exist rather than this stub kept alive out of momentum.
+//
+// Set on Astro.response rather than `return Astro.redirect("/")`: a top-level
+// return in frontmatter crashes @typescript-eslint/no-misused-promises with
+// exit 2. See context/foundation/lessons.md.
+Astro.response.status = 302;
+Astro.response.headers.set("Location", "/");
 ---
-
-<Layout title="Dashboard">
-  <div class="bg-cosmic flex min-h-screen items-center justify-center p-4">
-    <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
-      <h1 class="mb-4 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
-        Dashboard
-      </h1>
-      <p class="text-blue-100/80">
-        Welcome, <span class="font-semibold text-white">{user?.email}</span>
-      </p>
-      <p class="mt-2 text-sm text-blue-100/50">This page is only for authenticated users.</p>
-      <form method="POST" action="/api/auth/signout" class="mt-6">
-        <button
-          type="submit"
-          class="rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-sm transition-colors hover:bg-white/20"
-        >
-          Sign out
-        </button>
-      </form>
-    </div>
-  </div>
-</Layout>

@@ -1,0 +1,169 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import Rail from "@/components/shell/Rail.astro";
+import { createClient } from "@/lib/supabase";
+import { loadLibrary } from "@/lib/library";
+
+interface Props {
+  title?: string;
+  activeBookId?: string;
+  /** Only `/` sets this — the dashboard sets its stat numerals in the poster
+   *  face. Every other app screen must leave it off, or it ships a
+   *  single-weight display font it never uses. */
+  poster?: boolean;
+}
+
+const { title, activeBookId, poster = false } = Astro.props;
+const { user } = Astro.locals;
+
+// The rail carries the whole library on every app screen, so it is loaded here
+// once rather than in each page. RLS-filtered and index-backed, so it is cheap
+// — but it is a real second query on /books/[id] and is named as one.
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+const library = await loadLibrary(supabase);
+---
+
+<Layout title={title} poster={poster}>
+  <div class="shell">
+    <header class="topbar">
+      <a class="wordmark" href="/">about-books</a>
+      <details class="menu">
+        <summary aria-label="Library and account">Library</summary>
+        <div class="menu-panel">
+          <Rail library={library} activeBookId={activeBookId} email={user?.email} variant="sheet" />
+        </div>
+      </details>
+    </header>
+
+    <nav class="rail" aria-label="Library">
+      <a class="wordmark" href="/">about-books</a>
+      <Rail library={library} activeBookId={activeBookId} email={user?.email} />
+    </nav>
+
+    <main id="main" class="main">
+      <slot />
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .shell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wordmark {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    color: var(--ink);
+  }
+
+  /* ── Mobile top bar ─────────────────────────────────────────────── */
+  .topbar {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: var(--z-sticky);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    min-height: 48px;
+    padding-inline: max(var(--space-md), env(safe-area-inset-left));
+    background: var(--paper-2);
+    border-block-end: var(--rule-w-mid) solid var(--ink);
+  }
+
+  .menu > summary {
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    margin-inline-end: -10px;
+    cursor: pointer;
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--ink-2);
+  }
+  .menu > summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .menu-panel {
+    position: absolute;
+    inset-block-start: 100%;
+    inset-inline: 0;
+    z-index: var(--z-dropdown);
+    background: var(--paper-2);
+    border-block-end: var(--rule-w) solid var(--ink);
+    max-height: calc(100dvh - 48px);
+    overflow-y: auto;
+    animation: drop var(--dur-base) var(--ease-out);
+  }
+
+  @keyframes drop {
+    from {
+      opacity: 0;
+      transform: translateY(-2px);
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .menu-panel {
+      animation: fade 120ms var(--ease-out);
+    }
+  }
+
+  /* ── Desktop rail ───────────────────────────────────────────────── */
+  .rail {
+    display: none;
+  }
+
+  /* Capped, not full-bleed. On a wide monitor an uncapped content pane spreads
+     the three dashboard figures a foot apart and leaves every row title
+     stranded at the far left. The hairlines run to the cap, which reads as a
+     column of newsprint rather than as a stretched table. */
+  .main {
+    min-width: 0;
+    max-width: 56rem;
+    padding-block: var(--space-md) var(--space-xl);
+    padding-block-end: max(var(--space-xl), env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 60rem) {
+    .shell {
+      /* minmax(0, 1fr), never a bare 1fr: a bare 1fr refuses to shrink below
+         its content and a long book title pushes the page sideways. */
+      grid-template-columns: 260px minmax(0, 1fr);
+    }
+    .topbar {
+      display: none;
+    }
+    .rail {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      position: sticky;
+      inset-block-start: 0;
+      height: 100dvh;
+      padding-block-start: var(--space-md);
+      background: var(--paper-2);
+      border-inline-end: var(--rule-w) solid var(--rule);
+    }
+    .rail .wordmark {
+      padding-inline: var(--space-md);
+    }
+  }
+</style>

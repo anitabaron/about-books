@@ -1,0 +1,228 @@
+/* Form surfaces, shared by every screen. Two densities, because capture and
+ * correction are different moments:
+ *
+ *  .composer — the reader is mid-chapter and US-02 wants a character in under
+ *    30 seconds. Full box, 44px, --text-base.
+ *
+ *  .field / .rel — inside a <details>, correcting something already written.
+ *    Screen space is the scarce resource: label in a narrow left column,
+ *    underline instead of a box, 30px.
+ *
+ * Why underline and not a lighter box: WCAG 1.4.11 wants 3:1 on a control's
+ * boundary and --rule-strong is already the lightest value that clears it on
+ * cream. Weight had to come off the edges, not the value.
+ *
+ * Why the sizes change with the pointer: iOS zooms the viewport when a focused
+ * input is under 16px, and "no zooming" is an S-02 acceptance criterion. Fine
+ * pointers have no such rule, so they get the tighter set. */
+
+.composer {
+  display: flex;
+  gap: var(--space-xs);
+  padding-inline: var(--space-md);
+  margin-block: var(--space-md);
+}
+.composer input {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-size: var(--text-base);
+  color: var(--ink);
+  background: var(--paper);
+  border: var(--rule-w) solid var(--rule-strong);
+  border-radius: 0;
+  padding-inline: var(--space-xs);
+  min-height: 40px;
+}
+.composer input::placeholder {
+  color: var(--muted-fg);
+}
+.composer input:focus-visible {
+  border-color: var(--focus);
+}
+@media (pointer: coarse) {
+  .composer input {
+    min-height: 44px;
+  }
+}
+
+.field,
+.rel {
+  display: grid;
+  grid-template-columns: 3.9rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-xs);
+}
+.field > label,
+.rel > label {
+  font-family: var(--font-label);
+  font-size: 0.62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--muted-fg);
+}
+
+.field input,
+.field select,
+.rel select {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  line-height: 1.2;
+  color: var(--ink);
+  background-color: transparent;
+  border: 0;
+  border-block-end: var(--rule-w) solid var(--rule-strong);
+  border-radius: 0;
+  padding-inline: 2px;
+  min-height: 30px;
+  height: 30px;
+  min-width: 0;
+  max-width: 100%;
+}
+.field input::placeholder {
+  color: var(--muted-fg);
+}
+
+/* The native select chrome sets its own minimum height and will silently
+ * ignore everything above. This is the one control where appearance:none is
+ * load-bearing rather than cosmetic. */
+.field select,
+.rel select {
+  appearance: none;
+  padding-inline-end: 1.05rem;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='6' viewBox='0 0 9 6'%3E%3Cpath d='M1 1l3.5 3.5L8 1' fill='none' stroke='%23807060' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1px center;
+}
+
+.field input:focus-visible,
+.field select:focus-visible,
+.rel select:focus-visible {
+  border-block-end-color: var(--focus);
+}
+
+@media (pointer: coarse) {
+  .field input,
+  .field select,
+  .rel select {
+    font-size: var(--text-base);
+    min-height: 36px;
+    height: 36px;
+  }
+}
+
+.rel-controls {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.rel-controls select {
+  flex: 1 1 0;
+}
+.rel-controls > :not(select) {
+  flex: none;
+}
+
+.edit-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-block-start: var(--space-2xs);
+  flex-wrap: wrap;
+}
+
+/* ── Disclosure ──────────────────────────────────────────────────────── */
+.disclose > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  font-family: var(--font-label);
+  font-size: var(--text-label);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--muted-fg);
+}
+@media (pointer: fine) {
+  .disclose > summary {
+    min-height: 26px;
+  }
+}
+.disclose > summary::-webkit-details-marker {
+  display: none;
+}
+.disclose > summary::before {
+  content: "+";
+  margin-inline-end: 6px;
+}
+.disclose[open] > summary::before {
+  content: "–";
+}
+.disclose[open] > summary {
+  color: var(--ink-2);
+}
+
+.disclose-body {
+  border-block-start: var(--rule-w) solid var(--rule);
+  margin-block-start: 3px;
+  padding-block: var(--space-xs) var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  animation: disclose var(--dur-base) var(--ease-out);
+}
+@keyframes disclose {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
+@keyframes disclose-reduced {
+  from {
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .disclose-body {
+    animation: disclose-reduced 120ms var(--ease-out);
+  }
+}
+
+/* ── Section head ────────────────────────────────────────────────────── */
+.sec-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-inline: var(--space-md);
+  padding-block-end: 5px;
+  border-block-end: var(--rule-w-mid) solid var(--ink);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pad {
+  padding-inline: var(--space-md);
+}
+
+.note-text {
+  margin: 0;
+  font-size: var(--text-base);
+  color: var(--ink-2);
+  max-width: 56ch;
+}
+
+.error-text {
+  margin: 0;
+  padding-inline: var(--space-md);
+  font-size: 0.9rem;
+  color: var(--accent);
+  border-inline-start: var(--rule-w-thick) solid var(--accent);
+}

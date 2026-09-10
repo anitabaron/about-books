@@ -5,29 +5,45 @@ import { missingConfigs } from "@/lib/config-status";
 
 interface Props {
   title?: string;
+  /** Anton is the poster face. Only `/` loads it; every app screen would be paying
+   *  for a single-weight display face it never sets. */
+  poster?: boolean;
 }
 
-const { title = "10x Astro Starter" } = Astro.props;
+const { title = "about-books", poster = false } = Astro.props;
+
+const families = ["Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600;6..72,700", "IBM+Plex+Mono:wght@400;500;600"];
+if (poster) families.unshift("Anton");
+
+const fontHref = `https://fonts.googleapis.com/css2?${families.map((f) => `family=${f}`).join("&")}&display=swap`;
 ---
 
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width" />
+    <!-- initial-scale was missing before this change, which is why pages could
+         render zoomed on some phones. viewport-fit=cover is the precondition
+         for the safe-area padding the shell relies on. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
     <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href={fontHref} />
     <title>{title}</title>
   </head>
   <body>
+    <a class="skip-link" href="#main">Skip to content</a>
     {
       missingConfigs.map((cfg) => (
         <Banner variant="error">
-          <strong>Uwaga:</strong> {cfg.message}
+          <strong>Heads up:</strong> {cfg.message}
           {cfg.docsUrl && (
             <>
               {" "}
               <a href={cfg.docsUrl} target="_blank" rel="noopener noreferrer">
-                {cfg.docsLabel ?? "Dokumentacja"}
+                {cfg.docsLabel ?? "Documentation"}
               </a>
               .
             </>
@@ -38,12 +54,3 @@ const { title = "10x Astro Starter" } = Astro.props;
     <slot />
   </body>
 </html>
-
-<style>
-  html,
-  body {
-    margin: 0;
-    width: 100%;
-    height: 100%;
-  }
-</style>

@@ -1,11 +1,12 @@
 ---
-import Layout from "@/layouts/Layout.astro";
+import AppLayout from "@/layouts/AppLayout.astro";
+import Row from "@/components/ui/Row.astro";
+import { Button } from "@/components/ui/button";
 import AddCharacterForm from "@/components/characters/AddCharacterForm";
 import { createClient } from "@/lib/supabase";
 import type { Book, Character, Relationship, RelationshipTypeRow } from "@/types";
 import { RELATIONSHIP_TYPES } from "@/types";
 import { buildConnections } from "@/lib/connections";
-import { Users } from "lucide-react";
 
 type BookRow = Pick<Book, "id" | "title" | "author" | "finished_at">;
 type CharacterRow = Pick<Character, "id" | "name" | "description" | "created_at">;
@@ -128,432 +129,536 @@ if (!book && !loadError) {
 }
 ---
 
-<Layout title={book?.title ?? "Book not found"}>
-  <div class="bg-cosmic min-h-screen px-4 py-10">
-    <div class="mx-auto w-full max-w-2xl space-y-8">
-      {
-        !book && (
-          <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
-            <p class="text-lg font-semibold">Book not found</p>
-            <p class="mt-2 text-sm text-blue-100/60">
-              {loadError ?? "It may have been deleted, or it belongs to another reader."}
-            </p>
-            <a href="/books" class="mt-4 inline-block text-sm text-purple-300 hover:underline">
-              &larr; Back to your books
-            </a>
+<AppLayout title={book?.title ?? "Book not found"} activeBookId={book?.id}>
+  {
+    !book && (
+      <div class="pad notfound">
+        <h1 class="page-title">Book not found</h1>
+        <p class="note-text">{loadError ?? "It may have been deleted, or it belongs to another reader."}</p>
+        <a class="back label" href="/books">
+          &larr; Back to your books
+        </a>
+      </div>
+    )
+  }
+
+  {
+    book && (
+      <>
+        <header class="pad">
+          <p class="crumb label">
+            <a href="/books">Books</a> <span aria-hidden="true">/</span> <span>{book.title}</span>
+          </p>
+          <h1 class="page-title">{book.title}</h1>
+          <div class="bookmeta">
+            <span class="label">{book.author ?? "Author unknown"}</span>
+            {book.finished_at && <span class="label">Finished {dateFormatter.format(new Date(book.finished_at))}</span>}
+            {/* The form submits the state it WANTS, not "flip whatever it is now" -- submitting
+                twice is therefore idempotent, which a double tap on a slow connection needs. */}
+            <form method="POST" action={`/api/books/${book.id}/finish`}>
+              <input type="hidden" name="finished" value={book.finished_at ? "false" : "true"} />
+              <Button type="submit" variant="outline" size="sm">
+                {book.finished_at ? "Reopen" : "Mark finished"}
+              </Button>
+            </form>
           </div>
-        )
-      }
+        </header>
 
-      {
-        book && (
-          <>
-            <header>
-              <a href="/books" class="text-sm text-purple-300 hover:underline">
-                &larr; All books
-              </a>
-              <h1 class="mt-3 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold break-words text-transparent">
-                {book.title}
-              </h1>
-              <p class="mt-1 text-sm break-words text-blue-100/60">{book.author ?? "Author unknown"}</p>
+        {/* Closed by default: mid-read a reader is at least as likely to be editing a
+            description as adding a name, and an always-open form owned the top of the screen
+            on every visit. Adding still costs one tap, which US-02's 30-second bar affords.
 
-              {book.finished_at && (
-                <p class="mt-2 text-xs text-blue-100/50">Finished {dateFormatter.format(new Date(book.finished_at))}</p>
+            `open` when there is an error to show -- otherwise a rejected name would land in
+            a collapsed section. Server-rendered attribute, so no JavaScript decides it. */}
+        <details class="disclose block-disclose" open={addCharacterError !== null}>
+          <summary>Add a character</summary>
+          <div class="disclose-body">
+            <AddCharacterForm bookId={book.id} serverError={addCharacterError} client:load />
+          </div>
+        </details>
+
+        <p class="sec-head">
+          <span class="label">Cast</span>
+          <span class="label">{characters.length}</span>
+        </p>
+
+        {loadError && <p class="error-text pad">{loadError}</p>}
+
+        {!loadError && characters.length === 0 && (
+          <p class="note-text empty">No characters yet. Add the first name you meet.</p>
+        )}
+
+        <ul class="list">
+          {castRows.map(({ character, connections, others }) => (
+            <Row title={character.name} note={character.description}>
+              {/* No heading, ever: a character with no relationships renders nothing here at all.
+                  That is the state the cast view is in before any relationship exists -- the first
+                  thing a reader ever sees -- and an empty heading under every name would make a
+                  working page look broken. */}
+              {connections.length > 0 && (
+                <ul class="conns">
+                  {connections.map((connection) => (
+                    <li>
+                      <span class="conn-type label">{connection.typeLabel}</span>
+                      <span class="conn-name">{connection.otherName}</span>
+                    </li>
+                  ))}
+                </ul>
               )}
 
-              {/* The form submits the state it WANTS, not "flip whatever it is now" -- submitting
-                  twice is therefore idempotent, which a double tap on a slow connection needs. */}
-              <form method="POST" action={`/api/books/${book.id}/finish`} class="mt-3">
-                <input type="hidden" name="finished" value={book.finished_at ? "false" : "true"} />
-                <button
-                  type="submit"
-                  class="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20"
-                >
-                  {book.finished_at ? "Reopen this book" : "Mark as finished"}
-                </button>
-              </form>
-            </header>
+              {/* Native <details> disclosure: no island and no client JavaScript, so edit and
+                  delete keep working with scripting disabled. */}
+              <details class="disclose">
+                <summary>Edit</summary>
+                <div class="disclose-body">
+                  <form method="POST" action={`/api/characters/${character.id}`} class="stack">
+                    <input type="hidden" name="book_id" value={book.id} />
+                    <div class="field">
+                      <label for={`name-${character.id}`}>Name</label>
+                      <input id={`name-${character.id}`} name="name" value={character.name} />
+                    </div>
+                    <div class="field">
+                      <label for={`desc-${character.id}`}>Note</label>
+                      <input
+                        id={`desc-${character.id}`}
+                        name="description"
+                        value={character.description ?? ""}
+                        placeholder="Add a note as you read"
+                      />
+                    </div>
+                    <div class="edit-actions">
+                      <Button type="submit" size="sm">
+                        Save
+                      </Button>
+                    </div>
+                  </form>
 
-            {/* Closed by default: mid-read a reader is at least as likely to be editing a
-                description as adding a name, and an always-open form owned the top of the screen
-                on every visit. Adding still costs one tap, which US-02's 30-second bar affords.
+                  {/* Confirmation as a nested <details>: the destructive button only exists once the
+                      reader has opened it, so a mis-tap on the summary costs a click, not a character.
+                      A JS confirm() would not survive scripting being off, and this page has no island. */}
+                  <details class="confirm">
+                    <summary>Delete character</summary>
+                    <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
+                      <p>
+                        Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot be
+                        undone.
+                      </p>
+                      <Button type="submit" variant="destructive" size="sm">
+                        Yes, delete permanently
+                      </Button>
+                    </form>
+                  </details>
 
-                `open` when there is an error to show -- otherwise a rejected name would land in
-                a collapsed section, which is exactly the defect fixed for the vocabulary and
-                connection forms. Server-rendered attribute, so no JavaScript decides it. */}
-            <details
-              open={addCharacterError !== null}
-              class="rounded-2xl border border-white/10 bg-white/10 text-white backdrop-blur-xl"
-            >
-              <summary class="cursor-pointer px-6 py-4 text-lg font-semibold">Add a character</summary>
-              <div class="border-t border-white/10 px-6 py-4">
-                <AddCharacterForm bookId={book.id} serverError={addCharacterError} client:load />
-              </div>
-            </details>
-
-            <section class="space-y-3">
-              <h2 class="text-lg font-semibold text-white">
-                Cast
-                {characters.length > 0 && <span class="text-blue-100/50">({characters.length})</span>}
-              </h2>
-
-              {loadError && (
-                <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
-                  {loadError}
-                </p>
-              )}
-
-              {!loadError && characters.length === 0 && (
-                <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/60 backdrop-blur-xl">
-                  <Users className="mx-auto mb-3 size-8 text-white/30" />
-                  <p>No characters yet. Add the first name you meet.</p>
-                </div>
-              )}
-
-              <ul class="space-y-3">
-                {castRows.map(({ character, connections, others }) => (
-                  <li class="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
-                    <p class="font-medium break-words">{character.name}</p>
-                    {character.description && (
-                      <p class="mt-1 text-sm break-words text-blue-100/70">{character.description}</p>
-                    )}
-
-                    {/* No heading, ever: a character with no relationships renders nothing here at all.
-                        That is the state the cast view is in before any relationship exists -- the first
-                        thing a reader ever sees -- and an empty heading under every name would make a
-                        working page look broken. */}
-                    {connections.length > 0 && (
-                      <ul class="mt-2 space-y-0.5">
-                        {connections.map((connection) => (
-                          <li class="text-sm">
-                            <span class="text-purple-300">{connection.typeLabel}</span>
-                            <span class="text-blue-100/40"> &middot; </span>
-                            <span class="break-words text-blue-100/80">{connection.otherName}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {/* Native <details> disclosure: no island and no client JavaScript, so edit and
-                        delete keep working with scripting disabled. */}
-                    <details class="mt-3">
-                      <summary class="cursor-pointer text-xs text-purple-300 hover:underline">Edit or delete</summary>
-
-                      <form method="POST" action={`/api/characters/${character.id}`} class="mt-3 space-y-2">
-                        <input type="hidden" name="book_id" value={book.id} />
-                        <label class="block text-xs text-blue-100/70" for={`name-${character.id}`}>
-                          Name
-                        </label>
-                        <input
-                          id={`name-${character.id}`}
-                          name="name"
-                          value={character.name}
-                          class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                        />
-                        <label class="block text-xs text-blue-100/70" for={`desc-${character.id}`}>
-                          Note
-                        </label>
-                        <input
-                          id={`desc-${character.id}`}
-                          name="description"
-                          value={character.description ?? ""}
-                          placeholder="Add a note as you read"
-                          class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                        />
-                        <button
-                          type="submit"
-                          class="rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-purple-500"
-                        >
-                          Save changes
-                        </button>
-                      </form>
-
-                      {/* Confirmation as a nested <details>: the destructive button only exists once the
-                          reader has opened it, so a mis-tap on the summary costs a click, not a character.
-                          A JS confirm() would not survive scripting being off, and this page has no island. */}
-                      <details class="mt-2">
-                        <summary class="inline-block cursor-pointer list-none rounded-lg border border-red-400/40 px-3 py-1.5 text-sm text-red-300 transition-colors hover:bg-red-900/30 [&::-webkit-details-marker]:hidden">
-                          Delete character
-                        </summary>
-                        <form
-                          method="POST"
-                          action={`/api/characters/${character.id}/delete`}
-                          class="mt-2 rounded-lg border border-red-400/30 bg-red-950/30 p-3"
-                        >
-                          <p class="text-xs break-words text-blue-100/80">
-                            Delete <span class="font-medium text-white">{character.name}</span> and every relationship
-                            it appears in? This cannot be undone.
-                          </p>
-                          <button
-                            type="submit"
-                            class="mt-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500"
-                          >
-                            Yes, delete permanently
-                          </button>
-                        </form>
-                      </details>
-
-                      {others.length > 0 ? (
-                        <form
-                          method="POST"
-                          action={`/api/characters/${character.id}/relationships`}
-                          id={`character-${character.id}-relationships`}
-                          class="mt-4 space-y-2 border-t border-white/10 pt-3"
-                        >
-                          <p class="text-xs text-blue-100/70">Add a relationship</p>
-                          {connectionsErrorFor === character.id && formError && (
-                            <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
-                              {formError}
-                            </p>
-                          )}
-                          {/* Type first, person second: a reader knows WHAT the relationship is before
-                              they pick who it is with -- and the missing-word link belongs next to the
-                              field where the word is missing.
-                              One field, two meanings: a shared literal or a custom type's id. <optgroup>
-                              is native, so the merged list costs no JavaScript and the form still
-                              works with scripting off. The endpoint decides the column by shape. */}
-                          <select
-                            name="type"
-                            class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          >
-                            <optgroup label="Shared">
-                              {RELATIONSHIP_TYPES.map((relationshipType) => (
-                                <option value={relationshipType}>{relationshipType}</option>
+                  {others.length > 0 ? (
+                    <form
+                      method="POST"
+                      action={`/api/characters/${character.id}/relationships`}
+                      id={`character-${character.id}-relationships`}
+                      class="sub"
+                    >
+                      <p class="sub-label label">Add a relationship</p>
+                      {connectionsErrorFor === character.id && formError && <p class="error-text">{formError}</p>}
+                      {/* Type first, person second: a reader knows WHAT the relationship is before
+                          they pick who it is with -- and the missing-word link belongs next to the
+                          field where the word is missing.
+                          One field, two meanings: a shared literal or a custom type's id. <optgroup>
+                          is native, so the merged list costs no JavaScript and the form still
+                          works with scripting off. The endpoint decides the column by shape. */}
+                      <div class="rel">
+                        <label for={`newrel-type-${character.id}`}>Type</label>
+                        <select id={`newrel-type-${character.id}`} name="type">
+                          <optgroup label="Shared">
+                            {RELATIONSHIP_TYPES.map((relationshipType) => (
+                              <option value={relationshipType}>{relationshipType}</option>
+                            ))}
+                          </optgroup>
+                          {customTypes.length > 0 && (
+                            <optgroup label="Your types for this book">
+                              {customTypes.map((customType) => (
+                                <option value={customType.id}>{customType.name}</option>
                               ))}
                             </optgroup>
-                            {customTypes.length > 0 && (
-                              <optgroup label="Your types for this book">
-                                {customTypes.map((customType) => (
-                                  <option value={customType.id}>{customType.name}</option>
-                                ))}
-                              </optgroup>
-                            )}
-                          </select>
-                          <a href="#relationship-types-add" class="block text-xs text-purple-300 hover:underline">
-                            Need another word?
-                          </a>
-                          <select
-                            name="other_character_id"
-                            class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          >
+                          )}
+                        </select>
+                      </div>
+                      <a href="#relationship-types-add" class="hint label">
+                        Need another word?
+                      </a>
+                      <div class="rel">
+                        <label for={`newrel-who-${character.id}`}>With</label>
+                        <div class="rel-controls">
+                          <select id={`newrel-who-${character.id}`} name="other_character_id">
                             {others.map((other) => (
                               <option value={other.id}>{other.name}</option>
                             ))}
                           </select>
-                          <button
-                            type="submit"
-                            class="rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-purple-500"
-                          >
-                            Add relationship
-                          </button>
-                        </form>
-                      ) : (
-                        <p class="mt-4 border-t border-white/10 pt-3 text-xs text-blue-100/50">
-                          Add another character to this book before creating a relationship.
-                        </p>
-                      )}
+                          <Button type="submit" variant="outline" size="sm">
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    </form>
+                  ) : (
+                    <p class="sub note-small">Add another character to this book before creating a relationship.</p>
+                  )}
 
-                      {/* Managing connections lives inside the disclosure on purpose: the always-visible list
-                          above stays a clean scan, and edit/delete controls do not compete with it. */}
-                      {connections.length > 0 && (
-                        <div class="mt-4 space-y-3 border-t border-white/10 pt-3">
-                          <p class="text-xs text-blue-100/70">Change or remove a relationship</p>
-                          {connections.map((connection) => (
-                            <div class="rounded-lg border border-white/10 bg-white/5 p-2">
-                              <form method="POST" action={`/api/relationships/${connection.id}`} class="space-y-2">
-                                {/* The anchor tells the route which end to keep; it re-reads the row to work
-                                    out which column that is. */}
-                                <input type="hidden" name="anchor_id" value={character.id} />
-                                <select
-                                  name="other_character_id"
-                                  class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                                >
+                  {/* Managing connections lives inside the disclosure on purpose: the always-visible list
+                      above stays a clean scan, and edit/delete controls do not compete with it. */}
+                  {connections.length > 0 && (
+                    <div class="sub">
+                      <p class="sub-label label">Change or remove</p>
+                      {connections.map((connection) => (
+                        <div class="conn-edit">
+                          <form method="POST" action={`/api/relationships/${connection.id}`} class="stack">
+                            {/* The anchor tells the route which end to keep; it re-reads the row to work
+                                out which column that is. */}
+                            <input type="hidden" name="anchor_id" value={character.id} />
+                            <div class="rel">
+                              <label for={`rel-type-${connection.id}`}>Type</label>
+                              <select id={`rel-type-${connection.id}`} name="type">
+                                <optgroup label="Shared">
+                                  {RELATIONSHIP_TYPES.map((relationshipType) => (
+                                    <option
+                                      value={relationshipType}
+                                      selected={relationshipType === connection.typeValue}
+                                    >
+                                      {relationshipType}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                                {customTypes.length > 0 && (
+                                  <optgroup label="Your types for this book">
+                                    {customTypes.map((customType) => (
+                                      <option value={customType.id} selected={customType.id === connection.typeValue}>
+                                        {customType.name}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                )}
+                              </select>
+                            </div>
+                            <div class="rel">
+                              <label for={`rel-who-${connection.id}`}>With</label>
+                              <div class="rel-controls">
+                                <select id={`rel-who-${connection.id}`} name="other_character_id">
                                   {others.map((other) => (
                                     <option value={other.id} selected={other.id === connection.otherId}>
                                       {other.name}
                                     </option>
                                   ))}
                                 </select>
-                                <select
-                                  name="type"
-                                  class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                                >
-                                  <optgroup label="Shared">
-                                    {RELATIONSHIP_TYPES.map((relationshipType) => (
-                                      <option
-                                        value={relationshipType}
-                                        selected={relationshipType === connection.typeValue}
-                                      >
-                                        {relationshipType}
-                                      </option>
-                                    ))}
-                                  </optgroup>
-                                  {customTypes.length > 0 && (
-                                    <optgroup label="Your types for this book">
-                                      {customTypes.map((customType) => (
-                                        <option value={customType.id} selected={customType.id === connection.typeValue}>
-                                          {customType.name}
-                                        </option>
-                                      ))}
-                                    </optgroup>
-                                  )}
-                                </select>
-                                <a href="#relationship-types-add" class="block text-xs text-purple-300 hover:underline">
-                                  Need another word?
-                                </a>
-                                <button
-                                  type="submit"
-                                  class="rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-purple-500"
-                                >
-                                  Save relationship
-                                </button>
-                              </form>
-                              <details class="mt-2">
-                                <summary class="inline-block cursor-pointer list-none rounded-lg border border-red-400/40 px-3 py-1.5 text-sm text-red-300 transition-colors hover:bg-red-900/30 [&::-webkit-details-marker]:hidden">
-                                  Remove relationship
-                                </summary>
-                                <form
-                                  method="POST"
-                                  action={`/api/relationships/${connection.id}/delete`}
-                                  class="mt-2 rounded-lg border border-red-400/30 bg-red-950/30 p-3"
-                                >
-                                  <p class="text-xs break-words text-blue-100/80">
-                                    Remove the <span class="text-purple-300">{connection.typeLabel}</span> connection
-                                    with <span class="font-medium text-white">{connection.otherName}</span>? Both
-                                    characters stay; only the connection goes.
-                                  </p>
-                                  <button
-                                    type="submit"
-                                    class="mt-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500"
-                                  >
-                                    Yes, remove it
-                                  </button>
-                                </form>
-                              </details>
+                                <Button type="submit" size="sm">
+                                  Save
+                                </Button>
+                              </div>
                             </div>
-                          ))}
+                          </form>
+                          <a href="#relationship-types-add" class="hint label">
+                            Need another word?
+                          </a>
+                          <details class="confirm">
+                            <summary>Remove relationship</summary>
+                            <form
+                              method="POST"
+                              action={`/api/relationships/${connection.id}/delete`}
+                              class="confirm-body"
+                            >
+                              <p>
+                                Remove the <strong>{connection.typeLabel}</strong> connection with{" "}
+                                <strong>{connection.otherName}</strong>? Both characters stay; only the connection goes.
+                              </p>
+                              <Button type="submit" variant="destructive" size="sm">
+                                Yes, remove it
+                              </Button>
+                            </form>
+                          </details>
                         </div>
-                      )}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </details>
+            </Row>
+          ))}
+        </ul>
+
+        {/* The vocabulary lives behind a disclosure, closed by default: a reader who is happy
+            with the five shared types never opens it and sees the page they had before. It sits
+            after the cast because reading the cast is the point of this screen and managing a
+            word list is not. */}
+        <details class="disclose block-disclose vocab">
+          <summary>
+            Relationship types{customTypes.length > 0 && <span class="count">&nbsp;&middot; {customTypes.length}</span>}
+          </summary>
+
+          <div class="disclose-body">
+            <p class="note-small">
+              Five types are shared by every book: {RELATIONSHIP_TYPES.join(", ")}. Add your own for connections this
+              book needs and others do not — “lives with”, “serves”.
+            </p>
+
+            {customTypes.length > 0 && (
+              <ul class="list vocab-list">
+                {customTypes.map((customType) => (
+                  <li id={`relationship-type-${customType.id}`} class="vocab-item">
+                    {/* Rename is the half that repairs a typo -- delete cannot, because the
+                        foreign key refuses to remove a type a connection still points at.
+                        One update to this row changes the name on every connection holding it. */}
+                    <form method="POST" action={`/api/relationship-types/${customType.id}`} class="stack">
+                      <div class="field">
+                        <label for={`rename-${customType.id}`}>Name</label>
+                        <input id={`rename-${customType.id}`} name="name" value={customType.name} maxlength="40" />
+                      </div>
+                      <div class="edit-actions">
+                        <Button type="submit" size="sm">
+                          Save name
+                        </Button>
+                      </div>
+                    </form>
+
+                    {relationshipTypeErrorFor === customType.id && formError && <p class="error-text">{formError}</p>}
+
+                    <details class="confirm">
+                      <summary>Delete type</summary>
+                      <form
+                        method="POST"
+                        action={`/api/relationship-types/${customType.id}/delete`}
+                        class="confirm-body"
+                      >
+                        <p>
+                          Delete <strong>{customType.name}</strong> from this book’s vocabulary? Connections using it
+                          must be changed first.
+                        </p>
+                        <Button type="submit" variant="destructive" size="sm">
+                          Yes, delete this type
+                        </Button>
+                      </form>
                     </details>
                   </li>
                 ))}
               </ul>
-            </section>
+            )}
 
-            {/* The vocabulary lives behind a disclosure, closed by default: a reader who is happy
-                with the five shared types never opens it and sees the page they had before. It sits
-                after the cast because reading the cast is the point of this screen and managing a
-                word list is not. */}
-            <details class="rounded-2xl border border-white/10 bg-white/5 text-white backdrop-blur-xl">
-              <summary class="cursor-pointer px-6 py-4 text-sm text-purple-300 hover:underline">
-                Relationship types — add your own
-                {customTypes.length > 0 && <span class="text-blue-100/40"> ({customTypes.length} so far)</span>}
-              </summary>
+            {relationshipTypesError && <p class="error-text">{relationshipTypesError}</p>}
 
-              <div class="space-y-4 border-t border-white/10 px-6 py-4">
-                <p class="text-xs text-blue-100/60">
-                  Five types are shared by every book: {RELATIONSHIP_TYPES.join(", ")}. Add your own for connections
-                  this book needs and others do not — "lives with", "serves".
-                </p>
-
-                {customTypes.length > 0 && (
-                  <ul class="space-y-3 text-sm">
-                    {customTypes.map((customType) => (
-                      <li
-                        id={`relationship-type-${customType.id}`}
-                        class="rounded-lg border border-white/10 bg-white/5 p-3"
-                      >
-                        {/* Rename is the half that repairs a typo -- delete cannot, because the
-                            foreign key refuses to remove a type a connection still points at.
-                            One update to this row changes the name on every connection holding it. */}
-                        <form method="POST" action={`/api/relationship-types/${customType.id}`} class="space-y-2">
-                          <label class="block text-xs text-blue-100/70" for={`rename-${customType.id}`}>
-                            Rename
-                          </label>
-                          <input
-                            id={`rename-${customType.id}`}
-                            name="name"
-                            value={customType.name}
-                            maxlength="40"
-                            class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                          />
-                          <button
-                            type="submit"
-                            class="rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-purple-500"
-                          >
-                            Save name
-                          </button>
-                        </form>
-
-                        {relationshipTypeErrorFor === customType.id && formError && (
-                          <p class="mt-2 rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
-                            {formError}
-                          </p>
-                        )}
-
-                        <details class="mt-2">
-                          <summary class="inline-block cursor-pointer list-none rounded-lg border border-red-400/40 px-3 py-1.5 text-sm text-red-300 transition-colors hover:bg-red-900/30 [&::-webkit-details-marker]:hidden">
-                            Delete type
-                          </summary>
-                          <form
-                            method="POST"
-                            action={`/api/relationship-types/${customType.id}/delete`}
-                            class="mt-2 rounded-lg border border-red-400/30 bg-red-950/30 p-3"
-                          >
-                            <p class="text-xs break-words text-blue-100/80">
-                              Delete <span class="font-medium text-white">{customType.name}</span> from this book's
-                              vocabulary? Connections using it must be changed first.
-                            </p>
-                            <button
-                              type="submit"
-                              class="mt-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500"
-                            >
-                              Yes, delete this type
-                            </button>
-                          </form>
-                        </details>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                {relationshipTypesError && (
-                  <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
-                    {relationshipTypesError}
-                  </p>
-                )}
-
-                {/* The fragment target sits on content INSIDE the <details>, not on the element
-                    itself: browsers that expand a closed disclosure to reach a fragment then open
-                    it, and the rest simply scroll here. No JavaScript either way. */}
-                <form
-                  method="POST"
-                  action={`/api/books/${book.id}/relationship-types`}
-                  id="relationship-types-add"
-                  class="space-y-2"
-                >
-                  <label class="block text-xs text-blue-100/70" for="relationship-type-name">
-                    New type for this book
-                  </label>
-                  <input
-                    id="relationship-type-name"
-                    name="name"
-                    placeholder="lives with"
-                    maxlength="40"
-                    class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400 focus:outline-none"
-                  />
-                  <button
-                    type="submit"
-                    class="rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-purple-500"
-                  >
-                    Add type
-                  </button>
-                </form>
+            {/* The fragment target sits on content INSIDE the <details>, not on the element
+                itself: browsers that expand a closed disclosure to reach a fragment then open
+                it, and the rest simply scroll here. No JavaScript either way. */}
+            <form
+              method="POST"
+              action={`/api/books/${book.id}/relationship-types`}
+              id="relationship-types-add"
+              class="stack"
+            >
+              <div class="field">
+                <label for="relationship-type-name">New</label>
+                <input id="relationship-type-name" name="name" placeholder="lives with" maxlength="40" />
               </div>
-            </details>
-          </>
-        )
-      }
-    </div>
-  </div>
-</Layout>
+              <div class="edit-actions">
+                <Button type="submit" variant="outline" size="sm">
+                  Add type
+                </Button>
+              </div>
+            </form>
+          </div>
+        </details>
+      </>
+    )
+  }
+</AppLayout>
+
+<style>
+  .page-title {
+    font-size: var(--text-lg);
+    line-height: 1.15;
+  }
+
+  .notfound {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    align-items: flex-start;
+  }
+  .back {
+    text-decoration: none;
+    color: var(--accent);
+  }
+  .back:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .crumb {
+    margin: 0 0 var(--space-2xs);
+  }
+  .crumb a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .crumb a:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .bookmeta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs) var(--space-sm);
+    margin-block-start: var(--space-2xs);
+  }
+
+  /* A page-level disclosure reads as a band across the page, not as a row. */
+  .block-disclose {
+    border-block: var(--rule-w) solid var(--rule);
+    margin-block: var(--space-md);
+    padding-inline: var(--space-md);
+  }
+  .block-disclose > summary {
+    padding-block: var(--space-xs);
+  }
+  .block-disclose > .disclose-body {
+    border-block-start: 0;
+    padding-block-end: var(--space-md);
+  }
+  /* The cast list already ends in a hairline; a second rule 16px below it
+     reads as an empty band rather than as a section break. */
+  /* details.vocab, not .vocab: it must out-specify the .block-disclose
+     border-block shorthand declared above it. The cast list already ends in a
+     hairline, and a second rule 16px below it reads as an empty band. */
+  details.vocab {
+    border-block-start: 0;
+    margin-block-start: 0;
+  }
+  .vocab .count {
+    color: var(--muted-fg);
+  }
+
+  .empty {
+    padding: var(--space-md);
+  }
+
+  /* Relationship types are the one always-visible place the accent appears on
+     every viewport. min-width lines them into a column the eye can skip down. */
+  .conns {
+    list-style: none;
+    margin: var(--space-2xs) 0 0;
+    padding: 0;
+  }
+  .conns li {
+    display: flex;
+    gap: var(--space-xs);
+    align-items: baseline;
+    line-height: 1.5;
+  }
+  .conn-type {
+    color: var(--accent);
+    flex: none;
+    min-width: 7.2em;
+  }
+  .conn-name {
+    font-size: 0.9rem;
+    color: var(--ink-2);
+    overflow-wrap: anywhere;
+    min-width: 0;
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .sub {
+    border-block-start: var(--rule-w) solid var(--rule);
+    padding-block-start: var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  .sub-label {
+    margin: 0;
+  }
+  .note-small {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--muted-fg);
+  }
+  .hint {
+    color: var(--accent);
+    text-decoration: none;
+    justify-self: start;
+  }
+  .hint:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .conn-edit {
+    border-block-start: var(--rule-w) solid var(--rule);
+    padding-block: var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  /* Nested confirmation. The summary looks like the outline button it replaces,
+     but the destructive control only exists once it is open. */
+  .confirm > summary {
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding-inline: var(--space-xs);
+    border: var(--rule-w) solid var(--accent);
+    color: var(--accent);
+    cursor: pointer;
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  @media (pointer: coarse) {
+    .confirm > summary {
+      min-height: 44px;
+    }
+  }
+  .confirm > summary::-webkit-details-marker {
+    display: none;
+  }
+  .confirm > summary:hover {
+    background: var(--paper-3);
+  }
+  .confirm-body {
+    border-inline-start: var(--rule-w-thick) solid var(--accent);
+    padding: var(--space-xs) 0 var(--space-xs) var(--space-sm);
+    margin-block-start: var(--space-2xs);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    align-items: flex-start;
+  }
+  .confirm-body p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--ink-2);
+    overflow-wrap: anywhere;
+  }
+  .confirm-body strong {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .vocab-list {
+    display: flex;
+    flex-direction: column;
+  }
+  .vocab-item {
+    border-block-start: var(--rule-w) solid var(--rule);
+    padding-block: var(--space-xs);
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+</style>
