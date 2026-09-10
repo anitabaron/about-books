@@ -315,33 +315,33 @@ rollback there means redeploying a previous commit.
 
 #### Automated
 
-- [x] 1.1 Type checking passes: `npx astro check`
-- [x] 1.2 Production build succeeds: `npm run build`
-- [x] 1.3 Linting passes: `npm run lint`
-- [x] 1.4 Formatting is clean on touched files (repo-wide `--write` not run)
-- [x] 1.5 No regression in the isolation harness: `npm run db:verify-rls`
-- [x] 1.6 No Polish strings remain in `src/types.ts`
+- [x] 1.1 Type checking passes: `npx astro check` — 22f364d
+- [x] 1.2 Production build succeeds: `npm run build` — 22f364d
+- [x] 1.3 Linting passes: `npm run lint` — 22f364d
+- [x] 1.4 Formatting is clean on touched files (repo-wide `--write` not run) — 22f364d
+- [x] 1.5 No regression in the isolation harness: `npm run db:verify-rls` — 22f364d
+- [x] 1.6 No Polish strings remain in `src/types.ts` — 22f364d
 
 #### Manual
 
-- [x] 1.7 Adding a title and author shows the book in the list below the form
-- [x] 1.8 A book added with a blank author stores no author and renders cleanly
-- [x] 1.9 Empty and whitespace-only titles are refused client-side without a page load
-- [x] 1.10 `/books` while signed out redirects to `/auth/signin`
-- [x] 1.11 At 375px width the page needs no zooming and scrolls only vertically
-- [x] 1.12 With JavaScript disabled the form still submits and the book appears
-- [x] 1.13 Two local accounts: reader A's books are not visible to reader B
+- [x] 1.7 Adding a title and author shows the book in the list below the form — 22f364d
+- [x] 1.8 A book added with a blank author stores no author and renders cleanly — 22f364d
+- [x] 1.9 Empty and whitespace-only titles are refused client-side without a page load — 22f364d
+- [x] 1.10 `/books` while signed out redirects to `/auth/signin` — 22f364d
+- [x] 1.11 At 375px width the page needs no zooming and scrolls only vertically — 22f364d
+- [x] 1.12 With JavaScript disabled the form still submits and the book appears — 22f364d
+- [x] 1.13 Two local accounts: reader A's books are not visible to reader B — 22f364d
 
 ### Phase 2: Deployed-path isolation verification
 
 #### Automated
 
-- [ ] 2.1 Production build succeeds locally before pushing: `npm run build`
-- [ ] 2.2 Remote schema still carries the migration: `npx supabase migration list`
+- [x] 2.1 Production build succeeds locally before pushing: `npm run build`
+- [x] 2.2 Remote schema still carries the migration: `npx supabase migration list`
 
 #### Manual
 
-- [ ] 2.3 Deployed `/books` loads for a signed-in reader and the add form works
-- [ ] 2.4 A book created by remote reader A appears in reader A's list
-- [ ] 2.5 Reader A's book is NOT visible to remote reader B — empty list, not an error (F-01 criterion 4.7)
-- [ ] 2.6 Deployed `/books` while signed out redirects to sign-in
+- [x] 2.3 Deployed `/books` loads for a signed-in reader and the add form works
+- [x] 2.4 A book created by remote reader A appears in reader A's list
+- [x] 2.5 Reader A's book is NOT visible to remote reader B — empty list, not an error (F-01 criterion 4.7)
+- [x] 2.6 Deployed `/books` while signed out redirects to sign-in
