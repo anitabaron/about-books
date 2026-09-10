@@ -47,7 +47,7 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 | S-01 | `manual-book-entry`                | add a book by title and author and see it in their own collection                   | F-01          | FR-001, FR-002, US-01               | done     |
 | S-02 | `character-notes-crud`             | add, edit and delete a character with a note, fast, on a phone                      | S-01          | FR-003, US-02                       | done     |
 | S-03 | `cast-and-relationships-view`      | name relationships between characters and read the whole cast as a list             | S-02          | FR-004, FR-007, US-01               | done     |
-| S-04 | `book-status-and-recall`           | mark a book finished, filter active vs finished, and read a finished book back      | S-01          | FR-009, US-04                       | proposed |
+| S-04 | `book-status-and-recall`           | mark a book finished, filter active vs finished, and read a finished book back      | S-01          | FR-009, US-04                       | in-progress |
 
 ## Baseline
 
@@ -138,7 +138,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** Depends only on S-01, so it can be built alongside the character work — but its US-04 acceptance ("all characters, relationships and events recorded during reading are preserved and accessible on finished books") can only be fully checked once S-03 has landed, so verify it last even if it is implemented early. The other risk is drift into progress tracking: FR-009 is a two-state flag plus one timestamp, and § Non-Goals rules out page counters, percentages and streaks.
-- **Status:** proposed
+- **Status:** in-progress
 
 ## Backlog Handoff
 

@@ -269,22 +269,22 @@ nothing else depends on it. The remote schema needs `npx supabase db push` when 
 
 #### Automated
 
-- [x] 1.1 Migration applies from scratch: `npx supabase db reset`
-- [x] 1.2 Types regenerate and contain `finished_at`: `npm run db:types`
-- [x] 1.3 Harness still passes as a regression check: `npm run db:verify-rls`
-- [x] 1.4 Type checking passes: `npx astro check`
-- [x] 1.5 Production build succeeds: `npm run build`
-- [x] 1.6 Linting passes on this phase's files (`npx eslint` on the three, exit 0); repo-wide `npm run lint` is broken by another session's worktree under `.claude/worktrees/`
-- [x] 1.7 Formatting is clean on touched files
+- [x] 1.1 Migration applies from scratch: `npx supabase db reset` — f53f90d
+- [x] 1.2 Types regenerate and contain `finished_at`: `npm run db:types` — f53f90d
+- [x] 1.3 Harness still passes as a regression check: `npm run db:verify-rls` — f53f90d
+- [x] 1.4 Type checking passes: `npx astro check` — f53f90d
+- [x] 1.5 Production build succeeds: `npm run build` — f53f90d
+- [x] 1.6 Linting passes on this phase's files (`npx eslint` on the three, exit 0); repo-wide `npm run lint` is broken by another session's worktree under `.claude/worktrees/` — f53f90d
+- [x] 1.7 Formatting is clean on touched files — f53f90d
 
 #### Manual
 
-- [x] 1.8 An unfinished book shows a mark-finished control and no date line
-- [x] 1.9 Marking it finished shows "Finished on <today>" and offers to reopen
-- [x] 1.10 Reopening removes the date line and restores the original control
-- [x] 1.11 Submitting the same form twice does not toggle back
-- [x] 1.12 The control works with JavaScript disabled
-- [x] 1.13 Another reader's book id cannot be finished
+- [x] 1.8 An unfinished book shows a mark-finished control and no date line — f53f90d
+- [x] 1.9 Marking it finished shows "Finished on <today>" and offers to reopen — f53f90d
+- [x] 1.10 Reopening removes the date line and restores the original control — f53f90d
+- [x] 1.11 Submitting the same form twice does not toggle back — f53f90d
+- [x] 1.12 The control works with JavaScript disabled — f53f90d
+- [x] 1.13 Another reader's book id cannot be finished — f53f90d
 
 ### Phase 2: Filter the collection, and read a finished book back
 
