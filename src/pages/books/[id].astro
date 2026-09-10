@@ -2,6 +2,7 @@
 import AppLayout from "@/layouts/AppLayout.astro";
 import Row from "@/components/ui/Row.astro";
 import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
 import AddCharacterForm from "@/components/characters/AddCharacterForm";
 import { createClient } from "@/lib/supabase";
 import type { Book, Character, Relationship, RelationshipTypeRow } from "@/types";
@@ -211,7 +212,12 @@ if (!book && !loadError) {
               <details class="disclose">
                 <summary>Edit</summary>
                 <div class="disclose-body">
-                  <form method="POST" action={`/api/characters/${character.id}`} class="stack">
+                  <form
+                    method="POST"
+                    action={`/api/characters/${character.id}`}
+                    id={`edit-character-${character.id}`}
+                    class="stack"
+                  >
                     <input type="hidden" name="book_id" value={book.id} />
                     <div class="field">
                       <label for={`name-${character.id}`}>Name</label>
@@ -226,28 +232,37 @@ if (!book && !loadError) {
                         placeholder="Add a note as you read"
                       />
                     </div>
-                    <div class="edit-actions">
-                      <Button type="submit" size="sm">
-                        Save
-                      </Button>
-                    </div>
                   </form>
 
-                  {/* Confirmation as a nested <details>: the destructive button only exists once the
-                      reader has opened it, so a mis-tap on the summary costs a click, not a character.
-                      A JS confirm() would not survive scripting being off, and this page has no island. */}
-                  <details class="confirm">
-                    <summary>Delete character</summary>
-                    <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
-                      <p>
-                        Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot be
-                        undone.
-                      </p>
-                      <Button type="submit" variant="destructive" size="sm">
-                        Yes, delete permanently
-                      </Button>
-                    </form>
-                  </details>
+                  {/* Save and delete share one line, and delete is an icon: editing is
+                      constant, deleting is rare, and a full-width red button gave the rare
+                      action more weight than the frequent one.
+
+                      Save sits OUTSIDE its form and reaches it with `form=` — a <form>
+                      cannot nest inside another <form>, and the delete needs its own.
+
+                      The confirmation stays a nested <details>: the destructive control only
+                      exists once the reader has opened it, so a mis-tap costs a click, not a
+                      character. A JS confirm() would not survive scripting being off. */}
+                  <div class="edit-actions">
+                    <Button type="submit" form={`edit-character-${character.id}`} size="sm">
+                      Save
+                    </Button>
+                    <details class="confirm icon">
+                      <summary aria-label={`Delete ${character.name}`}>
+                        <Trash2 className="size-3.5" aria-hidden="true" />
+                      </summary>
+                      <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
+                        <p>
+                          Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot be
+                          undone.
+                        </p>
+                        <Button type="submit" variant="destructive" size="sm">
+                          Yes, delete permanently
+                        </Button>
+                      </form>
+                    </details>
+                  </div>
 
                   {others.length > 0 ? (
                     <form
@@ -404,36 +419,47 @@ if (!book && !loadError) {
                     {/* Rename is the half that repairs a typo -- delete cannot, because the
                         foreign key refuses to remove a type a connection still points at.
                         One update to this row changes the name on every connection holding it. */}
-                    <form method="POST" action={`/api/relationship-types/${customType.id}`} class="stack">
+                    <form
+                      method="POST"
+                      action={`/api/relationship-types/${customType.id}`}
+                      id={`rename-type-${customType.id}`}
+                      class="stack"
+                    >
                       <div class="field">
                         <label for={`rename-${customType.id}`}>Name</label>
                         <input id={`rename-${customType.id}`} name="name" value={customType.name} maxlength="40" />
-                      </div>
-                      <div class="edit-actions">
-                        <Button type="submit" size="sm">
-                          Save name
-                        </Button>
                       </div>
                     </form>
 
                     {relationshipTypeErrorFor === customType.id && formError && <p class="error-text">{formError}</p>}
 
-                    <details class="confirm">
-                      <summary>Delete type</summary>
-                      <form
-                        method="POST"
-                        action={`/api/relationship-types/${customType.id}/delete`}
-                        class="confirm-body"
-                      >
-                        <p>
-                          Delete <strong>{customType.name}</strong> from this book’s vocabulary? Connections using it
-                          must be changed first.
-                        </p>
-                        <Button type="submit" variant="destructive" size="sm">
-                          Yes, delete this type
-                        </Button>
-                      </form>
-                    </details>
+                    {/* Same shape as the character row: renaming is what a reader actually
+                        does here, deleting is rare, so they share a line and delete is a
+                        glyph. Save reaches its form with `form=` because a <form> cannot
+                        nest inside another <form>. */}
+                    <div class="edit-actions">
+                      <Button type="submit" form={`rename-type-${customType.id}`} size="sm">
+                        Save name
+                      </Button>
+                      <details class="confirm icon">
+                        <summary aria-label={`Delete the type ${customType.name}`}>
+                          <Trash2 className="size-3.5" aria-hidden="true" />
+                        </summary>
+                        <form
+                          method="POST"
+                          action={`/api/relationship-types/${customType.id}/delete`}
+                          class="confirm-body"
+                        >
+                          <p>
+                            Delete <strong>{customType.name}</strong> from this book’s vocabulary? Connections using it
+                            must be changed first.
+                          </p>
+                          <Button type="submit" variant="destructive" size="sm">
+                            Yes, delete this type
+                          </Button>
+                        </form>
+                      </details>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -602,16 +628,17 @@ if (!book && !loadError) {
     gap: 7px;
   }
 
-  /* Nested confirmation. The summary looks like the outline button it replaces,
-     but the destructive control only exists once it is open. */
+  /* Nested confirmation. Deleting is rare and saving is constant, so the
+     opener is quiet text — not the outlined red box it used to be, which gave
+     the rare action more weight than the frequent one. The destructive control
+     still only exists once the disclosure is open. */
   .confirm > summary {
     list-style: none;
     display: inline-flex;
     align-items: center;
-    min-height: 32px;
-    padding-inline: var(--space-xs);
-    border: var(--rule-w) solid var(--accent);
-    color: var(--accent);
+    justify-content: center;
+    min-height: 30px;
+    color: var(--muted-fg);
     cursor: pointer;
     font-family: var(--font-label);
     font-size: var(--text-label);
@@ -619,9 +646,24 @@ if (!book && !loadError) {
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
+  .confirm > summary:hover {
+    color: var(--accent);
+  }
+  /* Icon-only opener, on the same line as Save. Square, a full touch target
+     under a thumb even though the glyph is 14px, and in the brand red — small
+     is not the same as unmarked. The bin glyph and the aria-label carry the
+     meaning too, so nothing here rests on colour alone. */
+  .confirm.icon > summary {
+    min-width: 30px;
+    background: none;
+    color: var(--accent);
+  }
   @media (pointer: coarse) {
     .confirm > summary {
       min-height: 44px;
+    }
+    .confirm.icon > summary {
+      min-width: 44px;
     }
   }
   .confirm > summary::-webkit-details-marker {

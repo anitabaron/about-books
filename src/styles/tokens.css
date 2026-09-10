@@ -30,7 +30,7 @@
   --accent: oklch(43% 0.15 30); /* brick                             */
   --accent-ink: var(--paper);
   --focus: oklch(48% 0.17 30);
-  --ghost: oklch(78% 0.055 205); /* POSTER ONLY — landing hero layer  */
+  --ghost: oklch(78% 0.055 205); /* offset layer: wordmark + poster hero */
 
   /* ── Type ──────────────────────────────────────────────────────────── */
   --font-poster: "Anton", "Arial Narrow", sans-serif; /* landing page only */

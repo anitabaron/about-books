@@ -5,8 +5,10 @@ import { missingConfigs } from "@/lib/config-status";
 
 interface Props {
   title?: string;
-  /** Anton is the poster face. Only `/` loads it; every app screen would be paying
-   *  for a single-weight display face it never sets. */
+  /** Anton is the poster face, and `/` is the only route that sets it — the
+   *  hero when signed out, the stat numerals when signed in. Every other screen
+   *  would be shipping a single-weight display font it never uses. (It was the
+   *  wordmark for one revision, which is why this flag briefly went away.) */
   poster?: boolean;
 }
 

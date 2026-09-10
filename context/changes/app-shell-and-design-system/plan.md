@@ -1184,6 +1184,45 @@ Four defects that every automated gate passed:
   Astro.redirect()`. A top-level `return` in frontmatter is the exact construct
   `lessons.md` records as crashing the linter with exit 2.
 
+### Review round on a real phone (2026-09-10)
+
+Nine changes, all from the reader looking at the running app. Recorded because
+several of them contradict something the plan asserted:
+
+1. **Sign in / Sign up moved into the masthead's top row.** Sharing one wrapping row
+   with three section links pushed them onto the last line at 375 px — "Sign in" at the
+   *bottom* of the masthead, which is the one control a visitor must never hunt for.
+   The tagline took their place in the nav row.
+2. **The mobile disclosure is labelled "Menu", not "Library".** Sign-out lives inside
+   it. It was reachable the whole time and the reader could not find it, which is what
+   a discoverability defect looks like from the outside.
+3. **Book rows carry author and cast size.** `characters(count)` is a PostgREST embedded
+   aggregate, so a fifty-book library is still one round trip. Applied to `/books` as
+   well as the dashboard, so the two do not diverge.
+4. **Capture fields are underlined too.** The plan split boxed-for-capture from
+   underlined-for-inspection; that split was the plan's own invention and the reader had
+   accepted "underline". One field treatment product-wide now, two densities. The boxed
+   `.composer` rules were deleted rather than left unused.
+5. **Delete is a bin glyph on the Save line**, for characters and for relationship types.
+   Editing is constant and deleting is rare; a full-width red button gave the rare action
+   more weight than the frequent one. Save reaches its form with `form=` because a
+   `<form>` cannot nest inside another, and the delete needs its own. The nested
+   confirmation is untouched.
+6. **The other destructive openers are quiet text**, not outlined red boxes.
+7. **The wordmark took three attempts.** Serif caps read as neither mark nor title;
+   Anton shouted inside a UI (and forced the poster face onto every page, so the fence
+   came off and then went back on); the mono read as a stamp. It ends as the page-title
+   face set exactly like a page title — Newsreader 700, *no uppercasing*. Forcing caps
+   was the mistake all three times.
+8. **The wordmark carries the poster's two offset layers** — pale up-left, brand red
+   down-right. `--ghost` is therefore no longer poster-only, and `white-space: nowrap`
+   on the clones is load-bearing: an absolutely-positioned clone has no width, so
+   without it the copies wrap and pile up under the real mark as a smear.
+9. **Offsets are fixed px, not em, and small.** Scaling them with font-size was a
+   plan-grade idea and a mess on screen — at 19 px the layers drift into three
+   overlapping words. Settled at `-2px/-2px` pale and `+2px/+1px` red: two passes of
+   ink slightly out of register, not a drop shadow.
+
 ### Not verified
 
 - **Nothing was seen below ~1500 px.** `resize_window` reports success in this environment

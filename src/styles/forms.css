@@ -1,12 +1,8 @@
-/* Form surfaces, shared by every screen. Two densities, because capture and
- * correction are different moments:
- *
- *  .composer — the reader is mid-chapter and US-02 wants a character in under
- *    30 seconds. Full box, 44px, --text-base.
- *
- *  .field / .rel — inside a <details>, correcting something already written.
- *    Screen space is the scarce resource: label in a narrow left column,
- *    underline instead of a box, 30px.
+/* One field treatment product-wide: a writable line, never a box. Capture
+ * fields (FormField.tsx) and these inspector fields differ only in DENSITY —
+ * capture is 44px at 16px type, the inspector is 30px at 14px with its label
+ * in a narrow left column, because there the reader is correcting something
+ * already written and screen space is the scarce resource.
  *
  * Why underline and not a lighter box: WCAG 1.4.11 wants 3:1 on a control's
  * boundary and --rule-strong is already the lightest value that clears it on
@@ -15,36 +11,6 @@
  * Why the sizes change with the pointer: iOS zooms the viewport when a focused
  * input is under 16px, and "no zooming" is an S-02 acceptance criterion. Fine
  * pointers have no such rule, so they get the tighter set. */
-
-.composer {
-  display: flex;
-  gap: var(--space-xs);
-  padding-inline: var(--space-md);
-  margin-block: var(--space-md);
-}
-.composer input {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-family: var(--font-serif);
-  font-size: var(--text-base);
-  color: var(--ink);
-  background: var(--paper);
-  border: var(--rule-w) solid var(--rule-strong);
-  border-radius: 0;
-  padding-inline: var(--space-xs);
-  min-height: 40px;
-}
-.composer input::placeholder {
-  color: var(--muted-fg);
-}
-.composer input:focus-visible {
-  border-color: var(--focus);
-}
-@media (pointer: coarse) {
-  .composer input {
-    min-height: 44px;
-  }
-}
 
 .field,
 .rel {

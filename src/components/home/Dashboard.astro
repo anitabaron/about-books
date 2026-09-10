@@ -1,12 +1,12 @@
 ---
 import Row from "@/components/ui/Row.astro";
-import type { LibraryEntry } from "@/lib/library";
+import { castLabel, type ShelfEntry } from "@/lib/library";
 
 interface Props {
   books: number | null;
   characters: number | null;
   finished: number | null;
-  reading: LibraryEntry[];
+  reading: ShelfEntry[];
   error: string | null;
 }
 
@@ -61,7 +61,11 @@ const stats = [
           </p>
           <ul class="list">
             {reading.map((book) => (
-              <Row href={`/books/${book.id}`} title={book.title} />
+              <Row
+                href={`/books/${book.id}`}
+                title={book.title}
+                meta={[book.author ?? "Author unknown", castLabel(book.characters)]}
+              />
             ))}
           </ul>
         </>

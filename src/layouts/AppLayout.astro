@@ -7,9 +7,7 @@ import { loadLibrary } from "@/lib/library";
 interface Props {
   title?: string;
   activeBookId?: string;
-  /** Only `/` sets this — the dashboard sets its stat numerals in the poster
-   *  face. Every other app screen must leave it off, or it ships a
-   *  single-weight display font it never uses. */
+  /** Only `/` sets this: the dashboard's stat numerals are the poster face. */
   poster?: boolean;
 }
 
@@ -26,9 +24,14 @@ const library = await loadLibrary(supabase);
 <Layout title={title} poster={poster}>
   <div class="shell">
     <header class="topbar">
-      <a class="wordmark" href="/">about-books</a>
+      <a class="wordmark" data-t="about-books" href="/"><span>about-books</span></a>
+      {
+        /* "Menu", not "Library": account and sign-out live in here too, and a
+          reader looking for sign-out under a button labelled Library does not
+          find it. Reported from a phone, 2026-09-10. */
+      }
       <details class="menu">
-        <summary aria-label="Library and account">Library</summary>
+        <summary aria-label="Library and account">Menu</summary>
         <div class="menu-panel">
           <Rail library={library} activeBookId={activeBookId} email={user?.email} variant="sheet" />
         </div>
@@ -36,7 +39,7 @@ const library = await loadLibrary(supabase);
     </header>
 
     <nav class="rail" aria-label="Library">
-      <a class="wordmark" href="/">about-books</a>
+      <a class="wordmark" data-t="about-books" href="/"><span>about-books</span></a>
       <Rail library={library} activeBookId={activeBookId} email={user?.email} />
     </nav>
 
@@ -52,14 +55,10 @@ const library = await loadLibrary(supabase);
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* Shape and the offset-ghost layer come from the global .wordmark rule;
+     only the size is local. */
   .wordmark {
-    font-family: var(--font-serif);
-    font-weight: 700;
     font-size: 1rem;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    text-decoration: none;
-    color: var(--ink);
   }
 
   /* ── Mobile top bar ─────────────────────────────────────────────── */

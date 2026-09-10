@@ -4,8 +4,11 @@ import Row from "@/components/ui/Row.astro";
 import AddBookForm from "@/components/books/AddBookForm";
 import { createClient } from "@/lib/supabase";
 import type { Book } from "@/types";
+import { castLabel } from "@/lib/library";
 
-type BookRow = Pick<Book, "id" | "title" | "author" | "created_at" | "finished_at">;
+type BookRow = Pick<Book, "id" | "title" | "author" | "created_at" | "finished_at"> & {
+  characters: { count: number }[];
+};
 
 const formError = Astro.url.searchParams.get("error");
 
@@ -27,7 +30,9 @@ let loadError: string | null = null;
 if (supabase) {
   // RLS restricts this to the signed-in reader's own rows; no user_id filter is needed
   // here, and adding one would duplicate the policy rather than reinforce it.
-  const base = supabase.from("books").select("id, title, author, created_at, finished_at");
+  // `characters(count)` is a PostgREST embedded aggregate: cast sizes arrive with
+  // the books, so a fifty-book library is still one round trip.
+  const base = supabase.from("books").select("id, title, author, created_at, finished_at, characters(count)");
 
   // finished_at IS the status: null means currently reading, a timestamp means finished.
   const scoped =
@@ -132,6 +137,7 @@ const emptyMessage =
           dim={book.finished_at !== null}
           meta={[
             book.author ?? "Author unknown",
+            castLabel(book.characters[0]?.count ?? 0),
             book.finished_at ? `Finished ${formatDate(book.finished_at)}` : `Added ${formatDate(book.created_at)}`,
           ]}
         />

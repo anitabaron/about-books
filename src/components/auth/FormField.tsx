@@ -2,11 +2,12 @@ import type { ReactNode } from "react";
 import { CircleAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/* Capture density: the reader is mid-chapter and US-02 wants a character in
- * under 30 seconds. Full box, 44px, 16px type — the 16px floor is what stops
- * iOS zooming the viewport on focus. */
+/* One field treatment product-wide: a writable line, never a box. What changes
+ * between capture and the inspector is DENSITY, not the shape — here the target
+ * is 44px and the type is 16px, because the reader is mid-chapter and the 16px
+ * floor is what stops iOS zooming the viewport on focus. */
 const inputBase =
-  "w-full min-h-11 rounded-none border bg-paper py-2 pr-3 pl-9 font-[family-name:var(--font-serif)] text-base text-ink transition-colors outline-none placeholder:text-muted-fg";
+  "w-full min-h-11 rounded-none border-0 border-b bg-transparent py-2 pr-2 pl-7 font-[family-name:var(--font-serif)] text-base text-ink transition-colors outline-none placeholder:text-muted-fg";
 
 interface FormFieldProps {
   id: string;
@@ -41,7 +42,7 @@ export function FormField({
         {label}
       </label>
       <div className="relative">
-        <span className="text-muted-fg pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2">
+        <span className="text-muted-fg pointer-events-none absolute top-1/2 left-0 size-4 -translate-y-1/2">
           {icon}
         </span>
         <input
@@ -55,7 +56,7 @@ export function FormField({
           placeholder={placeholder}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={cn(inputBase, error ? "border-signal" : "border-rule-strong focus-visible:border-focus")}
+          className={cn(inputBase, error ? "border-b-signal" : "border-b-rule-strong focus-visible:border-b-focus")}
         />
         {endContent}
       </div>

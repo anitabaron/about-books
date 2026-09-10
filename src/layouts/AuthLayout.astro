@@ -11,7 +11,7 @@ const { title, heading } = Astro.props;
 
 <Layout title={title}>
   <main id="main" class="auth">
-    <a class="wordmark" href="/">about-books</a>
+    <a class="wordmark" data-t="about-books" href="/"><span>about-books</span></a>
     <div class="rule-thick"></div>
     <div class="rule-thin"></div>
 
@@ -37,13 +37,7 @@ const { title, heading } = Astro.props;
   }
 
   .wordmark {
-    font-family: var(--font-serif);
-    font-weight: 700;
     font-size: var(--text-md);
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
-    text-decoration: none;
-    color: var(--ink);
   }
 
   /* The masthead device, at page scale: thick over thin. */

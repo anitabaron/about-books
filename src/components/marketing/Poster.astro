@@ -13,18 +13,30 @@
 
 <main id="main" class="poster">
   <header>
+    {
+      /* Account actions sit in the top row, not in the section nav. Sharing one
+        wrapping row with three section links pushed them onto the last line on
+        a phone, which put "Sign in" at the bottom of the masthead — the one
+        place a visitor should never have to hunt for it. */
+    }
     <div class="mast">
-      <p class="mast-name">about-books<span class="mast-no">No 01</span></p>
-      <p class="mast-right label">Private by default<br />Your notes, nobody else’s</p>
+      <p class="mast-name">
+        <a class="wordmark" data-t="about-books" href="/"><span>about-books</span></a><span class="mast-no">No 01</span>
+      </p>
+      <p class="mast-auth label">
+        <a href="/auth/signin">Sign in</a>
+        <a class="primary" href="/auth/signup">Sign up</a>
+      </p>
     </div>
     <div class="rule-thick"></div>
     <div class="rule-thin"></div>
     <nav class="mast-nav label" aria-label="Main">
-      <a href="#problem">The problem</a>
-      <a href="#what">What it does</a>
-      <a href="#wont">What it won’t do</a>
-      <a href="/auth/signin">Sign in</a>
-      <a href="/auth/signup">Sign up</a>
+      <span class="nav-links">
+        <a href="#problem">The problem</a>
+        <a href="#what">What it does</a>
+        <a href="#wont">What it won’t do</a>
+      </span>
+      <span class="mast-tag">Private by default · Your notes, nobody else’s</span>
     </nav>
     <div class="rule-thin"></div>
   </header>
@@ -126,11 +138,7 @@
   }
   .mast-name {
     margin: 0;
-    font-family: var(--font-serif);
-    font-weight: 700;
     font-size: var(--text-md);
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
   }
   .mast-no {
     margin-inline-start: var(--space-xs);
@@ -139,10 +147,26 @@
     font-size: var(--text-label);
     letter-spacing: 0.08em;
   }
-  .mast-right {
+  /* Account actions. 44px tap targets even though they are label-sized text —
+     these are the two most important controls on the page for a visitor. */
+  .mast-auth {
     margin: 0;
-    text-align: end;
-    line-height: 1.65;
+    display: flex;
+    gap: var(--space-md);
+  }
+  .mast-auth a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .mast-auth a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .mast-auth .primary {
+    color: var(--accent);
   }
 
   /* The pair is the device. A single rule reads as an ordinary underline. */
@@ -159,8 +183,20 @@
   .mast-nav {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-sm) var(--space-md);
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-2xs) var(--space-md);
     padding-block: var(--space-xs);
+  }
+  .nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm) var(--space-md);
+  }
+  /* The tagline is masthead furniture, not navigation — it drops under the
+     links when the row cannot hold both. */
+  .mast-tag {
+    color: var(--faint);
   }
   .mast-nav a {
     text-decoration: none;

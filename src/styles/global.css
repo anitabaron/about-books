@@ -143,6 +143,64 @@
   }
 }
 
+/* The wordmark carries the poster hero's offset-colour treatment at UI scale,
+ * so the brand reads the same on the landing page and inside the app.
+ *
+ * 2px, not the hero's 0.055em: at 16px an em-relative offset lands under a
+ * pixel and reads as a blurry render rather than as a deliberate second
+ * impression. The ghost is generated content, so it never reaches the
+ * accessibility tree and cannot be selected. */
+.wordmark {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  /* The page-title face, set exactly as a page title is: Newsreader 700, no
+     uppercasing, heading tracking. The earlier attempts all failed on the same
+     thing — forcing the mark into caps. Anton shouted, the mono read as a
+     stamp, and the serif in caps read as neither. Lowercase is also how the
+     product's name is actually written. */
+  font-family: var(--font-serif);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: -0.012em;
+  text-decoration: none;
+  color: var(--ink);
+}
+/* Two offset layers, the way the poster hero is built: the pale one lifts up
+ * and left, the brand red drops down and right, and the ink sits on top. Both
+ * are generated content, so neither reaches the accessibility tree and neither
+ * can be selected as text. */
+.wordmark::before,
+.wordmark::after {
+  content: attr(data-t);
+  position: absolute;
+  z-index: 0;
+  /* nowrap is load-bearing: an absolutely-positioned clone has no width of its
+     own, so without it the offset copies wrap to a second line and pile up
+     under the real one as a smear. */
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+}
+/* Fixed pixels, not em. Scaling the offsets with the font size was an
+ * improvement on paper and a mess on screen: at 19px the layers drift far
+ * enough apart to read as three overlapping words instead of one inked mark.
+ * Two and three pixels hold at every size this wordmark is actually set. */
+.wordmark::before {
+  inset-block-start: -2px;
+  inset-inline-start: -2px;
+  color: var(--ghost);
+}
+.wordmark::after {
+  inset-block-start: 2px;
+  inset-inline-start: 1px;
+  color: var(--accent);
+}
+.wordmark > span {
+  position: relative;
+  z-index: 1;
+}
+
 /* The one device shared by both surfaces: mono, uppercase, widely tracked.
  * Short words only — a sentence set in --text-label is a bug. */
 @utility label {
