@@ -356,9 +356,25 @@ relationships query it describes.
 - The whole flow works at a 364px viewport with no horizontal scrolling, and a reader who never
   opens the disclosure sees no change to the page
 
+### Verification note (Phase 2, criterion 2.7, recorded 2026-09-10):
+
+The migration was already applied remotely, so no `db push` ran. The migration-history
+table said so too, but that is not evidence -- it records what was pushed, not what exists.
+The decisive probe is the remote REST API, with a negative control:
+
+```
+relationship_types     HTTP 401   permission denied for table relationship_types
+nie_ma_takiej_tabeli   HTTP 404   Could not find the table 'public.nie_ma_takiej_tabeli'
+                                  in the schema cache
+```
+
+A table absent from the remote schema answers 404 with that second string -- the one this
+project hit twice. A table that exists but denies `anon` answers 401. So `relationship_types`
+is present and `anon` is structurally denied, which is the intended state.
+
 ---
 
-## Phase 3: Rename and delete a type
+## Phase 3: Rename, then delete a type -- and make the vocabulary findable
 
 ### Overview
 
@@ -401,6 +417,36 @@ delete behind the nested-`<details>` confirmation already used for characters an
 
 **Contract**: the confirmation names the type; the destructive submit does not exist in the DOM
 until the disclosure is opened, matching `ceb5bca`.
+
+#### 4. Make the vocabulary findable
+
+**File**: `src/pages/books/[id].astro`
+
+**Intent**: Phase 2 shipped the input but not the path to it — evidence being that the person
+who commissioned the feature could not find it. The markup renders correctly; the placement
+fails its purpose. It sits below the entire cast, which on a phone with three characters and
+their connections is a long scroll, and the summary names a category ("Relationship types")
+rather than offering anything. Fix discoverability only: the disclosure stays closed by
+default, because the reader who wants nothing beyond the five must not pay for this.
+
+**Contract**: a small link beside the type `<select>` in BOTH connection forms ("Need another
+word?") pointing at the disclosure, so the reader meets the entry point while choosing a type
+— the moment the vocabulary is actually missing — rather than while scrolling past the cast.
+The summary reads "Relationship types — add your own". No schema change, no new route, no
+JavaScript: the link is a fragment anchor, and the id sits on content inside the `<details>`
+so browsers that auto-expand a fragment target open it, while the rest simply scroll to it.
+
+#### 5. Type before person in the add-relationship form
+
+**File**: `src/pages/books/[id].astro`
+
+**Intent**: The add form currently asks for the other character first and the type second.
+Swap them: the type comes first. A reader adding a connection knows what the relationship IS
+before they pick who it is with, and putting the type first is also where the "Need another
+word?" link belongs.
+
+**Contract**: field order only — no name changes, no endpoint change. `other_character_id`
+and `type` are read from `formData()` by name, so the submitted payload is unaffected.
 
 ### Success Criteria:
 
@@ -496,7 +542,7 @@ restore `not null` on `type`, which is only safe while no custom type is in use.
 - [x] 2.4 Isolation still green: `npm run db:verify-rls` — 2c08fb7
 - [x] 2.5 `src/lib/connections.ts` exports the resolution function and the page imports it — 2c08fb7
 - [x] 2.6 Unit tests pass: `npm test` (both type sources, missing map entry, both-ends indexing) — 2c08fb7
-- [ ] 2.7 Migration reaches production: `npx supabase db push` applied, `relationship_types` in the remote schema
+- [x] 2.7 Migration reaches production: `relationship_types` confirmed in the remote schema
 
 #### Manual
 
@@ -518,6 +564,9 @@ restore `not null` on `type`, which is only safe while no custom type is in use.
 #### Manual
 
 - [ ] 3.4 A rename updates every connection holding the type, in one action
+- [ ] 3.4a The "Need another word?" link appears beside the type select in both connection forms and reaches the disclosure
+- [ ] 3.4b The summary reads "Relationship types — add your own"
+- [ ] 3.4c The add-relationship form asks for the type before the person
 - [ ] 3.5 Deleting a type in use is refused with the correct count
 - [ ] 3.6 Deleting an unused type succeeds and it leaves the forms
 - [ ] 3.7 A rename to an existing name in that book is refused readably
