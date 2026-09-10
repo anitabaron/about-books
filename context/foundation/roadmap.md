@@ -9,7 +9,7 @@ main_goal: speed
 top_blocker: time
 milestone_id: readers-own-vocabulary
 milestone_seq: 2
-milestone_status: open
+milestone_status: done
 ---
 
 # Roadmap: about-books
@@ -20,7 +20,7 @@ milestone_status: open
 
 ## Milestone
 
-**M-2: The reader's own vocabulary** — Status: open
+**M-2: The reader's own vocabulary** — Status: done
 
 - **Intent:** M-1 proved a reader can re-orient from their own notes. Using it proved the next thing: the five shared relationship types are too narrow, and forcing a book-specific connection into "other" loses exactly the information the note was for. This milestone makes the relationship vocabulary the reader's own — their own types, scoped to one book, shown in their own language — without putting the extra machinery in front of a reader who never wanted it.
 - **Source materials:** `context/foundation/prd.md` (v3), FR-004 as amended 2026-09-10; plus one defect surfaced by using M-1's output.
@@ -41,10 +41,9 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 
 ## At a glance
 
-| ID   | Change ID                           | Outcome (user can …)                                                                                         | Prerequisites | PRD refs                           | Status  |
-| ---- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------- | ---------------------------------- | ------- |
-| S-01 | `reader-defined-relationship-types` | define their own relationship type for one book, and use it alongside the five shared ones                   | M-1 shipped   | FR-004 (amended 2026-09-10), US-01 | done    |
-| S-02 | `deduplicate-relationship-pairs`    | record one connection per pair of characters, and read a sentence instead of a database error on a duplicate | S-01          | FR-004, US-01                      | blocked |
+| ID   | Change ID                           | Outcome (user can …)                                                                       | Prerequisites | PRD refs                           | Status |
+| ---- | ----------------------------------- | ------------------------------------------------------------------------------------------ | ------------- | ---------------------------------- | ------ |
+| S-01 | `reader-defined-relationship-types` | define their own relationship type for one book, and use it alongside the five shared ones | M-1 shipped   | FR-004 (amended 2026-09-10), US-01 | done   |
 
 ## Baseline
 
@@ -86,25 +85,11 @@ Slices below assume these are present and do NOT re-scaffold them.
   - **If time runs out, the cut line is rename and delete** — defining and using a type is the milestone's claim; managing the list is the comfort around it.
 - **Status:** done
 
-### S-02: One connection per pair of characters
-
-- **Outcome:** user can record only one connection between the same two characters, and when they try to add the mirror of an existing one they read a sentence explaining it instead of a raw database error.
-- **Change ID:** `deduplicate-relationship-pairs`
-- **PRD refs:** FR-004, US-01
-- **Prerequisites:** S-01
-- **Parallel with:** —
-- **Blockers:** —
-- **Unknowns:**
-  - What the uniqueness key actually is. M-1's note assumed `unique (least(a,b), greatest(a,b))` — one connection per pair, full stop. Custom types change the question: a reader may legitimately want Harey–Kelvin recorded as both `romantic` and "mieszka z". If so the key is `(least, greatest, type, custom_type_id)` and the defect being fixed is narrower — only the true mirror duplicate. The two answers produce different constraints and different error copy, so planning cannot start until this is settled. — Owner: user. Block: **yes**.
-- **Risk:** It defends the integrity of FR-004's CRUD surface, and it matters for US-01 because a cast that lists the same connection twice reads as wrong at exactly the moment the reader is orienting. Sequenced after S-01 because its constraint shape depends on whether a pair can carry more than one type — building it first would mean writing a unique index that S-01 then has to drop. The known cost is that a unique index throws a raw database error at the reader, so the slice is not the one-liner it looks like: it also needs the error caught and translated, which is where the actual work sits. Weighed against a mild symptom, this is the first candidate to Park again if the milestone runs out of room.
-- **Status:** blocked
-
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                           | Suggested issue title                                    | Ready for `/10x-plan` | Notes                                                         |
-| ---------- | ----------------------------------- | -------------------------------------------------------- | --------------------- | ------------------------------------------------------------- |
-| S-01       | `reader-defined-relationship-types` | Reader-defined relationship types, scoped per book       | yes                   | Run `/10x-plan reader-defined-relationship-types`. North star |
-| S-02       | `deduplicate-relationship-pairs`    | Reject duplicate character pairs with a readable message | no                    | Needs S-01 and the uniqueness-key decision                    |
+| Roadmap ID | Change ID                           | Suggested issue title                              | Ready for `/10x-plan` | Notes                                                         |
+| ---------- | ----------------------------------- | -------------------------------------------------- | --------------------- | ------------------------------------------------------------- |
+| S-01       | `reader-defined-relationship-types` | Reader-defined relationship types, scoped per book | yes                   | Run `/10x-plan reader-defined-relationship-types`. North star |
 
 ## Open Roadmap Questions
 
@@ -122,6 +107,31 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
 - **FR-008 — collection browse and search.** Why parked: PRD § Scope Triage, phase 2 item 5; a plain unsorted list plus the active/finished filter covers the collection today.
 - **Editing and deleting a book — follow-up to S-01 of M-1.** Why parked: FR-002 covers adding only, and FR-003's full CRUD is about characters, not books. Deferred during M-1 planning on 2026-09-09, and kept out of M-2 on 2026-09-10 because it is about books, not the relationship vocabulary — including it would dilute this milestone's Done-when. Needs no PRD change to come back. **The cost is small, and this is the first thing to pick up if time remains after Phase 3 — ahead of anything else parked:** `updateBookSchema` already exists unused, and the endpoints are a copy of `src/pages/api/characters/[id].ts` and `characters/[id]/delete.ts`. Raised again on 2026-09-10 and confirmed in the code — books support create and the finished-status update only, so a typo in a title is permanent. Not a PRD gap (FR-002 covers adding), and the rubric is satisfied by characters and relationships, which each carry all four operations.
 - **A confirmation step before destructive actions elsewhere in the app.** Why parked: character and relationship delete were put behind a nested `<details>` confirmation on 2026-09-10 (`ceb5bca`). Nothing else in the app deletes anything yet; when book delete returns, it inherits the same pattern rather than inventing one.
+- **Deduplicating relationship pairs — was S-02 of M-2, now parked with its blocker answered.**
+  Why parked: the decision that unblocked it also made clear it is not worth the remaining
+  budget. It was never a PRD gap; the symptom is mild and the fix is not the one-liner it looks
+  like. Moved out of `blocked` deliberately — keeping it blocked would misrepresent why it is
+  not being built.
+
+  **Decided 2026-09-10, so a later `/10x-plan` starts from a settled shape:**
+  - **The uniqueness key is (pair, type), not (pair).** A pair may legitimately carry more than
+    one connection — "mieszka z" and "siostry" between the same two women. The defect being
+    fixed is only the true duplicate: the same pair with the same type recorded twice, usually
+    because it was entered once from each end.
+  - **The key must normalise pair order:** `(least(character_a_id, character_b_id),
+greatest(character_a_id, character_b_id), type, custom_type_id)`. Without normalising, A→B
+    and B→A look different to the index and the defect survives the fix — which is the entire
+    failure mode.
+  - **The index must be declared `unique nulls not distinct`.** Exactly one of `type` and
+    `custom_type_id` is always null, held by the `relationships_one_type` constraint, and
+    Postgres treats nulls as distinct in a unique index by default. A plain unique index would
+    therefore permit two identical rows and pass every test written against it. This is the trap
+    in this change: it is not obvious and it fails silently.
+  - **The known cost stands.** A unique index raises a raw database error, so the work is
+    catching the violation and translating it into a sentence — in both write endpoints, which
+    is the same duplicated `resolveTypeColumns` surface parked below. Doing both together is
+    cheaper than doing either alone.
+
 - **Write-side type resolution is duplicated and untested — risk-list entry for `test-plan.md`.**
   Why parked: the code is correct today and the deadline is real. `resolveTypeColumns` exists as
   two near-identical private copies, in `src/pages/api/characters/[id]/relationships.ts` and
@@ -150,24 +160,25 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
 (Append-only. Carried forward verbatim into each successor milestone's roadmap.)
 
 - **M-1: First usable cast** (`first-usable-cast`) — closed 2026-09-10. Shipped the private-by-default data contract plus four vertical slices — books, characters, named relationships with the cast view, and book status — proving a reader can re-orient from their own notes; the north star (S-03) landed with connections readable at zero interactions, against US-01's bar of one.
+- **M-2: The reader's own vocabulary** (`readers-own-vocabulary`) — closed 2026-09-10. Shipped reader-defined relationship types scoped per book, usable alongside the immutable five, with rename propagating through a foreign key and deletion of a type in use refused by the database; S-02 (deduplicating pairs) was parked with its uniqueness-key decision answered rather than built.
 
 ## Done
 
 (`/10x-archive` is the sole writer of this section.)
 
-- **F-01: (foundation) the first domain migration exists, with row-level security enabled and granular per-operation, per-role policies, plus the shared entity/DTO types and the request-validation shape that later slices copy — and cross-reader isolation has been checked, not assumed** — Archived 2026-09-09 → `context/archive/2026-09-09-private-by-default-data-contract/`. Lesson:
+- **M-1 F-01: (foundation) the first domain migration exists, with row-level security enabled and granular per-operation, per-role policies, plus the shared entity/DTO types and the request-validation shape that later slices copy — and cross-reader isolation has been checked, not assumed** — Archived 2026-09-09 → `context/archive/2026-09-09-private-by-default-data-contract/`. Lesson:
   `context/foundation/lessons.md` — a toolchain version pin is only tested by the environment
   that reads it. Deploy pipeline: the two Phase 3 items left open in the archived deploy-plan
   (manual dashboard deploy to confirm the pipeline end to end, and the post-deploy health
   check) are satisfied as of 2026-09-10 — commit 96bd1cd built through the Cloudflare Git
   integration and deployed automatically. Recorded here because archived changes are immutable.
 
-- **S-01: user can add a book by typing title and author, and see it listed in a collection nobody else can read** — Archived 2026-09-10 → `context/archive/2026-09-09-manual-book-entry/`. Lesson: —.
+- **M-1 S-01: user can add a book by typing title and author, and see it listed in a collection nobody else can read** — Archived 2026-09-10 → `context/archive/2026-09-09-manual-book-entry/`. Lesson: —.
 
-- **S-02: user can add a character to a book with a name alone in under 30 seconds on a phone, then edit or delete it and fill in the description note later** — Archived 2026-09-10 → `context/archive/2026-09-10-character-notes-crud/`. Lesson: —.
+- **M-1 S-02: user can add a character to a book with a name alone in under 30 seconds on a phone, then edit or delete it and fill in the description note later** — Archived 2026-09-10 → `context/archive/2026-09-10-character-notes-crud/`. Lesson: —.
 
-- **S-03: user can name a relationship between two characters (family / ally / antagonist / romantic / other), and read the whole cast with relationship types and notes as a list or table — reaching any character's connections in one interaction** — Archived 2026-09-10 → `context/archive/2026-09-10-cast-and-relationships-view/`. Lesson: —.
+- **M-1 S-03: user can name a relationship between two characters (family / ally / antagonist / romantic / other), and read the whole cast with relationship types and notes as a list or table — reaching any character's connections in one interaction** — Archived 2026-09-10 → `context/archive/2026-09-10-cast-and-relationships-view/`. Lesson: —.
 
-- **S-04: user can mark a book finished (with the date recorded), filter their collection by active versus finished, and open a finished book to read its cast and notes back as a self-contained reference** — Archived 2026-09-10 → `context/archive/2026-09-10-book-status-and-recall/`. Lesson: —.
+- **M-1 S-04: user can mark a book finished (with the date recorded), filter their collection by active versus finished, and open a finished book to read its cast and notes back as a self-contained reference** — Archived 2026-09-10 → `context/archive/2026-09-10-book-status-and-recall/`. Lesson: —.
 
-- **S-01: user can define their own relationship type for a single book (for example "mieszka z"), use it in a connection alongside the five shared types, rename it once and see the new name on every connection at once. Deleting a type still in use is refused with a sentence naming how many connections hold it** — Archived 2026-09-10 → `context/archive/2026-09-10-reader-defined-relationship-types/`. Lesson: `context/foundation/lessons.md` entry #4 — a probe must be able to fail for the reason you are testing.
+- **M-2 S-01: user can define their own relationship type for a single book (for example "mieszka z"), use it in a connection alongside the five shared types, rename it once and see the new name on every connection at once. Deleting a type still in use is refused with a sentence naming how many connections hold it** — Archived 2026-09-10 → `context/archive/2026-09-10-reader-defined-relationship-types/`. Lesson: `context/foundation/lessons.md` entry #4 — a probe must be able to fail for the reason you are testing.
