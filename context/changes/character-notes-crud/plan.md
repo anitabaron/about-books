@@ -431,16 +431,16 @@ now, so that step is no longer implicit.
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npx astro check`
-- [x] 3.2 Production build succeeds: `npm run build`
-- [x] 3.3 Linting passes: `npm run lint`
-- [x] 3.4 Formatting is clean on touched files
-- [x] 3.5 Isolation harness still passes: `npm run db:verify-rls`
+- [x] 3.1 Type checking passes: `npx astro check` — 4c86610
+- [x] 3.2 Production build succeeds: `npm run build` — 4c86610
+- [x] 3.3 Linting passes: `npm run lint` — 4c86610
+- [x] 3.4 Formatting is clean on touched files — 4c86610
+- [x] 3.5 Isolation harness still passes: `npm run db:verify-rls` — 4c86610
 
 #### Manual
 
-- [x] 3.6 Editing a character's name updates the row and returns to the same book page
-- [x] 3.7 Filling in a description on an existing character works
-- [x] 3.8 Deleting a character removes it from the list
-- [x] 3.9 Edit and delete both work with JavaScript disabled
-- [x] 3.10 A second account cannot edit or delete the first account's character by id
+- [x] 3.6 Editing a character's name updates the row and returns to the same book page — 4c86610
+- [x] 3.7 Filling in a description on an existing character works — 4c86610
+- [x] 3.8 Deleting a character removes it from the list — 4c86610
+- [x] 3.9 Edit and delete both work with JavaScript disabled — 4c86610
+- [x] 3.10 A second account cannot edit or delete the first account's character by id — 4c86610
