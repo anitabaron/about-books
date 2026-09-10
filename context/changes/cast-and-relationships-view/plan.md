@@ -414,17 +414,17 @@ implicit.
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npx astro check`
-- [x] 3.2 Production build succeeds: `npm run build`
-- [x] 3.3 Linting passes: `npm run lint`
-- [x] 3.4 Formatting is clean on touched files
-- [x] 3.5 Harness still passes: `npm run db:verify-rls`
+- [x] 3.1 Type checking passes: `npx astro check` — 7436b05
+- [x] 3.2 Production build succeeds: `npm run build` — 7436b05
+- [x] 3.3 Linting passes: `npm run lint` — 7436b05
+- [x] 3.4 Formatting is clean on touched files — 7436b05
+- [x] 3.5 Harness still passes: `npm run db:verify-rls` — 7436b05
 
 #### Manual
 
-- [x] 3.6 Changing a relationship's type updates it under both characters
-- [x] 3.7 Changing the other character moves the connection off the previous partner
-- [x] 3.8 Editing from the `character_b_id` side rewrites the correct end
-- [x] 3.9 Deleting a relationship removes it from both characters' rows
-- [x] 3.10 Edit and delete both work with JavaScript disabled
-- [x] 3.11 A second account cannot edit or delete the first account's relationship by id
+- [x] 3.6 Changing a relationship's type updates it under both characters — 7436b05
+- [x] 3.7 Changing the other character moves the connection off the previous partner — 7436b05
+- [x] 3.8 Editing from the `character_b_id` side rewrites the correct end — 7436b05
+- [x] 3.9 Deleting a relationship removes it from both characters' rows — 7436b05
+- [x] 3.10 Edit and delete both work with JavaScript disabled — 7436b05
+- [x] 3.11 A second account cannot edit or delete the first account's relationship by id — 7436b05
