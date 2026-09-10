@@ -294,4 +294,169 @@ begin
     'reader B isolated on select/insert/update/delete; anon denied at grant level';
 end $$;
 
+-- ============================================================================
+-- relationships -- roadmap S-03 (cast-and-relationships-view)
+-- Undirected: one row per connection. Same shape as the blocks above -- negative
+-- assertions that reader B cannot act on reader A's rows, positive ones that
+-- reader A can act on their own.
+-- ============================================================================
+
+do $$
+declare
+  a_id   uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  b_id   uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  a_book uuid := 'a0000000-0000-4000-8000-000000000001';
+  b_book uuid := 'b0000000-0000-4000-8000-000000000001';
+  a_c1   uuid;
+  a_c2   uuid;
+  b_c1   uuid;
+  b_c2   uuid;
+  a_rel  uuid;
+  a_own  uuid;
+  owner  uuid;
+  n      int;
+  denied boolean;
+begin
+  -- Fixtures as superuser: two characters per reader, so each has a pair to relate.
+  insert into public.characters (user_id, book_id, name)
+    values (a_id, a_book, 'Rel fixture A1') returning id into a_c1;
+  insert into public.characters (user_id, book_id, name)
+    values (a_id, a_book, 'Rel fixture A2') returning id into a_c2;
+  insert into public.characters (user_id, book_id, name)
+    values (b_id, b_book, 'Rel fixture B1') returning id into b_c1;
+  insert into public.characters (user_id, book_id, name)
+    values (b_id, b_book, 'Rel fixture B2') returning id into b_c2;
+
+  insert into public.relationships (user_id, character_a_id, character_b_id, type)
+    values (a_id, a_c1, a_c2, 'ally') returning id into a_rel;
+  insert into public.relationships (user_id, character_a_id, character_b_id, type)
+    values (b_id, b_c1, b_c2, 'family');
+
+  select count(*) into n from public.relationships where user_id in (a_id, b_id);
+  if n <> 2 then
+    raise exception 'FIXTURE FAIL: expected 2 fixture relationships as superuser, saw %', n;
+  end if;
+
+  -- The schema must refuse a self-relationship and an unknown type, independently of RLS.
+  denied := false;
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type)
+      values (a_id, a_c1, a_c1, 'ally');
+  exception when check_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL constraint: a character was related to itself';
+  end if;
+
+  denied := false;
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type)
+      values (a_id, a_c1, a_c2, 'nemesis');
+  exception when check_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL constraint: an unknown relationship type was accepted';
+  end if;
+
+  ----------------------------------------------------------------- reader A
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', a_id, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+
+  select count(*) into n from public.relationships;
+  if n <> 1 then
+    raise exception 'FAIL select: reader A sees % relationships, expected exactly 1', n;
+  end if;
+
+  select count(*) into n from public.relationships where user_id = b_id;
+  if n <> 0 then
+    raise exception 'FAIL select: reader A can see % of reader B''s relationships', n;
+  end if;
+
+  -- Positive controls: a too-NARROW policy would pass every negative assertion below.
+  -- Also exercises `default auth.uid()`, which the fixtures above bypass.
+  insert into public.relationships (character_a_id, character_b_id, type)
+    values (a_c2, a_c1, 'romantic')
+    returning id, user_id into a_own, owner;
+  if owner is distinct from a_id then
+    raise exception 'FAIL insert default: relationship owned by %, expected reader A % '
+      '(is `default auth.uid()` still on user_id?)', owner, a_id;
+  end if;
+
+  update public.relationships set type = 'family' where id = a_own;
+  get diagnostics n = row_count;
+  if n <> 1 then
+    raise exception 'FAIL update own: reader A updated % of their own relationships, expected 1 '
+      '(is relationships_update_own too narrow?)', n;
+  end if;
+
+  delete from public.relationships where id = a_own;
+  get diagnostics n = row_count;
+  if n <> 1 then
+    raise exception 'FAIL delete own: reader A deleted % of their own relationships, expected 1 '
+      '(is relationships_delete_own too narrow?)', n;
+  end if;
+
+  ----------------------------------------------------------------- reader B
+  perform set_config('role', 'postgres', true);
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', b_id, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+
+  select count(*) into n from public.relationships;
+  if n <> 1 then
+    raise exception 'FAIL select: reader B sees % relationships, expected exactly 1', n;
+  end if;
+
+  update public.relationships set type = 'antagonist' where id = a_rel;
+  get diagnostics n = row_count;
+  if n <> 0 then
+    raise exception 'FAIL update: reader B updated % of reader A''s relationships', n;
+  end if;
+
+  delete from public.relationships where id = a_rel;
+  get diagnostics n = row_count;
+  if n <> 0 then
+    raise exception 'FAIL delete: reader B deleted % of reader A''s relationships', n;
+  end if;
+
+  denied := false;
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type)
+      values (a_id, a_c1, a_c2, 'other');
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL insert: reader B inserted a relationship owned by reader A';
+  end if;
+
+  ----------------------------------------------------------------- anon
+  perform set_config('role', 'postgres', true);
+  perform set_config('role', 'anon', true);
+  denied := false;
+  begin
+    select count(*) into n from public.relationships;
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL anon: anon read relationships (saw % rows) -- expected permission denied', n;
+  end if;
+
+  ----------------------------------------------------------------- cascade
+  perform set_config('role', 'postgres', true);
+  delete from public.characters where id = a_c1;
+  select count(*) into n from public.relationships where id = a_rel;
+  if n <> 0 then
+    raise exception 'FAIL cascade: deleting a character left % of its relationships', n;
+  end if;
+
+  raise notice 'PASS relationships: schema refuses self-pairs and unknown types; reader A can '
+    'act on own rows (incl. default auth.uid()); reader B isolated; anon denied; character '
+    'delete cascades';
+end $$;
+
 rollback;

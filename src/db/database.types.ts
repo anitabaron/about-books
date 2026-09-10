@@ -99,6 +99,51 @@ export type Database = {
           },
         ]
       }
+      relationships: {
+        Row: {
+          character_a_id: string
+          character_b_id: string
+          created_at: string
+          id: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          character_a_id: string
+          character_b_id: string
+          created_at?: string
+          id?: string
+          type: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          character_a_id?: string
+          character_b_id?: string
+          created_at?: string
+          id?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationships_character_a_id_fkey"
+            columns: ["character_a_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_character_b_id_fkey"
+            columns: ["character_b_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
