@@ -201,7 +201,11 @@
 }
 .wordmark::after {
   inset-block-start: 2px;
-  inset-inline-start: 4px;
+  /* +2/+2, matching the rule stated above. At +3 and then +4 the red layer read
+   * as a burgundy band standing beside every letter rather than as a second
+   * print pass — the comment's own "any further and it reads as a drop shadow"
+   * had stopped describing the code. */
+  inset-inline-start: 2px;
   color: var(--accent);
 }
 .wordmark > span {
