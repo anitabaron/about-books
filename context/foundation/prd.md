@@ -1,6 +1,6 @@
 ---
 project: about-books
-version: 2
+version: 3
 status: active
 created: 2026-06-30
 context_type: greenfield
@@ -127,9 +127,16 @@ AI-generated character hints reduce the time needed to describe a known characte
 
   > Socrates: No counter-argument surfaced; it stands as written.
 
-- FR-004: Reader can add, edit, and delete a named relationship between two characters within a book (type: family / ally / antagonist / romantic / other) (full CRUD). Priority: must-have
+- FR-004: Reader can add, edit, and delete a named relationship between two characters within a book (full CRUD). Five shared types are available by default — family / ally / antagonist / romantic / other — and the reader can additionally define their own types, scoped to a single book (for example "lives with"), and use them alongside the shared five. Priority: must-have
 
-  > Socrates: No counter-argument surfaced; it stands as written.
+  > Socrates: No counter-argument surfaced on the CRUD itself; it stands as written.
+  > Amended 2026-09-10, after S-03 shipped the five shared types: a fixed vocabulary turned
+  > out to be too narrow in use. Relationships a reader actually wants to record are often
+  > book-specific ("lives with", "serves"), and forcing them into "other" loses exactly the
+  > information the note was for. The five stay as a shared starting set, so a reader who
+  > wants nothing more never sees the extra machinery. Scoped per book on purpose: a type
+  > invented for one novel is rarely meaningful in another, and per-book scoping keeps each
+  > book's vocabulary short enough to pick from.
 
 - FR-007: Reader can view their characters and relationships as a structured list or table (default view). Priority: must-have. The optional visual relationship diagram is **phase 2** — see Scope Triage.
   > Socrates: Counter-argument considered: "diagram rendering is complex; a list solves the same pain for 80% of books."
