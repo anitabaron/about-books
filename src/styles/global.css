@@ -164,7 +164,14 @@
 /* Two offset layers, the way the poster hero is built: the pale one lifts up
  * and left, the brand red drops down and right, and the ink sits on top. Both
  * are generated content, so neither reaches the accessibility tree and neither
- * can be selected as text. */
+ * can be selected as text.
+ *
+ * THIS IS DELIBERATE — offset-print misregistration, not a rendering fault.
+ * In a compressed screenshot the three copies of the hyphen in "about-books"
+ * smear into what looks like a strikethrough, because the hyphen sits at
+ * exactly the height a strikethrough would. Checked on a phone at 16-19px on
+ * 2026-09-10: it does not appear on a real screen, only in JPEGs. Do not
+ * "fix" it from a screenshot. */
 .wordmark::before,
 .wordmark::after {
   content: attr(data-t);
@@ -189,7 +196,7 @@
 }
 .wordmark::after {
   inset-block-start: 2px;
-  inset-inline-start: 1px;
+  inset-inline-start: 3px;
   color: var(--accent);
 }
 .wordmark > span {
