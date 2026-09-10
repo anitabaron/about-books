@@ -41,10 +41,10 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 
 ## At a glance
 
-| ID   | Change ID                           | Outcome (user can …)                                                                                         | Prerequisites | PRD refs                           | Status      |
-| ---- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------- | ---------------------------------- | ----------- |
-| S-01 | `reader-defined-relationship-types` | define their own relationship type for one book, and use it alongside the five shared ones                   | M-1 shipped   | FR-004 (amended 2026-09-10), US-01 | in-progress |
-| S-02 | `deduplicate-relationship-pairs`    | record one connection per pair of characters, and read a sentence instead of a database error on a duplicate | S-01          | FR-004, US-01                      | blocked     |
+| ID   | Change ID                           | Outcome (user can …)                                                                                         | Prerequisites | PRD refs                           | Status  |
+| ---- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------- | ---------------------------------- | ------- |
+| S-01 | `reader-defined-relationship-types` | define their own relationship type for one book, and use it alongside the five shared ones                   | M-1 shipped   | FR-004 (amended 2026-09-10), US-01 | done    |
+| S-02 | `deduplicate-relationship-pairs`    | record one connection per pair of characters, and read a sentence instead of a database error on a duplicate | S-01          | FR-004, US-01                      | blocked |
 
 ## Baseline
 
@@ -84,7 +84,7 @@ Slices below assume these are present and do NOT re-scaffold them.
   - **Worth guarding:** nothing structurally stops a custom type named "ally" colliding with a built-in. A unique index on (book, lower(name)) covers customs against each other; rejecting a custom name that matches one of the five needs its own check.
   - **Scope guard, because this table invites growth:** name, book, owner, nothing else. No colours, no icons, no ordering, no sorting. The management screen is a list with add, rename and delete. Anything beyond that comes back to Parked.
   - **If time runs out, the cut line is rename and delete** — defining and using a type is the milestone's claim; managing the list is the comfort around it.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-02: One connection per pair of characters
 
@@ -169,3 +169,5 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
 - **S-03: user can name a relationship between two characters (family / ally / antagonist / romantic / other), and read the whole cast with relationship types and notes as a list or table — reaching any character's connections in one interaction** — Archived 2026-09-10 → `context/archive/2026-09-10-cast-and-relationships-view/`. Lesson: —.
 
 - **S-04: user can mark a book finished (with the date recorded), filter their collection by active versus finished, and open a finished book to read its cast and notes back as a self-contained reference** — Archived 2026-09-10 → `context/archive/2026-09-10-book-status-and-recall/`. Lesson: —.
+
+- **S-01: user can define their own relationship type for a single book (for example "mieszka z"), use it in a connection alongside the five shared types, rename it once and see the new name on every connection at once. Deleting a type still in use is refused with a sentence naming how many connections hold it** — Archived 2026-09-10 → `context/archive/2026-09-10-reader-defined-relationship-types/`. Lesson: `context/foundation/lessons.md` entry #4 — a probe must be able to fail for the reason you are testing.
