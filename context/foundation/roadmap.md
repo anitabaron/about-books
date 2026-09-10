@@ -41,10 +41,10 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 
 ## At a glance
 
-| ID   | Change ID                           | Outcome (user can …)                                                                                         | Prerequisites | PRD refs                           | Status  |
-| ---- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------- | ---------------------------------- | ------- |
-| S-01 | `reader-defined-relationship-types` | define their own relationship type for one book, use it alongside the five, and read all types in Polish     | M-1 shipped   | FR-004 (amended 2026-09-10), US-01 | ready   |
-| S-02 | `deduplicate-relationship-pairs`    | record one connection per pair of characters, and read a sentence instead of a database error on a duplicate | S-01          | FR-004, US-01                      | blocked |
+| ID   | Change ID                           | Outcome (user can …)                                                                                         | Prerequisites | PRD refs                           | Status      |
+| ---- | ----------------------------------- | ------------------------------------------------------------------------------------------------------------ | ------------- | ---------------------------------- | ----------- |
+| S-01 | `reader-defined-relationship-types` | define their own relationship type for one book, and use it alongside the five shared ones                   | M-1 shipped   | FR-004 (amended 2026-09-10), US-01 | in-progress |
+| S-02 | `deduplicate-relationship-pairs`    | record one connection per pair of characters, and read a sentence instead of a database error on a duplicate | S-01          | FR-004, US-01                      | blocked     |
 
 ## Baseline
 
@@ -66,25 +66,25 @@ Slices below assume these are present and do NOT re-scaffold them.
 
 ### S-01: Give the reader their own relationship vocabulary
 
-- **Outcome:** user can define their own relationship type for a single book (for example "mieszka z"), use it in a connection alongside the five shared types, rename it once and see the new name on every connection at once, and read every type — shared or their own — in Polish. Deleting a type still in use is refused with a sentence naming how many connections hold it.
+- **Outcome:** user can define their own relationship type for a single book (for example "mieszka z"), use it in a connection alongside the five shared types, rename it once and see the new name on every connection at once. Deleting a type still in use is refused with a sentence naming how many connections hold it.
 - **Change ID:** `reader-defined-relationship-types`
 - **PRD refs:** FR-004 (amended 2026-09-10), US-01
 - **Prerequisites:** relationships CRUD and the cast view shipped in M-1 (`cast-and-relationships-view`, archived 2026-09-10)
 - **Parallel with:** —
 - **Blockers:** —
 - **Unknowns:**
-  - `relationships` has no `book_id`; the book is reached through `characters`. So "this custom type belongs to the same book as these two characters" cannot be enforced by a check constraint, which cannot read another table. Trigger, application-level validation, or a denormalised `book_id` — each has a different cost, and the choice is load-bearing for the whole slice. — Owner: this slice (`/10x-plan`). Block: no.
+  - ~~How to scope a custom type to the right book~~ — **resolved 2026-09-10 during planning, from the codebase.** `relationships` has no `book_id`, but both write endpoints already resolve the book through `characters` and reject a cross-book pair that way (`src/pages/api/characters/[id]/relationships.ts:47`). Scoping a custom type is the same comparison in the same branch — no trigger, no denormalised column, no new mechanism.
   - Whether renaming is offered per type or the reader is expected to delete and re-add. The design below assumes rename, because rename propagation is the reason for the foreign key at all; confirm it survives the ergonomic bar M-1 set (US-02: usable on a phone, no zooming, no horizontal scrolling). — Owner: this slice. Block: no.
-- **Risk:** The reader who wants nothing beyond the five must not pay for this. If the add-relationship form grows a second step, a type-management link, or a longer select before it grows any value, the slice has made the common case worse to serve the rare one — and M-1's 30-second capture bar is the thing it would break. The second risk is the Polish display map: database values stay English (the check constraint, Zod and `RELATIONSHIP_TYPES` all hold them), so the translation lives only in the select and the render, and any leak of a Polish string into a written value is a defect, not a variant.
+- **Risk:** The reader who wants nothing beyond the five must not pay for this. If the add-relationship form grows a second step, a type-management link, or a longer select before it grows any value, the slice has made the common case worse to serve the rare one — and M-1's 30-second capture bar is the thing it would break. The second risk is the type picker itself: one form field now carries either a shared literal or a custom type id, and a value that is neither must be refused rather than silently written.
 - **Decided up front (carried from M-1's Parked entry — do not re-litigate in planning):**
   - **The five shared types stay in code and are immutable.** They remain held by the check constraint, the Zod schema and `RELATIONSHIP_TYPES`. Custom types are added _alongside_ them as rows in a per-book table — not seeded into it.
-  - **Because the five cannot be renamed, a Polish display map stops being optional.** It is the only way "ally" and "antagonist" stop reading as fantasy-saga in domestic fiction. Database values stay English; only the select and the render are translated. This belongs in this slice, not a later one.
+  - **~~A Polish display map~~ — reversed 2026-09-10 during planning.** The UI stays English throughout, which also closes the language question left open since M-1's S-01. The problem the map was for still stands ("ally" and "antagonist" read as fantasy-saga in domestic fiction), but this slice answers it another way: the five cannot be renamed, yet a reader who finds them wrong can now write their own type instead of being stuck with one.
   - **A relationship points at a custom type's row; it never stores the name as text.** Two nullable columns on `relationships`: the existing `type` for the five, and `custom_type_id` as a foreign key to the new table, with a constraint that exactly one is filled. Two gains, both load-bearing: fixing a typo in a custom name changes it across every connection at once (a copied string would leave old connections showing the old text), and the delete refusal falls out of `on delete restrict` on the foreign key, so the database enforces it and the application only translates the error into a sentence with the count — "Ten typ jest używany przez 3 połączenia. Najpierw je zmień."
   - **Consequence to plan for:** every read of a relationship now coalesces two sources for display (a code value or a joined row), and the add/edit selects must offer one merged list. That is the cost of the two-column shape, accepted for the rename propagation it buys.
   - **Worth guarding:** nothing structurally stops a custom type named "ally" colliding with a built-in. A unique index on (book, lower(name)) covers customs against each other; rejecting a custom name that matches one of the five needs its own check.
   - **Scope guard, because this table invites growth:** name, book, owner, nothing else. No colours, no icons, no ordering, no sorting. The management screen is a list with add, rename and delete. Anything beyond that comes back to Parked.
   - **If time runs out, the cut line is rename and delete** — defining and using a type is the milestone's claim; managing the list is the comfort around it.
-- **Status:** ready
+- **Status:** in-progress
 
 ### S-02: One connection per pair of characters
 
@@ -101,10 +101,10 @@ Slices below assume these are present and do NOT re-scaffold them.
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                           | Suggested issue title                                                 | Ready for `/10x-plan` | Notes                                                         |
-| ---------- | ----------------------------------- | --------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------- |
-| S-01       | `reader-defined-relationship-types` | Reader-defined relationship types per book, with Polish display names | yes                   | Run `/10x-plan reader-defined-relationship-types`. North star |
-| S-02       | `deduplicate-relationship-pairs`    | Reject duplicate character pairs with a readable message              | no                    | Needs S-01 and the uniqueness-key decision                    |
+| Roadmap ID | Change ID                           | Suggested issue title                                    | Ready for `/10x-plan` | Notes                                                         |
+| ---------- | ----------------------------------- | -------------------------------------------------------- | --------------------- | ------------------------------------------------------------- |
+| S-01       | `reader-defined-relationship-types` | Reader-defined relationship types, scoped per book       | yes                   | Run `/10x-plan reader-defined-relationship-types`. North star |
+| S-02       | `deduplicate-relationship-pairs`    | Reject duplicate character pairs with a readable message | no                    | Needs S-01 and the uniqueness-key decision                    |
 
 ## Open Roadmap Questions
 

@@ -102,13 +102,49 @@ export type Database = {
           },
         ]
       }
+      relationship_types: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "relationship_types_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       relationships: {
         Row: {
           character_a_id: string
           character_b_id: string
           created_at: string
+          custom_type_id: string | null
           id: string
-          type: string
+          type: string | null
           updated_at: string
           user_id: string
         }
@@ -116,8 +152,9 @@ export type Database = {
           character_a_id: string
           character_b_id: string
           created_at?: string
+          custom_type_id?: string | null
           id?: string
-          type: string
+          type?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -125,8 +162,9 @@ export type Database = {
           character_a_id?: string
           character_b_id?: string
           created_at?: string
+          custom_type_id?: string | null
           id?: string
-          type?: string
+          type?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -143,6 +181,13 @@ export type Database = {
             columns: ["character_b_id"]
             isOneToOne: false
             referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_custom_type_id_fkey"
+            columns: ["custom_type_id"]
+            isOneToOne: false
+            referencedRelation: "relationship_types"
             referencedColumns: ["id"]
           },
         ]

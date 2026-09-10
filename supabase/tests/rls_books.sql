@@ -459,4 +459,246 @@ begin
     'delete cascades';
 end $$;
 
+-- ============================================================================
+-- relationship_types -- roadmap S-01 of M-2 (reader-defined-relationship-types)
+-- A reader's own type names, scoped to one book. Same shape as the blocks above --
+-- negative assertions that reader B cannot act on reader A's rows, positive ones
+-- that reader A can act on their own -- plus the structural guarantees this table
+-- introduces: a custom name cannot shadow one of the five, a book cannot hold the
+-- same name twice, a connection carries exactly one type source, and a type in use
+-- cannot be deleted while a book delete that removes both still goes through.
+--
+-- Every structural assertion traps its own exception. A violating statement left
+-- unwrapped inside a DO block aborts the whole script, which would turn a passing
+-- assertion into a failed run.
+-- ============================================================================
+
+do $$
+declare
+  a_id    uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  b_id    uuid := 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+  a_book  uuid := 'a0000000-0000-4000-8000-000000000001';
+  b_book  uuid := 'b0000000-0000-4000-8000-000000000001';
+  a_book2 uuid;
+  a_type  uuid;
+  a_type2 uuid;
+  b_type  uuid;
+  a_c1    uuid;
+  a_c2    uuid;
+  a_rel   uuid;
+  a_own   uuid;
+  owner   uuid;
+  n       int;
+  denied  boolean;
+begin
+  -- Fixtures as superuser. A second book for reader A is what lets the per-book scoping of
+  -- the unique index be asserted rather than assumed.
+  insert into public.books (user_id, title) values (a_id, 'Reader A second book')
+    returning id into a_book2;
+
+  insert into public.relationship_types (user_id, book_id, name)
+    values (a_id, a_book, 'lives with') returning id into a_type;
+  insert into public.relationship_types (user_id, book_id, name)
+    values (b_id, b_book, 'lives with') returning id into b_type;
+
+  select count(*) into n from public.relationship_types where user_id in (a_id, b_id);
+  if n <> 2 then
+    raise exception 'FIXTURE FAIL: expected 2 fixture types as superuser, saw %', n;
+  end if;
+
+  -- The same name under a DIFFERENT book of the same reader must be accepted: the unique
+  -- index is scoped to the book, and a vocabulary is per novel.
+  begin
+    insert into public.relationship_types (user_id, book_id, name)
+      values (a_id, a_book2, 'lives with') returning id into a_type2;
+  exception when unique_violation then
+    raise exception 'FAIL unique scope: the same name was refused under a different book '
+      '(is relationship_types_book_name_idx missing its book_id?)';
+  end;
+
+  -- A custom name may not shadow one of the five that live in code, however cased or padded.
+  denied := false;
+  begin
+    insert into public.relationship_types (user_id, book_id, name)
+      values (a_id, a_book, '  ALLY ');
+  exception when check_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL constraint: a custom type named "ALLY" shadowed a shared type';
+  end if;
+
+  -- One book cannot hold the same name twice, ignoring case and padding.
+  denied := false;
+  begin
+    insert into public.relationship_types (user_id, book_id, name)
+      values (a_id, a_book, 'Lives With ');
+  exception when unique_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL unique: one book accepted the same type name twice';
+  end if;
+
+  -- A connection carries EXACTLY one type source. Both filled and neither filled must fail.
+  insert into public.characters (user_id, book_id, name)
+    values (a_id, a_book, 'Type fixture A1') returning id into a_c1;
+  insert into public.characters (user_id, book_id, name)
+    values (a_id, a_book, 'Type fixture A2') returning id into a_c2;
+
+  denied := false;
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type, custom_type_id)
+      values (a_id, a_c1, a_c2, 'ally', a_type);
+  exception when check_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL xor: a connection held both a shared type and a custom one';
+  end if;
+
+  denied := false;
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type, custom_type_id)
+      values (a_id, a_c1, a_c2, null, null);
+  exception when check_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL xor: a connection held neither a shared type nor a custom one';
+  end if;
+
+  -- A connection pointing at a custom type, which the next assertion needs.
+  insert into public.relationships (user_id, character_a_id, character_b_id, type, custom_type_id)
+    values (a_id, a_c1, a_c2, null, a_type) returning id into a_rel;
+
+  -- A type a connection still points at cannot be deleted. This is the guarantee behind the
+  -- reader-facing refusal; the application only supplies the count for the message.
+  denied := false;
+  begin
+    delete from public.relationship_types where id = a_type;
+  exception when foreign_key_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL fk: a relationship type in use was deleted';
+  end if;
+
+  ----------------------------------------------------------------- reader A
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', a_id, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+
+  select count(*) into n from public.relationship_types;
+  if n <> 2 then
+    raise exception 'FAIL select: reader A sees % types, expected exactly 2', n;
+  end if;
+
+  select count(*) into n from public.relationship_types where user_id = b_id;
+  if n <> 0 then
+    raise exception 'FAIL select: reader A can see % of reader B''s types', n;
+  end if;
+
+  -- Positive controls: a too-NARROW policy would pass every negative assertion below.
+  -- Also exercises `default auth.uid()`, which the fixtures above bypass.
+  insert into public.relationship_types (book_id, name)
+    values (a_book, 'serves')
+    returning id, user_id into a_own, owner;
+  if owner is distinct from a_id then
+    raise exception 'FAIL insert default: type owned by %, expected reader A % '
+      '(is `default auth.uid()` still on user_id?)', owner, a_id;
+  end if;
+
+  update public.relationship_types set name = 'serves under' where id = a_own;
+  get diagnostics n = row_count;
+  if n <> 1 then
+    raise exception 'FAIL update own: reader A renamed % of their own types, expected 1 '
+      '(is relationship_types_update_own too narrow?)', n;
+  end if;
+
+  -- Reader A can point a connection at their own custom type through the policies.
+  update public.relationships set type = null, custom_type_id = a_own where id = a_rel;
+  get diagnostics n = row_count;
+  if n <> 1 then
+    raise exception 'FAIL update own: reader A moved % connections onto a custom type, expected 1', n;
+  end if;
+  update public.relationships set type = null, custom_type_id = a_type where id = a_rel;
+
+  delete from public.relationship_types where id = a_own;
+  get diagnostics n = row_count;
+  if n <> 1 then
+    raise exception 'FAIL delete own: reader A deleted % of their own unused types, expected 1 '
+      '(is relationship_types_delete_own too narrow?)', n;
+  end if;
+
+  ----------------------------------------------------------------- reader B
+  perform set_config('role', 'postgres', true);
+  perform set_config('request.jwt.claims',
+    json_build_object('sub', b_id, 'role', 'authenticated')::text, true);
+  perform set_config('role', 'authenticated', true);
+
+  select count(*) into n from public.relationship_types;
+  if n <> 1 then
+    raise exception 'FAIL select: reader B sees % types, expected exactly 1', n;
+  end if;
+
+  update public.relationship_types set name = 'stolen' where id = a_type;
+  get diagnostics n = row_count;
+  if n <> 0 then
+    raise exception 'FAIL update: reader B renamed % of reader A''s types', n;
+  end if;
+
+  delete from public.relationship_types where id = a_type2;
+  get diagnostics n = row_count;
+  if n <> 0 then
+    raise exception 'FAIL delete: reader B deleted % of reader A''s types', n;
+  end if;
+
+  denied := false;
+  begin
+    insert into public.relationship_types (user_id, book_id, name)
+      values (a_id, a_book, 'forged');
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL insert: reader B inserted a type owned by reader A';
+  end if;
+
+  ----------------------------------------------------------------- anon
+  perform set_config('role', 'postgres', true);
+  perform set_config('role', 'anon', true);
+  denied := false;
+  begin
+    select count(*) into n from public.relationship_types;
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL anon: anon read relationship_types (saw % rows) -- expected permission denied', n;
+  end if;
+
+  ----------------------------------------------------------------- cascade
+  -- Deleting the book must remove its types AND the connections using them, in one
+  -- statement. This is why the connection FK is NO ACTION and not RESTRICT: RESTRICT is
+  -- checked immediately, so it would refuse here unless the characters cascade happened to
+  -- fire first -- an accident of foreign-key order. NO ACTION sees the end state.
+  perform set_config('role', 'postgres', true);
+  delete from public.books where id = a_book;
+
+  select count(*) into n from public.relationship_types where book_id = a_book;
+  if n <> 0 then
+    raise exception 'FAIL cascade: deleting a book left % of its relationship types', n;
+  end if;
+  select count(*) into n from public.relationships where id = a_rel;
+  if n <> 0 then
+    raise exception 'FAIL cascade: deleting a book left % of the connections using its types', n;
+  end if;
+
+  raise notice 'PASS relationship_types: names are unique per book and cannot shadow the five; '
+    'a connection carries exactly one type source; a type in use cannot be deleted but a book '
+    'delete still cascades; reader A can act on own rows (incl. default auth.uid()); reader B '
+    'isolated; anon denied';
+end $$;
+
 rollback;
