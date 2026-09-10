@@ -55,12 +55,6 @@ const library = await loadLibrary(supabase);
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Shape and the offset-ghost layer come from the global .wordmark rule;
-     only the size is local. */
-  .wordmark {
-    font-size: 1rem;
-  }
-
   /* ── Mobile top bar ─────────────────────────────────────────────── */
   .topbar {
     position: sticky;
@@ -161,8 +155,11 @@ const library = await loadLibrary(supabase);
       background: var(--paper-2);
       border-inline-end: var(--rule-w) solid var(--rule);
     }
+    /* margin, not padding. The offset clones are absolutely positioned against
+       this element's box, so padding pushes the real text away from them and
+       the mark renders 16px out of register instead of 4. */
     .rail .wordmark {
-      padding-inline: var(--space-md);
+      margin-inline: var(--space-md);
     }
   }
 </style>

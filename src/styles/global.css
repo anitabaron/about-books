@@ -156,6 +156,11 @@
      product's name is actually written. */
   font-family: var(--font-serif);
   font-weight: 700;
+  /* One size everywhere. The offsets below are fixed pixels, so a mark set at
+     16px in the top bar and 19px on the auth page would carry two different
+     effects; calibrating them once means the size has to be constant too. */
+  font-size: var(--text-lg);
+  line-height: 1.1;
   text-transform: none;
   letter-spacing: -0.012em;
   text-decoration: none;
@@ -196,7 +201,7 @@
 }
 .wordmark::after {
   inset-block-start: 2px;
-  inset-inline-start: 3px;
+  inset-inline-start: 4px;
   color: var(--accent);
 }
 .wordmark > span {

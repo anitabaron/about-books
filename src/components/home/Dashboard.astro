@@ -95,8 +95,14 @@ const stats = [
   .stats {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: var(--space-xs);
+    gap: var(--space-md);
     padding: var(--space-md) var(--space-md) var(--space-lg);
+  }
+  /* Three equal columns leave ~104px each at 375px, and "CHARACTERS" tracked
+     at the standard 0.14em very nearly fills that — the captions ran into one
+     another. Pulled in to 0.09em here, and only here. */
+  .stat .label {
+    letter-spacing: 0.09em;
   }
   .stat {
     margin: 0;
