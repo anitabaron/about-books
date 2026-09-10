@@ -41,14 +41,13 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 
 ## At a glance
 
-| ID   | Change ID                          | Outcome (user can …)                                                                  | Prerequisites | PRD refs                            | Status   |
-| ---- | ---------------------------------- | ------------------------------------------------------------------------------------- | ------------- | ----------------------------------- | -------- |
-| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable   | —             | FR-001, NFR privacy, Access Control | done     |
-| S-01 | `manual-book-entry`                | add a book by title and author and see it in their own collection                     | F-01          | FR-001, FR-002, US-01               | done     |
-| S-02 | `character-notes-crud`             | add, edit and delete a character with a note, fast, on a phone                        | S-01          | FR-003, US-02                       | done     |
-| S-03 | `cast-and-relationships-view`      | name relationships between characters and read the whole cast as a list               | S-02          | FR-004, FR-007, US-01               | done     |
-| S-04 | `book-status-and-recall`           | mark a book finished, filter active vs finished, and read a finished book back        | S-01          | FR-009, US-04                       | proposed |
-| S-05 | `book-relationship-vocabulary`     | define their own relationship types for a book and use them alongside the shared five | S-03          | FR-004                              | proposed |
+| ID   | Change ID                          | Outcome (user can …)                                                                | Prerequisites | PRD refs                            | Status   |
+| ---- | ---------------------------------- | ----------------------------------------------------------------------------------- | ------------- | ----------------------------------- | -------- |
+| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | done     |
+| S-01 | `manual-book-entry`                | add a book by title and author and see it in their own collection                   | F-01          | FR-001, FR-002, US-01               | done     |
+| S-02 | `character-notes-crud`             | add, edit and delete a character with a note, fast, on a phone                      | S-01          | FR-003, US-02                       | done     |
+| S-03 | `cast-and-relationships-view`      | name relationships between characters and read the whole cast as a list             | S-02          | FR-004, FR-007, US-01               | done     |
+| S-04 | `book-status-and-recall`           | mark a book finished, filter active vs finished, and read a finished book back      | S-01          | FR-009, US-04                       | proposed |
 
 ## Baseline
 
@@ -141,20 +140,6 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Risk:** Depends only on S-01, so it can be built alongside the character work — but its US-04 acceptance ("all characters, relationships and events recorded during reading are preserved and accessible on finished books") can only be fully checked once S-03 has landed, so verify it last even if it is implemented early. The other risk is drift into progress tracking: FR-009 is a two-state flag plus one timestamp, and § Non-Goals rules out page counters, percentages and streaks.
 - **Status:** proposed
 
-### S-05: Define your own relationship types for a book
-
-- **Outcome:** user can define their own relationship types for a book — "lives with", "serves" — and use them alongside the five shared ones.
-- **Change ID:** `book-relationship-vocabulary`
-- **PRD refs:** FR-004 (amended 2026-09-10: the five are a shared starting set, and a reader may add their own, scoped to one book)
-- **Prerequisites:** S-03
-- **Parallel with:** S-04
-- **Blockers:** —
-- **Unknowns:**
-  - Are the five shared types rows seeded into the table per book, or built-ins merged with custom ones at read time? This decides whether a reader can rename or remove a shared type, whether `relationships.type` becomes a foreign key, and how much the select has to reconcile. — Owner: this slice. Block: no.
-  - What happens to relationships using a custom type when that type is deleted — refuse the delete, cascade the relationships away, or reassign them to "other"? Data safety is a PRD guardrail, so silently deleting a reader's connections is the one option that is clearly wrong. — Owner: this slice. Block: no.
-- **Risk:** A fourth table with its own RLS block, plus a management screen and a select that reconciles built-ins with custom types — comparable in size to S-02, not a small addition. Sequenced after S-04 by decision even though it only depends on S-03, because FR-009 and US-04 close phase 1 against the PRD while this extends it. Arose from real use after S-03 shipped: a fixed five-type vocabulary forced book-specific relationships into "other", losing exactly the information the note existed to hold.
-- **Status:** proposed
-
 ## Backlog Handoff
 
 | Roadmap ID | Change ID                          | Suggested issue title                                                | Ready for `/10x-plan` | Notes                                            |
@@ -164,7 +149,6 @@ Foundations below assume these are present and do NOT re-scaffold them.
 | S-02       | `character-notes-crud`             | Add, edit and delete characters with notes (phone-first)             | no                    | Needs S-01                                       |
 | S-03       | `cast-and-relationships-view`      | Name relationships and read the whole cast as a list                 | no                    | Needs S-02. North star                           |
 | S-04       | `book-status-and-recall`           | Mark books finished, filter by status, read back a finished book     | no                    | Needs S-01. Can run alongside S-02 / S-03        |
-| S-05       | `book-relationship-vocabulary`     | Define your own relationship types for a book                        | no                    | Needs S-03. Sequenced after S-04                 |
 
 ## Open Roadmap Questions
 
@@ -180,6 +164,38 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
 - **FR-002b — external book metadata lookup with prefilled cover and author.** Why parked: PRD § Scope Triage, phase 2 item 3 (largest surface for the least core value).
 - **FR-007 diagram view — visual relationship map.** Why parked: PRD § Scope Triage, phase 2 item 4; the list already solves the reader's problem.
 - **FR-008 — collection browse and search.** Why parked: PRD § Scope Triage, phase 2 item 5; a plain unsorted list covers phase 1.
+- **Reader-defined relationship types, scoped per book — first item of the NEXT milestone.**
+  Why parked here rather than in M-1: FR-004 was amended for it (prd_version 3), but phase 1 as
+  the PRD declared it is closed by S-04, and this is an extension discovered by using the
+  product. Keeping it out of M-1 lets the record say plainly that phase 1 shipped by the
+  deadline. Prerequisite: S-03.
+
+  Decided up front, so planning does not re-litigate:
+  - **The five shared types stay in code and are immutable.** They remain held by the check
+    constraint, the Zod schema and `RELATIONSHIP_TYPES`. Custom types are added _alongside_
+    them as rows in a per-book table — not seeded into it.
+  - **Because the five cannot be renamed, a Polish display map stops being optional.** It is the
+    only way "ally" and "antagonist" stop reading as fantasy-saga in domestic fiction. Database
+    values stay English — the check, Zod and the types all hold them — and only the select and
+    the render are translated. This belongs in the same slice, not a later one.
+  - **A relationship points at a custom type's row; it never stores the name as text.** Two
+    nullable columns on `relationships`: the existing `type` for the five, and `custom_type_id`
+    as a foreign key to the new table, with a constraint that exactly one is filled. Two gains,
+    both load-bearing: fixing a typo in a custom name changes it across every connection at once
+    (a copied string would leave old connections showing the old text), and the delete refusal
+    falls out of `on delete restrict` on the foreign key, so the database enforces it and the
+    application only translates the error into a sentence with the count — "Ten typ jest używany
+    przez 3 połączenia. Najpierw je zmień."
+  - **Consequence to plan for:** every read of a relationship now coalesces two sources for
+    display (a code value or a joined row), and the add/edit selects must offer one merged list.
+    That is the cost of the two-column shape, accepted for the rename propagation it buys.
+  - **Worth guarding:** nothing structurally stops a custom type named "ally" colliding with a
+    built-in. A unique index on (book, lower(name)) covers customs against each other; rejecting
+    a custom name that matches one of the five needs its own check.
+  - **Scope guard, because this table invites growth:** name, book, owner, nothing else. No
+    colours, no icons, no ordering, no sorting. The management screen is a list with add, rename
+    and delete. Anything beyond that comes back here.
+
 - **Editing and deleting a book — follow-up to S-01.** Why parked: FR-002 covers adding
   only, and FR-003's full CRUD is about characters, not books. Deferred during S-01 planning
   on 2026-09-09 — two days remained for S-01–S-04 with S-03 (the cast view) as the north
