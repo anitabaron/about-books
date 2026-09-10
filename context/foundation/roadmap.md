@@ -181,4 +181,9 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
 
 (Empty on first generation. `/10x-archive` is the sole writer of this section.)
 
-- **F-01: (foundation) the first domain migration exists, with row-level security enabled and granular per-operation, per-role policies, plus the shared entity/DTO types and the request-validation shape that later slices copy — and cross-reader isolation has been checked, not assumed** — Archived 2026-09-09 → `context/archive/2026-09-09-private-by-default-data-contract/`. Lesson: —.
+- **F-01: (foundation) the first domain migration exists, with row-level security enabled and granular per-operation, per-role policies, plus the shared entity/DTO types and the request-validation shape that later slices copy — and cross-reader isolation has been checked, not assumed** — Archived 2026-09-09 → `context/archive/2026-09-09-private-by-default-data-contract/`. Lesson:
+  `context/foundation/lessons.md` — a toolchain version pin is only tested by the environment
+  that reads it. Deploy pipeline: the two Phase 3 items left open in the archived deploy-plan
+  (manual dashboard deploy to confirm the pipeline end to end, and the post-deploy health
+  check) are satisfied as of 2026-09-10 — commit 96bd1cd built through the Cloudflare Git
+  integration and deployed automatically. Recorded here because archived changes are immutable.
