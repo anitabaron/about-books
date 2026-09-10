@@ -114,7 +114,7 @@ Full server-side rendering (`output: "server"` in astro.config.mjs). All pages a
 
 ### Environment
 
-- Node.js v22.14.0 (see `.nvmrc`)
+- Node.js v22.23.2 (see `.nvmrc`). Must be >= 22.15: Vite needs `module.registerHooks`, added in that release, and Cloudflare's build runner reads `.nvmrc` — a lower pin fails the remote build while local builds pass.
 - Env vars: `SUPABASE_URL`, `SUPABASE_KEY` (copy `.env.example` to `.env` for Node, or `.dev.vars` for Cloudflare local dev)
 - Local Supabase: `npx supabase start` (requires Docker)
 - Cloudflare local dev: secrets go in `.dev.vars` (gitignored)
