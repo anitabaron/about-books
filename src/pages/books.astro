@@ -1,0 +1,88 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import AddBookForm from "@/components/books/AddBookForm";
+import { createClient } from "@/lib/supabase";
+import type { Book } from "@/types";
+import { Library } from "lucide-react";
+
+type BookRow = Pick<Book, "id" | "title" | "author" | "created_at">;
+
+const formError = Astro.url.searchParams.get("error");
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+
+let books: BookRow[] = [];
+let loadError: string | null = null;
+
+if (supabase) {
+  // RLS restricts this to the signed-in reader's own rows; no user_id filter is needed
+  // here, and adding one would duplicate the policy rather than reinforce it.
+  const { data, error } = await supabase
+    .from("books")
+    .select("id, title, author, created_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    loadError = error.message;
+  } else {
+    // Supabase's response is a discriminated union: with `error` null, `data` is non-null.
+    books = data;
+  }
+} else {
+  loadError = "Supabase is not configured";
+}
+
+const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
+---
+
+<Layout title="My books">
+  <div class="bg-cosmic min-h-screen px-4 py-10">
+    <div class="mx-auto w-full max-w-2xl space-y-8">
+      <header class="text-center">
+        <h1 class="bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold text-transparent">
+          My books
+        </h1>
+        <p class="mt-2 text-sm text-blue-100/60">Add a book, then build up its characters as you read.</p>
+      </header>
+
+      <section class="rounded-2xl border border-white/10 bg-white/10 p-6 text-white backdrop-blur-xl">
+        <h2 class="mb-4 text-lg font-semibold">Add a book</h2>
+        <AddBookForm serverError={formError} client:load />
+      </section>
+
+      <section class="space-y-3">
+        <h2 class="text-lg font-semibold text-white">
+          Your collection
+          {books.length > 0 && <span class="text-blue-100/50">({books.length})</span>}
+        </h2>
+
+        {
+          loadError && (
+            <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">{loadError}</p>
+          )
+        }
+
+        {
+          !loadError && books.length === 0 && (
+            <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/60 backdrop-blur-xl">
+              <Library className="mx-auto mb-3 size-8 text-white/30" />
+              <p>No books yet. Add your first one above.</p>
+            </div>
+          )
+        }
+
+        <ul class="space-y-3">
+          {
+            books.map((book) => (
+              <li class="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
+                <p class="font-medium break-words">{book.title}</p>
+                <p class="mt-1 text-sm break-words text-blue-100/70">{book.author ?? "Author unknown"}</p>
+                <p class="mt-2 text-xs text-blue-100/40">Added {dateFormatter.format(new Date(book.created_at))}</p>
+              </li>
+            ))
+          }
+        </ul>
+      </section>
+    </div>
+  </div>
+</Layout>

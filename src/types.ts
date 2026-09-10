@@ -28,7 +28,7 @@ export interface Book {
 }
 
 /** `title text not null` — the column permits '', which is never a useful title. */
-const titleField = z.string().trim().min(1, "Podaj tytuł książki").max(300, "Tytuł jest zbyt długi");
+const titleField = z.string().trim().min(1, "Title is required").max(300, "Title is too long");
 
 /**
  * `author text` (nullable). A cleared form field arrives as '', which is not the same
@@ -38,7 +38,7 @@ const titleField = z.string().trim().min(1, "Podaj tytuł książki").max(300, "
 const authorField = z
   .string()
   .trim()
-  .max(200, "Nazwa autora jest zbyt długa")
+  .max(200, "Author name is too long")
   .transform((value) => (value === "" ? null : value))
   .nullable()
   .optional();
@@ -54,7 +54,7 @@ export const updateBookSchema = z
     author: authorField,
   })
   .refine((command) => command.title !== undefined || command.author !== undefined, {
-    message: "Podaj przynajmniej jedno pole do zmiany",
+    message: "Provide at least one field to update",
   });
 
 export type CreateBookCommand = z.infer<typeof createBookSchema>;

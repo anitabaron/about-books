@@ -41,13 +41,13 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 
 ## At a glance
 
-| ID   | Change ID                       | Outcome (user can …)                                                            | Prerequisites | PRD refs             | Status   |
-| ---- | ------------------------------- | ------------------------------------------------------------------------------- | ------------- | -------------------- | -------- |
-| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | done |
-| S-01 | `manual-book-entry`             | add a book by title and author and see it in their own collection                | F-01          | FR-001, FR-002, US-01 | proposed |
-| S-02 | `character-notes-crud`          | add, edit and delete a character with a note, fast, on a phone                   | S-01          | FR-003, US-02        | proposed |
-| S-03 | `cast-and-relationships-view`   | name relationships between characters and read the whole cast as a list           | S-02          | FR-004, FR-007, US-01 | proposed |
-| S-04 | `book-status-and-recall`        | mark a book finished, filter active vs finished, and read a finished book back    | S-01          | FR-009, US-04        | proposed |
+| ID   | Change ID                          | Outcome (user can …)                                                                | Prerequisites | PRD refs                            | Status   |
+| ---- | ---------------------------------- | ----------------------------------------------------------------------------------- | ------------- | ----------------------------------- | -------- |
+| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | done     |
+| S-01 | `manual-book-entry`                | add a book by title and author and see it in their own collection                   | F-01          | FR-001, FR-002, US-01               | in-progress |
+| S-02 | `character-notes-crud`             | add, edit and delete a character with a note, fast, on a phone                      | S-01          | FR-003, US-02                       | proposed |
+| S-03 | `cast-and-relationships-view`      | name relationships between characters and read the whole cast as a list             | S-02          | FR-004, FR-007, US-01               | proposed |
+| S-04 | `book-status-and-recall`           | mark a book finished, filter active vs finished, and read a finished book back      | S-01          | FR-009, US-04                       | proposed |
 
 ## Baseline
 
@@ -65,7 +65,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 
 ### F-01: Private-by-default data contract
 
-- **O
+- \*\*O
 
 - **Outcome:** (foundation) the first domain migration exists, with row-level security enabled and granular per-operation, per-role policies, plus the shared entity/DTO types and the request-validation shape that later slices copy — and cross-reader isolation has been checked, not assumed.
 - **Change ID:** `private-by-default-data-contract`
@@ -102,7 +102,7 @@ es
     should settle this rather than inherit the mix. Five strings now, fifty after S-03.
     — Owner: user. Block: no.
 - **Risk:** Carries the one part of F-01's guarantee still unproven end to end (see Unknowns). Sequenced immediately after the foundation because every other phase-1 slice hangs off a book row. Deliberately thin: a plain unsorted list is the whole surface, since collection browse and search is FR-008 and external metadata lookup is FR-002b — both phase 2. The failure mode to watch is scope creep back into those two.
-- **Status:** proposed
+- **Status:** in-progress
 
 ### S-02: Add a character mid-session, on a phone
 
@@ -142,13 +142,13 @@ es
 
 ## Backlog Handoff
 
-| Roadmap ID | Change ID                          | Suggested issue title                                            | Ready for `/10x-plan` | Notes                                        |
-| ---------- | ---------------------------------- | ---------------------------------------------------------------- | --------------------- | -------------------------------------------- |
+| Roadmap ID | Change ID                          | Suggested issue title                                                | Ready for `/10x-plan` | Notes                                            |
+| ---------- | ---------------------------------- | -------------------------------------------------------------------- | --------------------- | ------------------------------------------------ |
 | F-01       | `private-by-default-data-contract` | Establish private-by-default data contract (migration + RLS + types) | yes                   | Run `/10x-plan private-by-default-data-contract` |
-| S-01       | `manual-book-entry`                | Add a book manually and list your collection                     | no                    | Needs F-01                                    |
-| S-02       | `character-notes-crud`             | Add, edit and delete characters with notes (phone-first)         | no                    | Needs S-01                                    |
-| S-03       | `cast-and-relationships-view`      | Name relationships and read the whole cast as a list             | no                    | Needs S-02. North star                        |
-| S-04       | `book-status-and-recall`           | Mark books finished, filter by status, read back a finished book | no                    | Needs S-01. Can run alongside S-02 / S-03     |
+| S-01       | `manual-book-entry`                | Add a book manually and list your collection                         | no                    | Needs F-01                                       |
+| S-02       | `character-notes-crud`             | Add, edit and delete characters with notes (phone-first)             | no                    | Needs S-01                                       |
+| S-03       | `cast-and-relationships-view`      | Name relationships and read the whole cast as a list                 | no                    | Needs S-02. North star                           |
+| S-04       | `book-status-and-recall`           | Mark books finished, filter by status, read back a finished book     | no                    | Needs S-01. Can run alongside S-02 / S-03        |
 
 ## Open Roadmap Questions
 
@@ -164,6 +164,12 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
 - **FR-002b — external book metadata lookup with prefilled cover and author.** Why parked: PRD § Scope Triage, phase 2 item 3 (largest surface for the least core value).
 - **FR-007 diagram view — visual relationship map.** Why parked: PRD § Scope Triage, phase 2 item 4; the list already solves the reader's problem.
 - **FR-008 — collection browse and search.** Why parked: PRD § Scope Triage, phase 2 item 5; a plain unsorted list covers phase 1.
+- **Editing and deleting a book — follow-up to S-01.** Why parked: FR-002 covers adding
+  only, and FR-003's full CRUD is about characters, not books. Deferred during S-01 planning
+  on 2026-09-09 — two days remained for S-01–S-04 with S-03 (the cast view) as the north
+  star, so half a day on editing book titles was the wrong trade. Returns as its own slice
+  after S-04 if time allows; needs no PRD change to come back. F-01's `updateBookSchema`
+  already exists and waits unused for it.
 - **App-level observability (logging, error tracking, metrics).** Why parked: no phase-1 NFR depends on it, Cloudflare platform observability is already enabled in `wrangler.jsonc`, and `main_goal: speed` keeps every ungated layer simple.
 - **All PRD § Non-Goals stand unchanged:** no social features, no book purchasing or commerce, no academic or textbook support, no reading progress tracking.
 
