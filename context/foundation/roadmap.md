@@ -45,7 +45,7 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 | ---- | ---------------------------------- | ----------------------------------------------------------------------------------- | ------------- | ----------------------------------- | -------- |
 | F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | done     |
 | S-01 | `manual-book-entry`                | add a book by title and author and see it in their own collection                   | F-01          | FR-001, FR-002, US-01               | done |
-| S-02 | `character-notes-crud`             | add, edit and delete a character with a note, fast, on a phone                      | S-01          | FR-003, US-02                       | in-progress |
+| S-02 | `character-notes-crud`             | add, edit and delete a character with a note, fast, on a phone                      | S-01          | FR-003, US-02                       | done |
 | S-03 | `cast-and-relationships-view`      | name relationships between characters and read the whole cast as a list             | S-02          | FR-004, FR-007, US-01               | proposed |
 | S-04 | `book-status-and-recall`           | mark a book finished, filter active vs finished, and read a finished book back      | S-01          | FR-009, US-04                       | proposed |
 
@@ -114,7 +114,7 @@ Foundations below assume these are present and do NOT re-scaffold them.
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** The acceptance criteria are the risk here, not the CRUD: name-only creation, under 30 seconds, and a phone screen with no zooming and no horizontal scrolling. A desktop-shaped form that technically works would still fail US-02 — and if capture is too slow to survive a 20-minute reading session, the reader never accumulates the notes that S-03 reads back.
-- **Status:** in-progress
+- **Status:** done
 
 ### S-03: Read the whole cast and how it connects
 
@@ -189,3 +189,5 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
   integration and deployed automatically. Recorded here because archived changes are immutable.
 
 - **S-01: user can add a book by typing title and author, and see it listed in a collection nobody else can read** — Archived 2026-09-10 → `context/archive/2026-09-09-manual-book-entry/`. Lesson: —.
+
+- **S-02: user can add a character to a book with a name alone in under 30 seconds on a phone, then edit or delete it and fill in the description note later** — Archived 2026-09-10 → `context/archive/2026-09-10-character-notes-crud/`. Lesson: —.

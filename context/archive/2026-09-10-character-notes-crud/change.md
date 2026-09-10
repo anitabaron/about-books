@@ -1,10 +1,10 @@
 ---
 change_id: character-notes-crud
 title: Add, edit and delete characters within a book (roadmap S-02)
-status: implemented
+status: archived
 created: 2026-09-10
 updated: 2026-09-10
-archived_at: null
+archived_at: 2026-09-10T08:25:10Z
 ---
 
 ## Notes
