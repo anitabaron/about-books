@@ -1,10 +1,10 @@
 ---
 change_id: cast-and-relationships-view
 title: Cast and relationships view (roadmap S-03)
-status: implemented
+status: archived
 created: 2026-09-10
 updated: 2026-09-10
-archived_at: null
+archived_at: 2026-09-10T09:22:43Z
 ---
 
 ## Notes
