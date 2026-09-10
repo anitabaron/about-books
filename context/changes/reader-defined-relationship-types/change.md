@@ -1,7 +1,7 @@
 ---
 change_id: reader-defined-relationship-types
 title: Reader-defined relationship types, scoped per book
-status: implementing
+status: implemented
 created: 2026-09-10
 updated: 2026-09-10
 archived_at: null

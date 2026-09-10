@@ -462,8 +462,32 @@ and `type` are read from `formData()` by name, so the submitted payload is unaff
 - Deleting a type in use is refused with the correct count and the type is STILL PRESENT afterwards — the pass condition is the refusal, not a deletion
 - Deleting an unused type succeeds and it disappears from the forms
 - A rename to a name already used in that book is refused with a readable message
-- Reader B cannot rename or delete reader A's type (verified against the deployed app with two
-  real accounts, as in F-01 criterion 4.7)
+- Reader B cannot reach reader A's type. Recorded as a split, because the two halves were
+  checked in different places and a single tick would imply more than happened:
+  - **Browsable half — verified on the deployed app, two real accounts.** As reader B, opening
+    reader A's book URL directly returns a 404 indistinguishable from a missing book. This is
+    the reader-facing half and the one worth running against production, where RLS is enforced
+    by a different database than the local stack.
+  - **Crafted-POST half — measured locally, not on production.** Reader B gets "Relationship
+    type not found" on both rename and delete, and "Book not found" when adding a type to
+    reader A's book; reader A's row is unchanged afterwards. Also covered in both directions by
+    the `relationship_types` block in `supabase/tests/rls_books.sql`, which runs against the
+    same policies the migration installs.
+
+### Verification note (Phase 3, criterion 3.8, recorded 2026-09-10):
+
+Deployment confirmed read-only before the isolation check, so the check ran against the new
+code: the book page summary reads "Relationship types — add your own (1 so far)", a string only
+Phase 3 emits, and a real book renders "Marta — mieszka z — Kasia" under both characters — the
+slice working on real data rather than only on seed rows.
+
+Both Phase-3-only endpoints answer 302 → `/auth/signin` on the deployed app while a route
+present in no version answers 404, so the probe could distinguish present from absent (see
+`lessons.md` entry #4).
+
+What was NOT done: the crafted-POST half was not repeated against production. The local run and
+the harness cover it, and re-running it in production would mean sending forged writes at a live
+database to learn something two other checks already establish.
 
 ---
 
@@ -542,7 +566,7 @@ restore `not null` on `type`, which is only safe while no custom type is in use.
 - [x] 2.4 Isolation still green: `npm run db:verify-rls` — 2c08fb7
 - [x] 2.5 `src/lib/connections.ts` exports the resolution function and the page imports it — 2c08fb7
 - [x] 2.6 Unit tests pass: `npm test` (both type sources, missing map entry, both-ends indexing) — 2c08fb7
-- [x] 2.7 Migration reaches production: `relationship_types` confirmed in the remote schema
+- [x] 2.7 Migration reaches production: `relationship_types` confirmed in the remote schema — 2c08fb7
 
 #### Manual
 
@@ -570,4 +594,4 @@ restore `not null` on `type`, which is only safe while no custom type is in use.
 - [x] 3.5 Deleting a type in use is REFUSED with the correct count and the type is still present afterwards — 7a500f2
 - [x] 3.6 Deleting an unused type succeeds and it leaves the forms — 7a500f2
 - [x] 3.7 A rename to an existing name in that book is refused readably — 7a500f2
-- [ ] 3.8 Reader B cannot rename or delete reader A's type (deployed, two real accounts)
+- [x] 3.8 Reader B cannot reach reader A's type — split evidence, see the Phase 3 verification note — 7a500f2
