@@ -2,11 +2,20 @@
 import Layout from "@/layouts/Layout.astro";
 import AddCharacterForm from "@/components/characters/AddCharacterForm";
 import { createClient } from "@/lib/supabase";
-import type { Book, Character } from "@/types";
+import type { Book, Character, Relationship, RelationshipType } from "@/types";
+import { RELATIONSHIP_TYPES } from "@/types";
 import { Users } from "lucide-react";
 
 type BookRow = Pick<Book, "id" | "title" | "author">;
 type CharacterRow = Pick<Character, "id" | "name" | "description" | "created_at">;
+type RelationshipRow = Pick<Relationship, "id" | "character_a_id" | "character_b_id" | "type">;
+
+interface Connection {
+  id: string;
+  otherId: string;
+  otherName: string;
+  type: RelationshipType;
+}
 
 const bookId = Astro.params.id;
 const formError = Astro.url.searchParams.get("error");
@@ -47,6 +56,51 @@ if (!supabase) {
 // A top-level `return` in Astro frontmatter crashes @typescript-eslint/no-misused-promises
 // ("Expected node to have a parent"), so the status is set on Astro.response instead. Same
 // result — a real 404 — with no early return and no rule suppression.
+// Relationships touching this cast. The lookup matches either end, so `.or()` spans both
+// columns; the cast's ids already bound it to this book, which is why the table needs no
+// book_id of its own.
+const connectionsByCharacter = new Map<string, Connection[]>();
+
+if (supabase && characters.length > 0) {
+  const nameById = new Map(characters.map((c) => [c.id, c.name]));
+  const ids = characters.map((c) => c.id).join(",");
+
+  const { data: rels, error: relError } = await supabase
+    .from("relationships")
+    .select("id, character_a_id, character_b_id, type")
+    .or(`character_a_id.in.(${ids}),character_b_id.in.(${ids})`)
+    .overrideTypes<RelationshipRow[], { merge: false }>();
+
+  if (relError) {
+    loadError ??= relError.message;
+  } else {
+    for (const rel of rels) {
+      // Undirected: index the row under both ends so it renders beneath both characters.
+      for (const [selfId, otherId] of [
+        [rel.character_a_id, rel.character_b_id],
+        [rel.character_b_id, rel.character_a_id],
+      ]) {
+        const otherName = nameById.get(otherId);
+        // Defensive: a relationship reaching outside this cast is skipped rather than
+        // rendered as "undefined". The create route requires a shared book, so this should
+        // be unreachable.
+        if (!nameById.has(selfId) || otherName === undefined) continue;
+        const list = connectionsByCharacter.get(selfId) ?? [];
+        list.push({ id: rel.id, otherId, otherName, type: rel.type });
+        connectionsByCharacter.set(selfId, list);
+      }
+    }
+  }
+}
+
+// Precomputed so the template stays a plain map: each row carries its own connections and
+// the other cast members it can be related to.
+const castRows = characters.map((character) => ({
+  character,
+  connections: connectionsByCharacter.get(character.id) ?? [],
+  others: characters.filter((c) => c.id !== character.id),
+}));
+
 if (!book && !loadError) {
   Astro.response.status = 404;
 }
@@ -107,11 +161,27 @@ if (!book && !loadError) {
               )}
 
               <ul class="space-y-3">
-                {characters.map((character) => (
+                {castRows.map(({ character, connections, others }) => (
                   <li class="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
                     <p class="font-medium break-words">{character.name}</p>
                     {character.description && (
                       <p class="mt-1 text-sm break-words text-blue-100/70">{character.description}</p>
+                    )}
+
+                    {/* No heading, ever: a character with no relationships renders nothing here at all.
+                        That is the state the cast view is in before any relationship exists -- the first
+                        thing a reader ever sees -- and an empty heading under every name would make a
+                        working page look broken. */}
+                    {connections.length > 0 && (
+                      <ul class="mt-2 space-y-0.5">
+                        {connections.map((connection) => (
+                          <li class="text-sm">
+                            <span class="text-purple-300">{connection.type}</span>
+                            <span class="text-blue-100/40"> &middot; </span>
+                            <span class="break-words text-blue-100/80">{connection.otherName}</span>
+                          </li>
+                        ))}
+                      </ul>
                     )}
 
                     {/* Native <details> disclosure: no island and no client JavaScript, so edit and
@@ -156,6 +226,42 @@ if (!book && !loadError) {
                           Delete character
                         </button>
                       </form>
+
+                      {others.length > 0 ? (
+                        <form
+                          method="POST"
+                          action={`/api/characters/${character.id}/relationships`}
+                          class="mt-4 space-y-2 border-t border-white/10 pt-3"
+                        >
+                          <p class="text-xs text-blue-100/70">Add a relationship</p>
+                          <select
+                            name="other_character_id"
+                            class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                          >
+                            {others.map((other) => (
+                              <option value={other.id}>{other.name}</option>
+                            ))}
+                          </select>
+                          <select
+                            name="type"
+                            class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                          >
+                            {RELATIONSHIP_TYPES.map((relationshipType) => (
+                              <option value={relationshipType}>{relationshipType}</option>
+                            ))}
+                          </select>
+                          <button
+                            type="submit"
+                            class="rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-purple-500"
+                          >
+                            Add relationship
+                          </button>
+                        </form>
+                      ) : (
+                        <p class="mt-4 border-t border-white/10 pt-3 text-xs text-blue-100/50">
+                          Add another character to this book before creating a relationship.
+                        </p>
+                      )}
                     </details>
                   </li>
                 ))}

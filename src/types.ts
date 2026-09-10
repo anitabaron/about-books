@@ -109,3 +109,52 @@ export const updateCharacterSchema = z
 
 export type CreateCharacterCommand = z.infer<typeof createCharacterSchema>;
 export type UpdateCharacterCommand = z.infer<typeof updateCharacterSchema>;
+
+/**
+ * The five relationship names from FR-004. Single source of truth: the Zod schema and the
+ * form's select both read this, so they cannot drift, and the migration's check constraint
+ * carries the same list.
+ */
+export const RELATIONSHIP_TYPES = ["family", "ally", "antagonist", "romantic", "other"] as const;
+
+export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
+
+/**
+ * A row of `public.relationships`.
+ * Mirrors `supabase/migrations/20260910103932_create_relationships_with_rls.sql`.
+ *
+ * Undirected: the row is rendered beneath both characters, and which id sits in
+ * `character_a_id` depends only on whose row it was created from. Never assume the anchor.
+ */
+export interface Relationship {
+  id: string;
+  user_id: string;
+  character_a_id: string;
+  character_b_id: string;
+  type: RelationshipType;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * The add form lives under one character, so it submits only the OTHER end plus the type.
+ * The anchor comes from the route's `[id]` param, never from the form.
+ */
+export const createRelationshipSchema = z.object({
+  other_character_id: z.uuid("Pick a character"),
+  type: z.enum(RELATIONSHIP_TYPES),
+});
+
+/**
+ * Editing keeps the anchor character fixed and replaces the other end and/or the type.
+ * `anchor_id` tells the route which column holds the anchor; it is validated but never
+ * written, and the route re-reads the row rather than trusting it to decide the column.
+ */
+export const updateRelationshipSchema = z.object({
+  anchor_id: z.uuid(),
+  other_character_id: z.uuid("Pick a character"),
+  type: z.enum(RELATIONSHIP_TYPES),
+});
+
+export type CreateRelationshipCommand = z.infer<typeof createRelationshipSchema>;
+export type UpdateRelationshipCommand = z.infer<typeof updateRelationshipSchema>;

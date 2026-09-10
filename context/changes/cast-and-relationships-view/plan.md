@@ -376,39 +376,39 @@ implicit.
 
 #### Automated
 
-- [x] 1.1 Migration applies from scratch: `npx supabase db reset`
-- [x] 1.2 Harness passes with the relationships block: `npm run db:verify-rls`
-- [x] 1.3 Negative control: too-broad `relationships_select_own` makes the check FAIL, then restored
-- [x] 1.4 Positive control: too-narrow `relationships_update_own` makes the check FAIL, then restored
-- [x] 1.5 Types regenerate and contain a `relationships` row type: `npm run db:types`
-- [x] 1.6 Type checking and build pass: `npx astro check`, `npm run build`
-- [x] 1.7 Linting passes: `npm run lint`
+- [x] 1.1 Migration applies from scratch: `npx supabase db reset` — e73ffb2
+- [x] 1.2 Harness passes with the relationships block: `npm run db:verify-rls` — e73ffb2
+- [x] 1.3 Negative control: too-broad `relationships_select_own` makes the check FAIL, then restored — e73ffb2
+- [x] 1.4 Positive control: too-narrow `relationships_update_own` makes the check FAIL, then restored — e73ffb2
+- [x] 1.5 Types regenerate and contain a `relationships` row type: `npm run db:types` — e73ffb2
+- [x] 1.6 Type checking and build pass: `npx astro check`, `npm run build` — e73ffb2
+- [x] 1.7 Linting passes: `npm run lint` — e73ffb2
 
 #### Manual
 
-- [x] 1.8 Studio shows `relationships` with RLS enabled and exactly four `authenticated` policies
-- [x] 1.9 Deleting a character cascades its relationships away
-- [x] 1.10 The type check rejects an unknown value and the self-relationship check rejects a = b
+- [x] 1.8 Studio shows `relationships` with RLS enabled and exactly four `authenticated` policies — e73ffb2
+- [x] 1.9 Deleting a character cascades its relationships away — e73ffb2
+- [x] 1.10 The type check rejects an unknown value and the self-relationship check rejects a = b — e73ffb2
 
 ### Phase 2: Relationships inline under every character
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npx astro check`
-- [ ] 2.2 Production build succeeds: `npm run build`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Formatting is clean on touched files
-- [ ] 2.5 Harness still passes: `npm run db:verify-rls`
+- [x] 2.1 Type checking passes: `npx astro check`
+- [x] 2.2 Production build succeeds: `npm run build`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Formatting is clean on touched files
+- [x] 2.5 Harness still passes: `npm run db:verify-rls`
 
 #### Manual
 
-- [ ] 2.6 A relationship added under one character appears under BOTH characters
-- [ ] 2.7 Connections are visible without any clicking (US-01 satisfied at zero interactions)
-- [ ] 2.8 The other-character select excludes the character whose row it is in
-- [ ] 2.9 A character with no relationships renders NO relationship section at all — no empty heading, no "None", no bare separator
-- [ ] 2.10 At 375px no zooming, vertical scrolling only
-- [ ] 2.11 With JavaScript disabled the add form still submits
-- [ ] 2.12 A second account's characters never appear in the select
+- [x] 2.6 A relationship added under one character appears under BOTH characters
+- [x] 2.7 Connections are visible without any clicking (US-01 satisfied at zero interactions)
+- [x] 2.8 The other-character select excludes the character whose row it is in
+- [x] 2.9 A character with no relationships renders NO relationship section at all — no empty heading, no "None", no bare separator
+- [x] 2.10 At 375px no zooming, vertical scrolling only
+- [x] 2.11 With JavaScript disabled the add form still submits
+- [x] 2.12 A second account's characters never appear in the select
 
 ### Phase 3: Edit and delete a relationship
 
