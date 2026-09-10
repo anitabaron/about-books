@@ -490,22 +490,22 @@ restore `not null` on `type`, which is only safe while no custom type is in use.
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npx astro check`
-- [x] 2.2 Linting passes: `npm run lint`
-- [x] 2.3 Formatting clean on touched files
-- [x] 2.4 Isolation still green: `npm run db:verify-rls`
-- [x] 2.5 `src/lib/connections.ts` exports the resolution function and the page imports it
-- [x] 2.6 Unit tests pass: `npm test` (both type sources, missing map entry, both-ends indexing)
+- [x] 2.1 Type checking passes: `npx astro check` — 2c08fb7
+- [x] 2.2 Linting passes: `npm run lint` — 2c08fb7
+- [x] 2.3 Formatting clean on touched files — 2c08fb7
+- [x] 2.4 Isolation still green: `npm run db:verify-rls` — 2c08fb7
+- [x] 2.5 `src/lib/connections.ts` exports the resolution function and the page imports it — 2c08fb7
+- [x] 2.6 Unit tests pass: `npm test` (both type sources, missing map entry, both-ends indexing) — 2c08fb7
 - [ ] 2.7 Migration reaches production: `npx supabase db push` applied, `relationship_types` in the remote schema
 
 #### Manual
 
-- [x] 2.8 A type added on one book appears only in that book's forms
-- [x] 2.9 A connection with a custom type renders under both characters
-- [x] 2.10 A connection with a shared type renders exactly as before
-- [x] 2.11 An edit can move a connection between a shared and a custom type, both ways
-- [x] 2.12 A character with no connections renders no relationship section at all
-- [x] 2.13 Whole flow works at 364px; a reader ignoring the disclosure sees no change
+- [x] 2.8 A type added on one book appears only in that book's forms — 2c08fb7
+- [x] 2.9 A connection with a custom type renders under both characters — 2c08fb7
+- [x] 2.10 A connection with a shared type renders exactly as before — 2c08fb7
+- [x] 2.11 An edit can move a connection between a shared and a custom type, both ways — 2c08fb7
+- [x] 2.12 A character with no connections renders no relationship section at all — 2c08fb7
+- [x] 2.13 Whole flow works at 364px; a reader ignoring the disclosure sees no change — 2c08fb7
 
 ### Phase 3: Rename and delete a type
 
