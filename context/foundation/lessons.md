@@ -36,13 +36,20 @@ older build. The signal was `/books` returning 404 in production after a commit 
   newly added route is the tell. Checking that the site "still loads" proves nothing, because
   the previous build serves the old routes perfectly well.
 
-## A top-level `return` in Astro frontmatter trips the lint, not the compiler
+## A top-level `return` in Astro frontmatter crashes the linter, not the compiler
 
 **Rule.** Do not use an early `return` at the top level of an `.astro` frontmatter block to
-short-circuit a page. It compiles and behaves correctly, but the frontmatter is analysed as an
-async function body, so `@typescript-eslint/no-misused-promises` reports "Expected non-Promise
-value in a boolean conditional" or similar — a confusing message that points nowhere near the
-actual line of intent. Set the status and render instead:
+short-circuit a page. It compiles and behaves correctly, but it breaks
+`@typescript-eslint/no-misused-promises`.
+
+**This is a tool crash, not a lint finding.** Exit 2 with
+`Non-null Assertion Failed: Expected node to have a parent` means the rule could not walk the
+AST — nothing is wrong with your code's logic, and no amount of reading the diff will show it.
+The cause is the top-level `return`; the fix is `Astro.response.status`. Exit 1 is a finding
+about your code; exit 2 is the tooling failing, and the message names the rule that broke
+rather than the defect.
+
+Set the status and render instead:
 
 ```astro
 ---
@@ -52,9 +59,16 @@ if (!book) Astro.response.status = 404; // not: if (!book) return new Response(n
 ```
 
 **What happened.** S-02's `/books/[id]` page needed a 404 for a book the reader does not own.
-The obvious early return produced a real 404 and a red lint. Working around it with
-`Astro.response.status = 404` plus a conditional template gives the same HTTP response with no
-suppression comment, so the rule stays on for the cases it is meant to catch.
+The obvious early return produced a real 404 and an ESLint run that exited 2 with the message
+above, pointing at the `return` line. Moving the return moved the crash with it, which is what
+identified the cause: the construct, not the surrounding code. `Astro.response.status = 404`
+plus a conditional template gives the same HTTP response with no suppression comment, so the
+rule stays on for the cases it is meant to catch.
+
+This entry originally described the symptom as a lint _finding_ — "Expected non-Promise value
+in a boolean conditional" — which was inferred from how the rule usually behaves rather than
+from the run. Corrected against the measured output. The symptom is the only thing anyone will
+search for, so getting it wrong made the entry useless at the moment it was needed.
 
 **How to apply.** Every dynamic route hits this the first time it needs a not-found branch.
 Reach for `Astro.response.status` before reaching for `eslint-disable`. A suppression here
