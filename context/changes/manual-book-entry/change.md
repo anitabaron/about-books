@@ -1,7 +1,7 @@
 ---
 change_id: manual-book-entry
 title: Add a book to your own collection (roadmap S-01)
-status: implementing
+status: implemented
 created: 2026-09-09
 updated: 2026-09-10
 archived_at: null

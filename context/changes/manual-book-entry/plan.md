@@ -336,12 +336,12 @@ rollback there means redeploying a previous commit.
 
 #### Automated
 
-- [x] 2.1 Production build succeeds locally before pushing: `npm run build`
-- [x] 2.2 Remote schema still carries the migration: `npx supabase migration list`
+- [x] 2.1 Production build succeeds locally before pushing: `npm run build` — 20acf13
+- [x] 2.2 Remote schema still carries the migration: `npx supabase migration list` — 20acf13
 
 #### Manual
 
-- [x] 2.3 Deployed `/books` loads for a signed-in reader and the add form works
-- [x] 2.4 A book created by remote reader A appears in reader A's list
-- [x] 2.5 Reader A's book is NOT visible to remote reader B — empty list, not an error (F-01 criterion 4.7)
-- [x] 2.6 Deployed `/books` while signed out redirects to sign-in
+- [x] 2.3 Deployed `/books` loads for a signed-in reader and the add form works — 20acf13
+- [x] 2.4 A book created by remote reader A appears in reader A's list — 20acf13
+- [x] 2.5 Reader A's book is NOT visible to remote reader B — empty list, not an error (F-01 criterion 4.7) — 20acf13
+- [x] 2.6 Deployed `/books` while signed out redirects to sign-in — 20acf13
