@@ -75,7 +75,9 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
           {
             books.map((book) => (
               <li class="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
-                <p class="font-medium break-words">{book.title}</p>
+                <a href={`/books/${book.id}`} class="font-medium break-words hover:underline">
+                  {book.title}
+                </a>
                 <p class="mt-1 text-sm break-words text-blue-100/70">{book.author ?? "Author unknown"}</p>
                 <p class="mt-2 text-xs text-blue-100/40">Added {dateFormatter.format(new Date(book.created_at))}</p>
               </li>

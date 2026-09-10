@@ -393,39 +393,39 @@ now, so that step is no longer implicit.
 
 #### Automated
 
-- [x] 1.1 Migration applies from scratch: `npx supabase db reset`
-- [x] 1.2 Isolation harness passes with the characters block: `npm run db:verify-rls`
-- [x] 1.3 Negative control: too-broad `characters_select_own` makes the check FAIL, then restored
-- [x] 1.4 Positive control: too-narrow `characters_update_own` makes the check FAIL, then restored
-- [x] 1.5 Types regenerate and contain a `characters` row type: `npm run db:types`
-- [x] 1.6 Type checking and build pass: `npx astro check`, `npm run build`
-- [x] 1.7 Linting passes: `npm run lint`
+- [x] 1.1 Migration applies from scratch: `npx supabase db reset` — 8fc3a4e
+- [x] 1.2 Isolation harness passes with the characters block: `npm run db:verify-rls` — 8fc3a4e
+- [x] 1.3 Negative control: too-broad `characters_select_own` makes the check FAIL, then restored — 8fc3a4e
+- [x] 1.4 Positive control: too-narrow `characters_update_own` makes the check FAIL, then restored — 8fc3a4e
+- [x] 1.5 Types regenerate and contain a `characters` row type: `npm run db:types` — 8fc3a4e
+- [x] 1.6 Type checking and build pass: `npx astro check`, `npm run build` — 8fc3a4e
+- [x] 1.7 Linting passes: `npm run lint` — 8fc3a4e
 
 #### Manual
 
-- [x] 1.8 Studio shows `characters` with RLS enabled and exactly four `authenticated` policies
-- [x] 1.9 Deleting a book cascades its characters away; deleting a reader cascades both
+- [x] 1.8 Studio shows `characters` with RLS enabled and exactly four `authenticated` policies — 8fc3a4e
+- [x] 1.9 Deleting a book cascades its characters away; deleting a reader cascades both — 8fc3a4e
 
 ### Phase 2: Book page and add a character
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npx astro check`
-- [ ] 2.2 Production build succeeds: `npm run build`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Formatting is clean on touched files
-- [ ] 2.5 Isolation harness still passes: `npm run db:verify-rls`
+- [x] 2.1 Type checking passes: `npx astro check`
+- [x] 2.2 Production build succeeds: `npm run build`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Formatting is clean on touched files
+- [x] 2.5 Isolation harness still passes: `npm run db:verify-rls`
 
 #### Manual
 
-- [ ] 2.6 A character is added from a name alone (US-02 acceptance criterion)
-- [ ] 2.7 Open book → type name → submit completes in under 30 seconds on a phone viewport
-- [ ] 2.8 At 375px the page needs no zooming and scrolls only vertically
-- [ ] 2.9 A blank description renders without an empty-string artifact
-- [ ] 2.10 Empty and whitespace-only names are refused client-side with no page load
-- [ ] 2.11 Clicking a book in `/books` opens that book's page
-- [ ] 2.12 Another reader's book id returns 404, not an empty page or an error trace
-- [ ] 2.13 With JavaScript disabled the add form still submits
+- [x] 2.6 A character is added from a name alone (US-02 acceptance criterion)
+- [x] 2.7 Open book → type name → submit completes in under 30 seconds on a phone viewport
+- [x] 2.8 At 375px the page needs no zooming and scrolls only vertically
+- [x] 2.9 A blank description renders without an empty-string artifact
+- [x] 2.10 Empty and whitespace-only names are refused client-side with no page load
+- [x] 2.11 Clicking a book in `/books` opens that book's page
+- [x] 2.12 Another reader's book id returns 404, not an empty page or an error trace
+- [x] 2.13 With JavaScript disabled the add form still submits
 
 ### Phase 3: Edit and delete a character
 

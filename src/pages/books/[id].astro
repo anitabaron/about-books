@@ -1,0 +1,125 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import AddCharacterForm from "@/components/characters/AddCharacterForm";
+import { createClient } from "@/lib/supabase";
+import type { Book, Character } from "@/types";
+import { Users } from "lucide-react";
+
+type BookRow = Pick<Book, "id" | "title" | "author">;
+type CharacterRow = Pick<Character, "id" | "name" | "description" | "created_at">;
+
+const bookId = Astro.params.id;
+const formError = Astro.url.searchParams.get("error");
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+
+let book: BookRow | null = null;
+let characters: CharacterRow[] = [];
+let loadError: string | null = null;
+
+if (!supabase) {
+  loadError = "Supabase is not configured";
+} else {
+  // RLS-filtered: another reader's book id is indistinguishable from a missing one, which is
+  // the behaviour we want — a 404 leaks nothing about what other readers have.
+  const { data: found } = await supabase
+    .from("books")
+    .select("id, title, author")
+    .eq("id", bookId)
+    .maybeSingle<BookRow>();
+  book = found;
+
+  if (book) {
+    const { data, error } = await supabase
+      .from("characters")
+      .select("id, name, description, created_at")
+      .eq("book_id", bookId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      loadError = error.message;
+    } else {
+      characters = data;
+    }
+  }
+}
+
+// A top-level `return` in Astro frontmatter crashes @typescript-eslint/no-misused-promises
+// ("Expected node to have a parent"), so the status is set on Astro.response instead. Same
+// result — a real 404 — with no early return and no rule suppression.
+if (!book && !loadError) {
+  Astro.response.status = 404;
+}
+---
+
+<Layout title={book?.title ?? "Book not found"}>
+  <div class="bg-cosmic min-h-screen px-4 py-10">
+    <div class="mx-auto w-full max-w-2xl space-y-8">
+      {
+        !book && (
+          <div class="rounded-2xl border border-white/10 bg-white/10 p-8 text-center text-white backdrop-blur-xl">
+            <p class="text-lg font-semibold">Book not found</p>
+            <p class="mt-2 text-sm text-blue-100/60">
+              {loadError ?? "It may have been deleted, or it belongs to another reader."}
+            </p>
+            <a href="/books" class="mt-4 inline-block text-sm text-purple-300 hover:underline">
+              &larr; Back to your books
+            </a>
+          </div>
+        )
+      }
+
+      {
+        book && (
+          <>
+            <header>
+              <a href="/books" class="text-sm text-purple-300 hover:underline">
+                &larr; All books
+              </a>
+              <h1 class="mt-3 bg-gradient-to-r from-blue-200 to-purple-200 bg-clip-text text-3xl font-bold break-words text-transparent">
+                {book.title}
+              </h1>
+              <p class="mt-1 text-sm break-words text-blue-100/60">{book.author ?? "Author unknown"}</p>
+            </header>
+
+            <section class="rounded-2xl border border-white/10 bg-white/10 p-6 text-white backdrop-blur-xl">
+              <h2 class="mb-4 text-lg font-semibold">Add a character</h2>
+              <AddCharacterForm bookId={book.id} serverError={formError} client:load />
+            </section>
+
+            <section class="space-y-3">
+              <h2 class="text-lg font-semibold text-white">
+                Cast
+                {characters.length > 0 && <span class="text-blue-100/50">({characters.length})</span>}
+              </h2>
+
+              {loadError && (
+                <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">
+                  {loadError}
+                </p>
+              )}
+
+              {!loadError && characters.length === 0 && (
+                <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/60 backdrop-blur-xl">
+                  <Users className="mx-auto mb-3 size-8 text-white/30" />
+                  <p>No characters yet. Add the first name you meet.</p>
+                </div>
+              )}
+
+              <ul class="space-y-3">
+                {characters.map((character) => (
+                  <li class="rounded-2xl border border-white/10 bg-white/10 p-4 text-white backdrop-blur-xl">
+                    <p class="font-medium break-words">{character.name}</p>
+                    {character.description && (
+                      <p class="mt-1 text-sm break-words text-blue-100/70">{character.description}</p>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          </>
+        )
+      }
+    </div>
+  </div>
+</Layout>
