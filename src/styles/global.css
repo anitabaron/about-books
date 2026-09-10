@@ -144,12 +144,7 @@
 }
 
 /* The wordmark carries the poster hero's offset-colour treatment at UI scale,
- * so the brand reads the same on the landing page and inside the app.
- *
- * 2px, not the hero's 0.055em: at 16px an em-relative offset lands under a
- * pixel and reads as a blurry render rather than as a deliberate second
- * impression. The ghost is generated content, so it never reaches the
- * accessibility tree and cannot be selected. */
+ * so the brand reads the same on the landing page and inside the app. */
 .wordmark {
   position: relative;
   display: inline-block;
@@ -182,10 +177,11 @@
   pointer-events: none;
   user-select: none;
 }
-/* Fixed pixels, not em. Scaling the offsets with the font size was an
- * improvement on paper and a mess on screen: at 19px the layers drift far
+/* Fixed pixels, not em, and small. Scaling the offsets with the font size was
+ * an improvement on paper and a mess on screen: at 19px the layers drift far
  * enough apart to read as three overlapping words instead of one inked mark.
- * Two and three pixels hold at every size this wordmark is actually set. */
+ * Two pixels up and two down is one mark printed slightly out of register —
+ * any further and it reads as a drop shadow. */
 .wordmark::before {
   inset-block-start: -2px;
   inset-inline-start: -2px;
