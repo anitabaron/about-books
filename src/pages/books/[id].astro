@@ -262,6 +262,57 @@ if (!book && !loadError) {
                           Add another character to this book before creating a relationship.
                         </p>
                       )}
+
+                      {/* Managing connections lives inside the disclosure on purpose: the always-visible list
+                          above stays a clean scan, and edit/delete controls do not compete with it. */}
+                      {connections.length > 0 && (
+                        <div class="mt-4 space-y-3 border-t border-white/10 pt-3">
+                          <p class="text-xs text-blue-100/70">Change or remove a relationship</p>
+                          {connections.map((connection) => (
+                            <div class="rounded-lg border border-white/10 bg-white/5 p-2">
+                              <form method="POST" action={`/api/relationships/${connection.id}`} class="space-y-2">
+                                {/* The anchor tells the route which end to keep; it re-reads the row to work
+                                    out which column that is. */}
+                                <input type="hidden" name="anchor_id" value={character.id} />
+                                <select
+                                  name="other_character_id"
+                                  class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                                >
+                                  {others.map((other) => (
+                                    <option value={other.id} selected={other.id === connection.otherId}>
+                                      {other.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                <select
+                                  name="type"
+                                  class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                                >
+                                  {RELATIONSHIP_TYPES.map((relationshipType) => (
+                                    <option value={relationshipType} selected={relationshipType === connection.type}>
+                                      {relationshipType}
+                                    </option>
+                                  ))}
+                                </select>
+                                <button
+                                  type="submit"
+                                  class="rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-purple-500"
+                                >
+                                  Save relationship
+                                </button>
+                              </form>
+                              <form method="POST" action={`/api/relationships/${connection.id}/delete`} class="mt-2">
+                                <button
+                                  type="submit"
+                                  class="rounded-lg border border-red-400/40 px-3 py-1.5 text-sm text-red-300 transition-colors hover:bg-red-900/30"
+                                >
+                                  Remove relationship
+                                </button>
+                              </form>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </details>
                   </li>
                 ))}

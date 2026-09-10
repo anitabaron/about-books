@@ -41,13 +41,13 @@ The product's bet is that if the reader's own notes about a cast are stored as s
 
 ## At a glance
 
-| ID   | Change ID                          | Outcome (user can …)                                                                | Prerequisites | PRD refs                            | Status   |
-| ---- | ---------------------------------- | ----------------------------------------------------------------------------------- | ------------- | ----------------------------------- | -------- |
-| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | done     |
-| S-01 | `manual-book-entry`                | add a book by title and author and see it in their own collection                   | F-01          | FR-001, FR-002, US-01               | done     |
-| S-02 | `character-notes-crud`             | add, edit and delete a character with a note, fast, on a phone                      | S-01          | FR-003, US-02                       | done     |
+| ID   | Change ID                          | Outcome (user can …)                                                                | Prerequisites | PRD refs                            | Status      |
+| ---- | ---------------------------------- | ----------------------------------------------------------------------------------- | ------------- | ----------------------------------- | ----------- |
+| F-01 | `private-by-default-data-contract` | (foundation) first domain table lands with per-user isolation proven and repeatable | —             | FR-001, NFR privacy, Access Control | done        |
+| S-01 | `manual-book-entry`                | add a book by title and author and see it in their own collection                   | F-01          | FR-001, FR-002, US-01               | done        |
+| S-02 | `character-notes-crud`             | add, edit and delete a character with a note, fast, on a phone                      | S-01          | FR-003, US-02                       | done        |
 | S-03 | `cast-and-relationships-view`      | name relationships between characters and read the whole cast as a list             | S-02          | FR-004, FR-007, US-01               | in-progress |
-| S-04 | `book-status-and-recall`           | mark a book finished, filter active vs finished, and read a finished book back      | S-01          | FR-009, US-04                       | proposed |
+| S-04 | `book-status-and-recall`           | mark a book finished, filter active vs finished, and read a finished book back      | S-01          | FR-009, US-04                       | proposed    |
 
 ## Baseline
 
@@ -170,6 +170,12 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
   star, so half a day on editing book titles was the wrong trade. Returns as its own slice
   after S-04 if time allows; needs no PRD change to come back. F-01's `updateBookSchema`
   already exists and waits unused for it.
+- **Deduplicating relationship pairs — first item after the MVP.** Why parked: nothing stops a
+  reader entering A↔B and then B↔A as two rows, and the cast view then shows the connection
+  twice (correctly — there are two rows). Surfaced during S-03 Phase 3 testing. The fix is not
+  a one-liner: a `unique (least(a,b), greatest(a,b))` index would throw a raw database error at
+  the reader, so it also needs catching and translating into a readable message. Roughly an
+  hour against a mild symptom.
 - **App-level observability (logging, error tracking, metrics).** Why parked: no phase-1 NFR depends on it, Cloudflare platform observability is already enabled in `wrangler.jsonc`, and `main_goal: speed` keeps every ungated layer simple.
 - **All PRD § Non-Goals stand unchanged:** no social features, no book purchasing or commerce, no academic or textbook support, no reading progress tracking.
 

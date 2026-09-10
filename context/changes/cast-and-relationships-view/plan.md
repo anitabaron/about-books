@@ -394,37 +394,37 @@ implicit.
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npx astro check`
-- [x] 2.2 Production build succeeds: `npm run build`
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Formatting is clean on touched files
-- [x] 2.5 Harness still passes: `npm run db:verify-rls`
+- [x] 2.1 Type checking passes: `npx astro check` — 4495fcb
+- [x] 2.2 Production build succeeds: `npm run build` — 4495fcb
+- [x] 2.3 Linting passes: `npm run lint` — 4495fcb
+- [x] 2.4 Formatting is clean on touched files — 4495fcb
+- [x] 2.5 Harness still passes: `npm run db:verify-rls` — 4495fcb
 
 #### Manual
 
-- [x] 2.6 A relationship added under one character appears under BOTH characters
-- [x] 2.7 Connections are visible without any clicking (US-01 satisfied at zero interactions)
-- [x] 2.8 The other-character select excludes the character whose row it is in
-- [x] 2.9 A character with no relationships renders NO relationship section at all — no empty heading, no "None", no bare separator
-- [x] 2.10 At 375px no zooming, vertical scrolling only
-- [x] 2.11 With JavaScript disabled the add form still submits
-- [x] 2.12 A second account's characters never appear in the select
+- [x] 2.6 A relationship added under one character appears under BOTH characters — 4495fcb
+- [x] 2.7 Connections are visible without any clicking (US-01 satisfied at zero interactions) — 4495fcb
+- [x] 2.8 The other-character select excludes the character whose row it is in — 4495fcb
+- [x] 2.9 A character with no relationships renders NO relationship section at all — no empty heading, no "None", no bare separator — 4495fcb
+- [x] 2.10 At 375px no zooming, vertical scrolling only — 4495fcb
+- [x] 2.11 With JavaScript disabled the add form still submits — 4495fcb
+- [x] 2.12 A second account's characters never appear in the select — 4495fcb
 
 ### Phase 3: Edit and delete a relationship
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npx astro check`
-- [ ] 3.2 Production build succeeds: `npm run build`
-- [ ] 3.3 Linting passes: `npm run lint`
-- [ ] 3.4 Formatting is clean on touched files
-- [ ] 3.5 Harness still passes: `npm run db:verify-rls`
+- [x] 3.1 Type checking passes: `npx astro check`
+- [x] 3.2 Production build succeeds: `npm run build`
+- [x] 3.3 Linting passes: `npm run lint`
+- [x] 3.4 Formatting is clean on touched files
+- [x] 3.5 Harness still passes: `npm run db:verify-rls`
 
 #### Manual
 
-- [ ] 3.6 Changing a relationship's type updates it under both characters
-- [ ] 3.7 Changing the other character moves the connection off the previous partner
-- [ ] 3.8 Editing from the `character_b_id` side rewrites the correct end
-- [ ] 3.9 Deleting a relationship removes it from both characters' rows
-- [ ] 3.10 Edit and delete both work with JavaScript disabled
-- [ ] 3.11 A second account cannot edit or delete the first account's relationship by id
+- [x] 3.6 Changing a relationship's type updates it under both characters
+- [x] 3.7 Changing the other character moves the connection off the previous partner
+- [x] 3.8 Editing from the `character_b_id` side rewrites the correct end
+- [x] 3.9 Deleting a relationship removes it from both characters' rows
+- [x] 3.10 Edit and delete both work with JavaScript disabled
+- [x] 3.11 A second account cannot edit or delete the first account's relationship by id

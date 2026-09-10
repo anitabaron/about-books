@@ -70,8 +70,13 @@ _Dune_ with two characters.
 
 ## Open Risks & Assumptions
 
-- **Duplicate pairs are possible.** Nothing stops A↔B and B↔A as two rows. Accepted for the
-  MVP; `unique (least(a,b), greatest(a,b))` is the fix if time remains.
+- **Duplicate pairs are possible.** Nothing stops A↔B and B↔A as two rows, and the render
+  correctly shows the connection twice because there genuinely are two rows. It materialised
+  during Phase 3 testing by editing a relationship into a pair that already existed — a reader
+  can do exactly the same. **The fix is not a one-liner:** a
+  `unique (least(a,b), greatest(a,b))` index would throw a raw database error at the reader, so
+  it also needs catching and translating into a readable message. Roughly an hour against a
+  mild symptom, so it is the first item after the MVP, not part of it.
 - **The anchor column is not fixed.** A relationship renders under both characters, so editing
   from one side must work out whether the anchor is `character_a_id` or `character_b_id`.
   Getting this wrong silently rewrites the wrong end — the one bug in this slice that would not
