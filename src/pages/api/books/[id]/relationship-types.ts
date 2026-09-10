@@ -16,7 +16,14 @@ export const POST: APIRoute = async (context) => {
     return context.redirect(`/books?error=${encodeURIComponent("Supabase is not configured")}`);
   }
 
-  const backToBook = (message: string) => context.redirect(`/books/${bookId}?error=${encodeURIComponent(message)}`);
+  // `at` scopes the message so the page renders it where the reader was working, and the
+  // fragment re-opens the collapsed disclosure and scrolls to it. Without both, every error
+  // from this page surfaces in the "Add a character" island at the very top, in a section the
+  // reader can no longer see.
+  const backToBook = (message: string) =>
+    context.redirect(
+      `/books/${bookId}?error=${encodeURIComponent(message)}&at=relationship-types#relationship-types-add`,
+    );
 
   const form = await context.request.formData();
   const parsed = createRelationshipTypeSchema.safeParse({ name: form.get("name") });

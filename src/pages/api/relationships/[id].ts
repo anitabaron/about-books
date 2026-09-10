@@ -66,8 +66,12 @@ export const POST: APIRoute = async (context) => {
     return toBooks("Character not found");
   }
 
+  // Scoped like the vocabulary section: `at` + `for` put the message back under the character
+  // whose form was rejected, and the fragment re-opens that character's collapsed disclosure.
   const backToBook = (message: string) =>
-    context.redirect(`/books/${anchor.book_id}?error=${encodeURIComponent(message)}`);
+    context.redirect(
+      `/books/${anchor.book_id}?error=${encodeURIComponent(message)}&at=connections&for=${anchor_id}#character-${anchor_id}-relationships`,
+    );
 
   if (anchor_id === other_character_id) {
     return backToBook("A character cannot be related to itself");

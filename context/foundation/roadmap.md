@@ -141,6 +141,7 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
   is deliberate — `getViteConfig` from `astro/config` pulls in the Cloudflare adapter and fails
   the test run at startup with "exports is not defined" — and a drift here fails loudly on the
   next test run rather than silently. Not worth a mechanism today.
+- **Add `npx astro check` to CI.** Why parked: raised 2026-09-10 while reviewing the test plan and deliberately deferred until after Phase 3. One line in `.github/workflows/ci.yml`, and it would make §5 of `test-plan.md` able to claim typecheck as a CI gate rather than local-only — it is the gate that catches exactly the type drift Phase 2 of `reader-defined-relationship-types` was about.
 - **App-level observability (logging, error tracking, metrics).** Why parked: no requirement in this milestone depends on it, Cloudflare platform observability is already enabled in `wrangler.jsonc`, and `main_goal: speed` keeps every ungated layer simple.
 - **All PRD § Non-Goals stand unchanged:** no social features, no book purchasing or commerce, no academic or textbook support, no reading progress tracking.
 

@@ -459,7 +459,7 @@ and `type` are read from `formData()` by name, so the submitted payload is unaff
 #### Manual Verification:
 
 - Renaming a type updates the name on every connection holding it, in one action
-- Deleting a type in use is refused with the correct count, and the type is still there
+- Deleting a type in use is refused with the correct count and the type is STILL PRESENT afterwards — the pass condition is the refusal, not a deletion
 - Deleting an unused type succeeds and it disappears from the forms
 - A rename to a name already used in that book is refused with a readable message
 - Reader B cannot rename or delete reader A's type (verified against the deployed app with two
@@ -557,17 +557,17 @@ restore `not null` on `type`, which is only safe while no custom type is in use.
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npx astro check`
-- [ ] 3.2 Linting passes: `npm run lint`
-- [ ] 3.3 Isolation and the type-in-use refusal assertion still green: `npm run db:verify-rls`
+- [x] 3.1 Type checking passes: `npx astro check`
+- [x] 3.2 Linting passes: `npm run lint`
+- [x] 3.3 Isolation and the type-in-use refusal assertion still green: `npm run db:verify-rls`
 
 #### Manual
 
-- [ ] 3.4 A rename updates every connection holding the type, in one action
-- [ ] 3.4a The "Need another word?" link appears beside the type select in both connection forms and reaches the disclosure
-- [ ] 3.4b The summary reads "Relationship types — add your own"
-- [ ] 3.4c The add-relationship form asks for the type before the person
-- [ ] 3.5 Deleting a type in use is refused with the correct count
-- [ ] 3.6 Deleting an unused type succeeds and it leaves the forms
-- [ ] 3.7 A rename to an existing name in that book is refused readably
+- [x] 3.4 A rename updates every connection holding the type, in one action
+- [x] 3.4a The "Need another word?" link appears beside the type select in both connection forms and reaches the disclosure
+- [x] 3.4b The summary reads "Relationship types — add your own"
+- [x] 3.4c The add-relationship form asks for the type before the person
+- [x] 3.5 Deleting a type in use is REFUSED with the correct count and the type is still present afterwards
+- [x] 3.6 Deleting an unused type succeeds and it leaves the forms
+- [x] 3.7 A rename to an existing name in that book is refused readably
 - [ ] 3.8 Reader B cannot rename or delete reader A's type (deployed, two real accounts)

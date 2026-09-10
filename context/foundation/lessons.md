@@ -89,3 +89,32 @@ changed lines, so it passed review and survived two commits. Nobody had reason t
 **How to apply.** The failure mode is shared with the version-pin lesson above: **a tool
 confirming that it did something is not evidence that it did the intended thing.** One command
 after the edit is usually enough — `grep '^#' file.md`, `grep 'create policy' migration.sql`.
+
+## A probe must be able to fail for the reason you are testing
+
+**Rule.** `curl` without `-X` sends GET when there is no body, and a POST-only Astro route
+answers 404 to a GET — indistinguishable from a route that does not exist. Probe route
+matching with a nonexistent UUID; never with a real id on a destructive route.
+
+**What happened.** A shell helper defined as `curl … "$@"` relied on `--data-*` to imply the
+method. The delete calls carry no body, so three requests went out as GETs and came back 404.
+The 404s were read as a broken route manifest and diagnosed as such; the manifest was fine.
+The same helper, in the same run, also issued real POSTs to destructive endpoints used as
+existence probes, which deleted seed rows — a character, and a connection that a later
+assertion depended on.
+
+**Why the rule did not save it.** `test-plan.md` §6.5 already carries this exact rule — "pick
+a probe that can actually distinguish present from absent — a `GET` on a POST-only route
+answers 404 either way" — committed about an hour before it was walked into. Nobody opens a
+TBD stub in a cookbook before writing a shell helper. That is why the rule belongs here:
+`CLAUDE.md` loads this file every session.
+
+**How to apply.**
+
+- Put `-X POST` in the helper itself, not in the calls that happen to have a body.
+- Probe existence with input that cannot destroy anything — a nonexistent UUID on a route
+  whose handler answers "not found" with a redirect tells you the route matched.
+- The wider class: a shortcut looks cheap because you are looking at what the command is
+  meant to check, not at what it does on the way there. The `GIT_INDEX_FILE` workaround
+  earlier in this project was the same shape — it silently reverted a manifest and two
+  documentation files.
