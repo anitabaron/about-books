@@ -23,6 +23,8 @@ export interface Book {
   user_id: string;
   title: string;
   author: string | null;
+  /** Null means currently reading. A timestamp means finished on that date — there is no separate status flag. */
+  finished_at: string | null;
   created_at: string;
   updated_at: string;
 }

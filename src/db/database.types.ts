@@ -38,6 +38,7 @@ export type Database = {
         Row: {
           author: string | null
           created_at: string
+          finished_at: string | null
           id: string
           title: string
           updated_at: string
@@ -46,6 +47,7 @@ export type Database = {
         Insert: {
           author?: string | null
           created_at?: string
+          finished_at?: string | null
           id?: string
           title: string
           updated_at?: string
@@ -54,6 +56,7 @@ export type Database = {
         Update: {
           author?: string | null
           created_at?: string
+          finished_at?: string | null
           id?: string
           title?: string
           updated_at?: string

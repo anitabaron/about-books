@@ -6,7 +6,7 @@ import type { Book, Character, Relationship, RelationshipType } from "@/types";
 import { RELATIONSHIP_TYPES } from "@/types";
 import { Users } from "lucide-react";
 
-type BookRow = Pick<Book, "id" | "title" | "author">;
+type BookRow = Pick<Book, "id" | "title" | "author" | "finished_at">;
 type CharacterRow = Pick<Character, "id" | "name" | "description" | "created_at">;
 type RelationshipRow = Pick<Relationship, "id" | "character_a_id" | "character_b_id" | "type">;
 
@@ -33,7 +33,7 @@ if (!supabase) {
   // the behaviour we want — a 404 leaks nothing about what other readers have.
   const { data: found } = await supabase
     .from("books")
-    .select("id, title, author")
+    .select("id, title, author, finished_at")
     .eq("id", bookId)
     .maybeSingle<BookRow>();
   book = found;
@@ -59,6 +59,8 @@ if (!supabase) {
 // Relationships touching this cast. The lookup matches either end, so `.or()` spans both
 // columns; the cast's ids already bound it to this book, which is why the table needs no
 // book_id of its own.
+const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
+
 const connectionsByCharacter = new Map<string, Connection[]>();
 
 if (supabase && characters.length > 0) {
@@ -134,6 +136,22 @@ if (!book && !loadError) {
                 {book.title}
               </h1>
               <p class="mt-1 text-sm break-words text-blue-100/60">{book.author ?? "Author unknown"}</p>
+
+              {book.finished_at && (
+                <p class="mt-2 text-xs text-blue-100/50">Finished {dateFormatter.format(new Date(book.finished_at))}</p>
+              )}
+
+              {/* The form submits the state it WANTS, not "flip whatever it is now" -- submitting
+                  twice is therefore idempotent, which a double tap on a slow connection needs. */}
+              <form method="POST" action={`/api/books/${book.id}/finish`} class="mt-3">
+                <input type="hidden" name="finished" value={book.finished_at ? "false" : "true"} />
+                <button
+                  type="submit"
+                  class="rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-sm transition-colors hover:bg-white/20"
+                >
+                  {book.finished_at ? "Reopen this book" : "Mark as finished"}
+                </button>
+              </form>
             </header>
 
             <section class="rounded-2xl border border-white/10 bg-white/10 p-6 text-white backdrop-blur-xl">
