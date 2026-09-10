@@ -410,37 +410,37 @@ now, so that step is no longer implicit.
 
 #### Automated
 
-- [x] 2.1 Type checking passes: `npx astro check`
-- [x] 2.2 Production build succeeds: `npm run build`
-- [x] 2.3 Linting passes: `npm run lint`
-- [x] 2.4 Formatting is clean on touched files
-- [x] 2.5 Isolation harness still passes: `npm run db:verify-rls`
+- [x] 2.1 Type checking passes: `npx astro check` — cfbe4ab
+- [x] 2.2 Production build succeeds: `npm run build` — cfbe4ab
+- [x] 2.3 Linting passes: `npm run lint` — cfbe4ab
+- [x] 2.4 Formatting is clean on touched files — cfbe4ab
+- [x] 2.5 Isolation harness still passes: `npm run db:verify-rls` — cfbe4ab
 
 #### Manual
 
-- [x] 2.6 A character is added from a name alone (US-02 acceptance criterion)
-- [x] 2.7 Open book → type name → submit completes in under 30 seconds on a phone viewport
-- [x] 2.8 At 375px the page needs no zooming and scrolls only vertically
-- [x] 2.9 A blank description renders without an empty-string artifact
-- [x] 2.10 Empty and whitespace-only names are refused client-side with no page load
-- [x] 2.11 Clicking a book in `/books` opens that book's page
-- [x] 2.12 Another reader's book id returns 404, not an empty page or an error trace
-- [x] 2.13 With JavaScript disabled the add form still submits
+- [x] 2.6 A character is added from a name alone (US-02 acceptance criterion) — cfbe4ab
+- [x] 2.7 Open book → type name → submit completes in under 30 seconds on a phone viewport — cfbe4ab
+- [x] 2.8 At 375px the page needs no zooming and scrolls only vertically — cfbe4ab
+- [x] 2.9 A blank description renders without an empty-string artifact — cfbe4ab
+- [x] 2.10 Empty and whitespace-only names are refused client-side with no page load — cfbe4ab
+- [x] 2.11 Clicking a book in `/books` opens that book's page — cfbe4ab
+- [x] 2.12 Another reader's book id returns 404, not an empty page or an error trace — cfbe4ab
+- [x] 2.13 With JavaScript disabled the add form still submits — cfbe4ab
 
 ### Phase 3: Edit and delete a character
 
 #### Automated
 
-- [ ] 3.1 Type checking passes: `npx astro check`
-- [ ] 3.2 Production build succeeds: `npm run build`
-- [ ] 3.3 Linting passes: `npm run lint`
-- [ ] 3.4 Formatting is clean on touched files
-- [ ] 3.5 Isolation harness still passes: `npm run db:verify-rls`
+- [x] 3.1 Type checking passes: `npx astro check`
+- [x] 3.2 Production build succeeds: `npm run build`
+- [x] 3.3 Linting passes: `npm run lint`
+- [x] 3.4 Formatting is clean on touched files
+- [x] 3.5 Isolation harness still passes: `npm run db:verify-rls`
 
 #### Manual
 
-- [ ] 3.6 Editing a character's name updates the row and returns to the same book page
-- [ ] 3.7 Filling in a description on an existing character works
-- [ ] 3.8 Deleting a character removes it from the list
-- [ ] 3.9 Edit and delete both work with JavaScript disabled
-- [ ] 3.10 A second account cannot edit or delete the first account's character by id
+- [x] 3.6 Editing a character's name updates the row and returns to the same book page
+- [x] 3.7 Filling in a description on an existing character works
+- [x] 3.8 Deleting a character removes it from the list
+- [x] 3.9 Edit and delete both work with JavaScript disabled
+- [x] 3.10 A second account cannot edit or delete the first account's character by id

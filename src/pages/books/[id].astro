@@ -113,6 +113,50 @@ if (!book && !loadError) {
                     {character.description && (
                       <p class="mt-1 text-sm break-words text-blue-100/70">{character.description}</p>
                     )}
+
+                    {/* Native <details> disclosure: no island and no client JavaScript, so edit and
+                        delete keep working with scripting disabled. */}
+                    <details class="mt-3">
+                      <summary class="cursor-pointer text-xs text-purple-300 hover:underline">Edit or delete</summary>
+
+                      <form method="POST" action={`/api/characters/${character.id}`} class="mt-3 space-y-2">
+                        <input type="hidden" name="book_id" value={book.id} />
+                        <label class="block text-xs text-blue-100/70" for={`name-${character.id}`}>
+                          Name
+                        </label>
+                        <input
+                          id={`name-${character.id}`}
+                          name="name"
+                          value={character.name}
+                          class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        />
+                        <label class="block text-xs text-blue-100/70" for={`desc-${character.id}`}>
+                          Note
+                        </label>
+                        <input
+                          id={`desc-${character.id}`}
+                          name="description"
+                          value={character.description ?? ""}
+                          placeholder="Add a note as you read"
+                          class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                        />
+                        <button
+                          type="submit"
+                          class="rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-purple-500"
+                        >
+                          Save changes
+                        </button>
+                      </form>
+
+                      <form method="POST" action={`/api/characters/${character.id}/delete`} class="mt-2">
+                        <button
+                          type="submit"
+                          class="rounded-lg border border-red-400/40 px-3 py-1.5 text-sm text-red-300 transition-colors hover:bg-red-900/30"
+                        >
+                          Delete character
+                        </button>
+                      </form>
+                    </details>
                   </li>
                 ))}
               </ul>
