@@ -236,14 +236,30 @@ if (!book && !loadError) {
                         </button>
                       </form>
 
-                      <form method="POST" action={`/api/characters/${character.id}/delete`} class="mt-2">
-                        <button
-                          type="submit"
-                          class="rounded-lg border border-red-400/40 px-3 py-1.5 text-sm text-red-300 transition-colors hover:bg-red-900/30"
-                        >
+                      {/* Confirmation as a nested <details>: the destructive button only exists once the
+                          reader has opened it, so a mis-tap on the summary costs a click, not a character.
+                          A JS confirm() would not survive scripting being off, and this page has no island. */}
+                      <details class="mt-2">
+                        <summary class="inline-block cursor-pointer list-none rounded-lg border border-red-400/40 px-3 py-1.5 text-sm text-red-300 transition-colors hover:bg-red-900/30 [&::-webkit-details-marker]:hidden">
                           Delete character
-                        </button>
-                      </form>
+                        </summary>
+                        <form
+                          method="POST"
+                          action={`/api/characters/${character.id}/delete`}
+                          class="mt-2 rounded-lg border border-red-400/30 bg-red-950/30 p-3"
+                        >
+                          <p class="text-xs break-words text-blue-100/80">
+                            Delete <span class="font-medium text-white">{character.name}</span> and every relationship
+                            it appears in? This cannot be undone.
+                          </p>
+                          <button
+                            type="submit"
+                            class="mt-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500"
+                          >
+                            Yes, delete permanently
+                          </button>
+                        </form>
+                      </details>
 
                       {others.length > 0 ? (
                         <form
@@ -319,14 +335,28 @@ if (!book && !loadError) {
                                   Save relationship
                                 </button>
                               </form>
-                              <form method="POST" action={`/api/relationships/${connection.id}/delete`} class="mt-2">
-                                <button
-                                  type="submit"
-                                  class="rounded-lg border border-red-400/40 px-3 py-1.5 text-sm text-red-300 transition-colors hover:bg-red-900/30"
-                                >
+                              <details class="mt-2">
+                                <summary class="inline-block cursor-pointer list-none rounded-lg border border-red-400/40 px-3 py-1.5 text-sm text-red-300 transition-colors hover:bg-red-900/30 [&::-webkit-details-marker]:hidden">
                                   Remove relationship
-                                </button>
-                              </form>
+                                </summary>
+                                <form
+                                  method="POST"
+                                  action={`/api/relationships/${connection.id}/delete`}
+                                  class="mt-2 rounded-lg border border-red-400/30 bg-red-950/30 p-3"
+                                >
+                                  <p class="text-xs break-words text-blue-100/80">
+                                    Remove the <span class="text-purple-300">{connection.type}</span> connection with{" "}
+                                    <span class="font-medium text-white">{connection.otherName}</span>? Both characters
+                                    stay; only the connection goes.
+                                  </p>
+                                  <button
+                                    type="submit"
+                                    class="mt-2 rounded-lg bg-red-600 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-red-500"
+                                  >
+                                    Yes, remove it
+                                  </button>
+                                </form>
+                              </details>
                             </div>
                           ))}
                         </div>
