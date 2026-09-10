@@ -290,18 +290,18 @@ nothing else depends on it. The remote schema needs `npx supabase db push` when 
 
 #### Automated
 
-- [ ] 2.1 Type checking passes: `npx astro check`
-- [ ] 2.2 Production build succeeds: `npm run build`
-- [ ] 2.3 Linting passes: `npm run lint`
-- [ ] 2.4 Formatting is clean on touched files
-- [ ] 2.5 Harness still passes: `npm run db:verify-rls`
+- [x] 2.1 Type checking passes: `npx astro check`
+- [x] 2.2 Production build succeeds: `npm run build`
+- [x] 2.3 Linting passes: `npm run lint`
+- [x] 2.4 Formatting is clean on touched files
+- [x] 2.5 Harness still passes: `npm run db:verify-rls`
 
 #### Manual
 
-- [ ] 2.6 `/books` with no parameter lists every book
-- [ ] 2.7 `?status=active` and `?status=finished` each list only their own
-- [ ] 2.8 A nonsense status value falls back to all books rather than erroring
-- [ ] 2.9 Each row shows its status, and finished rows show the date
-- [ ] 2.10 US-04: a finished book still shows its whole cast with relationships
-- [ ] 2.11 At 375px the filter links and rows need no zooming, vertical scrolling only
-- [ ] 2.12 A second reader's books never appear under any filter value
+- [x] 2.6 `/books` with no parameter lists every book
+- [x] 2.7 `?status=active` and `?status=finished` each list only their own
+- [x] 2.8 A nonsense status value falls back to all books rather than erroring
+- [x] 2.9 Each row shows its status, and finished rows show the date
+- [x] 2.10 US-04: a finished book still shows its whole cast with relationships
+- [x] 2.11 At 375px the filter links and rows need no zooming, vertical scrolling only
+- [x] 2.12 A second reader's books never appear under any filter value

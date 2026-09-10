@@ -5,9 +5,18 @@ import { createClient } from "@/lib/supabase";
 import type { Book } from "@/types";
 import { Library } from "lucide-react";
 
-type BookRow = Pick<Book, "id" | "title" | "author" | "created_at">;
+type BookRow = Pick<Book, "id" | "title" | "author" | "created_at" | "finished_at">;
 
 const formError = Astro.url.searchParams.get("error");
+
+// Only these two narrow the list. Anything else — including a nonsense value typed into the
+// URL — falls back to showing everything: a filter is not worth an error page, and an empty
+// list would read as data loss rather than as a bad parameter.
+const STATUS_FILTERS = ["active", "finished"] as const;
+type StatusFilter = (typeof STATUS_FILTERS)[number];
+
+const requestedStatus = Astro.url.searchParams.get("status");
+const status: StatusFilter | null = STATUS_FILTERS.find((f) => f === requestedStatus) ?? null;
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 
@@ -17,10 +26,17 @@ let loadError: string | null = null;
 if (supabase) {
   // RLS restricts this to the signed-in reader's own rows; no user_id filter is needed
   // here, and adding one would duplicate the policy rather than reinforce it.
-  const { data, error } = await supabase
-    .from("books")
-    .select("id, title, author, created_at")
-    .order("created_at", { ascending: false });
+  const base = supabase.from("books").select("id, title, author, created_at, finished_at");
+
+  // finished_at IS the status: null means currently reading, a timestamp means finished.
+  const scoped =
+    status === "active"
+      ? base.is("finished_at", null)
+      : status === "finished"
+        ? base.not("finished_at", "is", null)
+        : base;
+
+  const { data, error } = await scoped.order("created_at", { ascending: false });
 
   if (error) {
     loadError = error.message;
@@ -33,6 +49,20 @@ if (supabase) {
 }
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
+const formatDate = (iso: string) => dateFormatter.format(new Date(iso));
+
+const filterLinkClass = (isCurrent: boolean) =>
+  isCurrent ? "text-white underline" : "text-purple-300 hover:underline";
+
+// The empty state has to answer the filter the reader is actually looking at. Under
+// ?status=finished, "Add your first one above" would be wrong twice over: they may have
+// plenty of books, and adding one would not put it in this view.
+const emptyMessage =
+  status === "finished"
+    ? "No finished books yet. Open a book and mark it finished."
+    : status === "active"
+      ? "Nothing currently reading — every book in your collection is finished."
+      : "No books yet. Add your first one above.";
 ---
 
 <Layout title="My books">
@@ -56,6 +86,12 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
           {books.length > 0 && <span class="text-blue-100/50">({books.length})</span>}
         </h2>
 
+        <nav class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          <a href="/books" class:list={filterLinkClass(status === null)}>All</a>
+          <a href="/books?status=active" class:list={filterLinkClass(status === "active")}>Currently reading</a>
+          <a href="/books?status=finished" class:list={filterLinkClass(status === "finished")}>Finished</a>
+        </nav>
+
         {
           loadError && (
             <p class="rounded-lg border border-red-500/30 bg-red-900/30 px-3 py-2 text-sm text-red-300">{loadError}</p>
@@ -66,7 +102,7 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
           !loadError && books.length === 0 && (
             <div class="rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-blue-100/60 backdrop-blur-xl">
               <Library className="mx-auto mb-3 size-8 text-white/30" />
-              <p>No books yet. Add your first one above.</p>
+              <p>{emptyMessage}</p>
             </div>
           )
         }
@@ -79,7 +115,10 @@ const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
                   {book.title}
                 </a>
                 <p class="mt-1 text-sm break-words text-blue-100/70">{book.author ?? "Author unknown"}</p>
-                <p class="mt-2 text-xs text-blue-100/40">Added {dateFormatter.format(new Date(book.created_at))}</p>
+                <p class="mt-2 text-xs text-blue-100/40">
+                  {book.finished_at ? `Finished ${formatDate(book.finished_at)}` : "Currently reading"}
+                  <span class="text-blue-100/30"> &middot; added {formatDate(book.created_at)}</span>
+                </p>
               </li>
             ))
           }
