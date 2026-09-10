@@ -91,6 +91,11 @@ harness; `psql` on PATH for `db:verify-rls`. Reaching production additionally ne
 - Assumed: `relationship_types` needs no `updated_at` consumer beyond convention, but the trigger
   is attached anyway because omitting it yields a column that looks right and lies.
 
+- **The write side of the two-meanings field is duplicated and untested.** `resolveTypeColumns`
+  is a near-identical private copy in each of the two relationship endpoints; the unit tests
+  cover only the read side. Left as-is deliberately (correct today, deadline real) and recorded
+  in the roadmap's Parked list as a risk-list entry for `test-plan.md`.
+
 ## Success Criteria (Summary)
 
 - A reader can record "lives with" on one book and read it back under both characters, with the

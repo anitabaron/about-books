@@ -1,8 +1,28 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
-import { updateRelationshipSchema } from "@/types";
+import { updateRelationshipSchema, isSharedType } from "@/types";
 
 export const prerender = false;
+
+/** Same resolution as the create route: one submitted value, exactly one column written. */
+async function resolveTypeColumns(
+  supabase: NonNullable<ReturnType<typeof createClient>>,
+  choice: string,
+  bookId: string,
+): Promise<{ type: string | null; custom_type_id: string | null } | null> {
+  if (isSharedType(choice)) {
+    return { type: choice, custom_type_id: null };
+  }
+
+  const { data: customType } = await supabase
+    .from("relationship_types")
+    .select("id, book_id")
+    .eq("id", choice)
+    .maybeSingle<{ id: string; book_id: string }>();
+
+  if (customType?.book_id !== bookId) return null;
+  return { type: null, custom_type_id: choice };
+}
 
 interface RelationshipEnds {
   character_a_id: string;
@@ -77,7 +97,17 @@ export const POST: APIRoute = async (context) => {
     return backToBook("That character is not part of this relationship");
   }
 
-  const patch = anchorIsA ? { character_b_id: other_character_id, type } : { character_a_id: other_character_id, type };
+  // Both type columns are always written, so an edit can move a connection from a shared
+  // type to a custom one and back. Writing only one would leave the other set and trip the
+  // exactly-one-source check.
+  const typeColumns = await resolveTypeColumns(supabase, type, anchor.book_id);
+  if (typeColumns === null) {
+    return backToBook("That type is not in this book");
+  }
+
+  const patch = anchorIsA
+    ? { character_b_id: other_character_id, ...typeColumns }
+    : { character_a_id: other_character_id, ...typeColumns };
 
   const { data: updated, error } = await supabase
     .from("relationships")

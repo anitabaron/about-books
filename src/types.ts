@@ -133,10 +133,69 @@ export interface Relationship {
   user_id: string;
   character_a_id: string;
   character_b_id: string;
-  type: RelationshipType;
+  /** One of the five shared types, or `null` when `custom_type_id` is set. Exactly one of the two. */
+  type: RelationshipType | null;
+  /** A reader-defined type's id, or `null` when `type` is set. Never the type's NAME. */
+  custom_type_id: string | null;
   created_at: string;
   updated_at: string;
 }
+
+/**
+ * A row of `public.relationship_types` -- a name this reader coined for ONE of their books.
+ * Mirrors `supabase/migrations/20260910140215_create_relationship_types_with_rls.sql`.
+ *
+ * The five shared types are NOT rows here; they live in `RELATIONSHIP_TYPES` above and are
+ * immutable. This table holds only what the reader added alongside them.
+ */
+export interface RelationshipTypeRow {
+  id: string;
+  user_id: string;
+  book_id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+const relationshipTypeNameField = z
+  .string()
+  .trim()
+  .min(1, "Give the type a name")
+  .max(40, "Keep the name under 40 characters")
+  // The database rejects these too (relationship_types_not_shared); catching it here is what
+  // turns a constraint violation into a sentence the reader can act on.
+  .refine((name) => !RELATIONSHIP_TYPES.includes(name.toLowerCase() as RelationshipType), {
+    message: "That is already one of the shared types",
+  });
+
+export const createRelationshipTypeSchema = z.object({ name: relationshipTypeNameField });
+export const updateRelationshipTypeSchema = z.object({ name: relationshipTypeNameField });
+
+export type CreateRelationshipTypeCommand = z.infer<typeof createRelationshipTypeSchema>;
+export type UpdateRelationshipTypeCommand = z.infer<typeof updateRelationshipTypeSchema>;
+
+/**
+ * The type `<select>` submits ONE field carrying two possible meanings: one of the five
+ * shared literals, or the uuid of a reader-defined type. A value that is neither is refused
+ * by validation rather than written to the wrong column.
+ *
+ * A refine rather than `z.union([z.enum(...), z.uuid()])`: measured on Zod 4.5.4, a failing
+ * union reports the LAST branch's issue and ignores the union-level `error`, so a reader who
+ * submitted neither saw the internal "Invalid UUID". The refine yields one message that
+ * means something to them.
+ */
+export const relationshipTypeChoice = z
+  .string()
+  .refine(
+    (choice) => (RELATIONSHIP_TYPES as readonly string[]).includes(choice) || z.uuid().safeParse(choice).success,
+    { message: "Pick a relationship type" },
+  );
+
+export type RelationshipTypeChoice = z.infer<typeof relationshipTypeChoice>;
+
+/** Narrows a submitted choice to the shared-literal branch. */
+export const isSharedType = (choice: RelationshipTypeChoice): choice is RelationshipType =>
+  (RELATIONSHIP_TYPES as readonly string[]).includes(choice);
 
 /**
  * The add form lives under one character, so it submits only the OTHER end plus the type.
@@ -144,7 +203,7 @@ export interface Relationship {
  */
 export const createRelationshipSchema = z.object({
   other_character_id: z.uuid("Pick a character"),
-  type: z.enum(RELATIONSHIP_TYPES),
+  type: relationshipTypeChoice,
 });
 
 /**
@@ -155,7 +214,7 @@ export const createRelationshipSchema = z.object({
 export const updateRelationshipSchema = z.object({
   anchor_id: z.uuid(),
   other_character_id: z.uuid("Pick a character"),
-  type: z.enum(RELATIONSHIP_TYPES),
+  type: relationshipTypeChoice,
 });
 
 export type CreateRelationshipCommand = z.infer<typeof createRelationshipSchema>;

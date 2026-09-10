@@ -122,6 +122,25 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
 - **FR-008 — collection browse and search.** Why parked: PRD § Scope Triage, phase 2 item 5; a plain unsorted list plus the active/finished filter covers the collection today.
 - **Editing and deleting a book — follow-up to S-01 of M-1.** Why parked: FR-002 covers adding only, and FR-003's full CRUD is about characters, not books. Deferred during M-1 planning on 2026-09-09, and kept out of M-2 on 2026-09-10 because it is about books, not the relationship vocabulary — including it would dilute this milestone's Done-when. Needs no PRD change to come back. `updateBookSchema` already exists and waits unused for it.
 - **A confirmation step before destructive actions elsewhere in the app.** Why parked: character and relationship delete were put behind a nested `<details>` confirmation on 2026-09-10 (`ceb5bca`). Nothing else in the app deletes anything yet; when book delete returns, it inherits the same pattern rather than inventing one.
+- **Write-side type resolution is duplicated and untested — risk-list entry for `test-plan.md`.**
+  Why parked: the code is correct today and the deadline is real. `resolveTypeColumns` exists as
+  two near-identical private copies, in `src/pages/api/characters/[id]/relationships.ts` and
+  `src/pages/api/relationships/[id].ts`, with no shared definition and no test. Phase 2's named
+  key risk was "one form field carrying two meanings", and the unit tests cover only the READ
+  side. The update endpoint's own comment names the subtle part: both type columns are always
+  written, because writing one leaves the other set and trips `relationships_one_type` — so
+  fixing one copy without the other surfaces a raw database error to the reader. The natural
+  shape when addressed: a pure classifier (shared literal vs uuid, already half-done by
+  `isSharedType`) split from the book-membership check that needs the Supabase client.
+- **The 12 `src/lib/connections.ts` tests need an entry in the test plan's risk map.**
+  Why parked: retroactive mapping costs nothing but has to happen when `/10x-test-plan` runs.
+  Tests that exist without a plan naming the risk they cover read as unmotivated, and the
+  rubric marks that criterion failed even though the tests are real and mutation-checked.
+- **The `@` path alias is declared in three places with nothing checking they agree:**
+  `astro.config.mjs`, `tsconfig.json` and now `vitest.config.ts`. Why parked: the duplication
+  is deliberate — `getViteConfig` from `astro/config` pulls in the Cloudflare adapter and fails
+  the test run at startup with "exports is not defined" — and a drift here fails loudly on the
+  next test run rather than silently. Not worth a mechanism today.
 - **App-level observability (logging, error tracking, metrics).** Why parked: no requirement in this milestone depends on it, Cloudflare platform observability is already enabled in `wrangler.jsonc`, and `main_goal: speed` keeps every ungated layer simple.
 - **All PRD § Non-Goals stand unchanged:** no social features, no book purchasing or commerce, no academic or textbook support, no reading progress tracking.
 

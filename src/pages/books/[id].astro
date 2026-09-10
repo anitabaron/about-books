@@ -2,20 +2,15 @@
 import Layout from "@/layouts/Layout.astro";
 import AddCharacterForm from "@/components/characters/AddCharacterForm";
 import { createClient } from "@/lib/supabase";
-import type { Book, Character, Relationship, RelationshipType } from "@/types";
+import type { Book, Character, Relationship, RelationshipTypeRow } from "@/types";
 import { RELATIONSHIP_TYPES } from "@/types";
+import { buildConnections } from "@/lib/connections";
 import { Users } from "lucide-react";
 
 type BookRow = Pick<Book, "id" | "title" | "author" | "finished_at">;
 type CharacterRow = Pick<Character, "id" | "name" | "description" | "created_at">;
-type RelationshipRow = Pick<Relationship, "id" | "character_a_id" | "character_b_id" | "type">;
-
-interface Connection {
-  id: string;
-  otherId: string;
-  otherName: string;
-  type: RelationshipType;
-}
+type RelationshipRow = Pick<Relationship, "id" | "character_a_id" | "character_b_id" | "type" | "custom_type_id">;
+type RelationshipTypeOption = Pick<RelationshipTypeRow, "id" | "name">;
 
 const bookId = Astro.params.id;
 const formError = Astro.url.searchParams.get("error");
@@ -56,42 +51,53 @@ if (!supabase) {
 // A top-level `return` in Astro frontmatter crashes @typescript-eslint/no-misused-promises
 // ("Expected node to have a parent"), so the status is set on Astro.response instead. Same
 // result — a real 404 — with no early return and no rule suppression.
-// Relationships touching this cast. The lookup matches either end, so `.or()` spans both
-// columns; the cast's ids already bound it to this book, which is why the table needs no
-// book_id of its own.
 const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
 
-const connectionsByCharacter = new Map<string, Connection[]>();
+// The types this reader coined for THIS book. Loaded once and passed to buildConnections,
+// which resolves each connection's label from whichever source it carries. A second query
+// plus a Map, mirroring how character names are resolved — no embedded select, so the
+// `.or()` below stays exactly as it was.
+let customTypes: RelationshipTypeOption[] = [];
+
+if (supabase && book) {
+  const { data, error: typesError } = await supabase
+    .from("relationship_types")
+    .select("id, name")
+    .eq("book_id", bookId)
+    .order("name")
+    .overrideTypes<RelationshipTypeOption[], { merge: false }>();
+
+  if (typesError) {
+    loadError ??= typesError.message;
+  } else {
+    customTypes = data;
+  }
+}
+
+let connectionsByCharacter = new Map<
+  string,
+  ReturnType<typeof buildConnections> extends Map<string, infer C> ? C : never
+>();
 
 if (supabase && characters.length > 0) {
-  const nameById = new Map(characters.map((c) => [c.id, c.name]));
+  // Relationships touching this cast. The lookup matches either end, so `.or()` spans both
+  // columns; the cast's ids already bound it to this book, which is why the table needs no
+  // book_id of its own.
   const ids = characters.map((c) => c.id).join(",");
 
   const { data: rels, error: relError } = await supabase
     .from("relationships")
-    .select("id, character_a_id, character_b_id, type")
+    .select("id, character_a_id, character_b_id, type, custom_type_id")
     .or(`character_a_id.in.(${ids}),character_b_id.in.(${ids})`)
     .overrideTypes<RelationshipRow[], { merge: false }>();
 
   if (relError) {
     loadError ??= relError.message;
   } else {
-    for (const rel of rels) {
-      // Undirected: index the row under both ends so it renders beneath both characters.
-      for (const [selfId, otherId] of [
-        [rel.character_a_id, rel.character_b_id],
-        [rel.character_b_id, rel.character_a_id],
-      ]) {
-        const otherName = nameById.get(otherId);
-        // Defensive: a relationship reaching outside this cast is skipped rather than
-        // rendered as "undefined". The create route requires a shared book, so this should
-        // be unreachable.
-        if (!nameById.has(selfId) || otherName === undefined) continue;
-        const list = connectionsByCharacter.get(selfId) ?? [];
-        list.push({ id: rel.id, otherId, otherName, type: rel.type });
-        connectionsByCharacter.set(selfId, list);
-      }
-    }
+    // Undirected indexing and the two-source label resolution both live in
+    // src/lib/connections.ts, where they are covered by unit tests. Nothing about them can
+    // be checked from here: page frontmatter is unreachable by any command.
+    connectionsByCharacter = buildConnections(characters, rels, customTypes);
   }
 }
 
@@ -194,7 +200,7 @@ if (!book && !loadError) {
                       <ul class="mt-2 space-y-0.5">
                         {connections.map((connection) => (
                           <li class="text-sm">
-                            <span class="text-purple-300">{connection.type}</span>
+                            <span class="text-purple-300">{connection.typeLabel}</span>
                             <span class="text-blue-100/40"> &middot; </span>
                             <span class="break-words text-blue-100/80">{connection.otherName}</span>
                           </li>
@@ -276,13 +282,25 @@ if (!book && !loadError) {
                               <option value={other.id}>{other.name}</option>
                             ))}
                           </select>
+                          {/* One field, two meanings: a shared literal or a custom type's id. <optgroup>
+                              is native, so the merged list costs no JavaScript and the form still
+                              works with scripting off. The endpoint decides the column by shape. */}
                           <select
                             name="type"
                             class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
                           >
-                            {RELATIONSHIP_TYPES.map((relationshipType) => (
-                              <option value={relationshipType}>{relationshipType}</option>
-                            ))}
+                            <optgroup label="Shared">
+                              {RELATIONSHIP_TYPES.map((relationshipType) => (
+                                <option value={relationshipType}>{relationshipType}</option>
+                              ))}
+                            </optgroup>
+                            {customTypes.length > 0 && (
+                              <optgroup label="Your types for this book">
+                                {customTypes.map((customType) => (
+                                  <option value={customType.id}>{customType.name}</option>
+                                ))}
+                              </optgroup>
+                            )}
                           </select>
                           <button
                             type="submit"
@@ -322,11 +340,25 @@ if (!book && !loadError) {
                                   name="type"
                                   class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white focus:ring-2 focus:ring-purple-400 focus:outline-none"
                                 >
-                                  {RELATIONSHIP_TYPES.map((relationshipType) => (
-                                    <option value={relationshipType} selected={relationshipType === connection.type}>
-                                      {relationshipType}
-                                    </option>
-                                  ))}
+                                  <optgroup label="Shared">
+                                    {RELATIONSHIP_TYPES.map((relationshipType) => (
+                                      <option
+                                        value={relationshipType}
+                                        selected={relationshipType === connection.typeValue}
+                                      >
+                                        {relationshipType}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                  {customTypes.length > 0 && (
+                                    <optgroup label="Your types for this book">
+                                      {customTypes.map((customType) => (
+                                        <option value={customType.id} selected={customType.id === connection.typeValue}>
+                                          {customType.name}
+                                        </option>
+                                      ))}
+                                    </optgroup>
+                                  )}
                                 </select>
                                 <button
                                   type="submit"
@@ -345,9 +377,9 @@ if (!book && !loadError) {
                                   class="mt-2 rounded-lg border border-red-400/30 bg-red-950/30 p-3"
                                 >
                                   <p class="text-xs break-words text-blue-100/80">
-                                    Remove the <span class="text-purple-300">{connection.type}</span> connection with{" "}
-                                    <span class="font-medium text-white">{connection.otherName}</span>? Both characters
-                                    stay; only the connection goes.
+                                    Remove the <span class="text-purple-300">{connection.typeLabel}</span> connection
+                                    with <span class="font-medium text-white">{connection.otherName}</span>? Both
+                                    characters stay; only the connection goes.
                                   </p>
                                   <button
                                     type="submit"
@@ -366,6 +398,51 @@ if (!book && !loadError) {
                 ))}
               </ul>
             </section>
+
+            {/* The vocabulary lives behind a disclosure, closed by default: a reader who is happy
+                with the five shared types never opens it and sees the page they had before. It sits
+                after the cast because reading the cast is the point of this screen and managing a
+                word list is not. */}
+            <details class="rounded-2xl border border-white/10 bg-white/5 text-white backdrop-blur-xl">
+              <summary class="cursor-pointer px-6 py-4 text-sm text-purple-300 hover:underline">
+                Relationship types
+                {customTypes.length > 0 && <span class="text-blue-100/40"> ({customTypes.length} of your own)</span>}
+              </summary>
+
+              <div class="space-y-4 border-t border-white/10 px-6 py-4">
+                <p class="text-xs text-blue-100/60">
+                  Five types are shared by every book: {RELATIONSHIP_TYPES.join(", ")}. Add your own for connections
+                  this book needs and others do not — "lives with", "serves".
+                </p>
+
+                {customTypes.length > 0 && (
+                  <ul class="space-y-1 text-sm">
+                    {customTypes.map((customType) => (
+                      <li class="break-words text-blue-100/80">{customType.name}</li>
+                    ))}
+                  </ul>
+                )}
+
+                <form method="POST" action={`/api/books/${book.id}/relationship-types`} class="space-y-2">
+                  <label class="block text-xs text-blue-100/70" for="relationship-type-name">
+                    New type for this book
+                  </label>
+                  <input
+                    id="relationship-type-name"
+                    name="name"
+                    placeholder="lives with"
+                    maxlength="40"
+                    class="w-full rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400 focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    class="rounded-lg bg-purple-600 px-3 py-1.5 text-sm font-medium transition-colors hover:bg-purple-500"
+                  >
+                    Add type
+                  </button>
+                </form>
+              </div>
+            </details>
           </>
         )
       }
