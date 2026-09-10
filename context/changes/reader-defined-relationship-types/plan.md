@@ -557,17 +557,17 @@ restore `not null` on `type`, which is only safe while no custom type is in use.
 
 #### Automated
 
-- [x] 3.1 Type checking passes: `npx astro check`
-- [x] 3.2 Linting passes: `npm run lint`
-- [x] 3.3 Isolation and the type-in-use refusal assertion still green: `npm run db:verify-rls`
+- [x] 3.1 Type checking passes: `npx astro check` — 7a500f2
+- [x] 3.2 Linting passes: `npm run lint` — 7a500f2
+- [x] 3.3 Isolation and the type-in-use refusal assertion still green: `npm run db:verify-rls` — 7a500f2
 
 #### Manual
 
-- [x] 3.4 A rename updates every connection holding the type, in one action
-- [x] 3.4a The "Need another word?" link appears beside the type select in both connection forms and reaches the disclosure
-- [x] 3.4b The summary reads "Relationship types — add your own"
-- [x] 3.4c The add-relationship form asks for the type before the person
-- [x] 3.5 Deleting a type in use is REFUSED with the correct count and the type is still present afterwards
-- [x] 3.6 Deleting an unused type succeeds and it leaves the forms
-- [x] 3.7 A rename to an existing name in that book is refused readably
+- [x] 3.4 A rename updates every connection holding the type, in one action — 7a500f2
+- [x] 3.4a The "Need another word?" link appears beside the type select in both connection forms and reaches the disclosure — 7a500f2
+- [x] 3.4b The summary reads "Relationship types — add your own" — 7a500f2
+- [x] 3.4c The add-relationship form asks for the type before the person — 7a500f2
+- [x] 3.5 Deleting a type in use is REFUSED with the correct count and the type is still present afterwards — 7a500f2
+- [x] 3.6 Deleting an unused type succeeds and it leaves the forms — 7a500f2
+- [x] 3.7 A rename to an existing name in that book is refused readably — 7a500f2
 - [ ] 3.8 Reader B cannot rename or delete reader A's type (deployed, two real accounts)
