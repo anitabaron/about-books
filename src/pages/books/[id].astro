@@ -334,14 +334,19 @@ if (!book && !loadError) {
                     {edge.segments.map((seg) => (
                       <line class="mapedge" x1={seg.x1} y1={seg.y1} x2={seg.x2} y2={seg.y2} />
                     ))}
+                    {/* One line per way this pair is connected, stacked and centred on the
+                        edge: two names joined by a separator read as one long type. */}
                     <text
                       class="maplabel"
                       x={edge.labelX}
-                      y={edge.labelY + 3}
+                      y={edge.labelY + 3 - (edge.labels.length - 1) * 5}
                       text-anchor="middle"
                       transform={`rotate(${edge.labelAngle.toFixed(2)} ${edge.labelX.toFixed(2)} ${edge.labelY.toFixed(2)})`}
-                      set:text={edge.label}
-                    />
+                    >
+                      {edge.labels.map((name, i) => (
+                        <tspan x={edge.labelX} dy={i === 0 ? 0 : 10} set:text={name} />
+                      ))}
+                    </text>
                   </>
                 ))}
                 {castMap.nodes.map((node) => (

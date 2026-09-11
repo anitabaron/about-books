@@ -24,9 +24,9 @@ const CAST = [
 ];
 
 const LINKS: MapLink[] = [
-  { id: "r1", a: "helena", b: "tomasz", label: "romantic" },
-  { id: "r2", a: "tomasz", b: "antoni", label: "antagonist" },
-  { id: "r3", a: "helena", b: "antoni", label: "mieszka z" },
+  { id: "r1", a: "helena", b: "tomasz", labels: ["romantic"] },
+  { id: "r2", a: "tomasz", b: "antoni", labels: ["antagonist"] },
+  { id: "r3", a: "helena", b: "antoni", labels: ["mieszka z"] },
 ];
 
 const conn = (id: string, otherId: string, otherName: string, label: string): Connection => ({
@@ -46,7 +46,7 @@ describe("toLinks", () => {
     ]);
     const links = toLinks(byCharacter);
     expect(links).toHaveLength(1);
-    expect(links[0]).toMatchObject({ id: "r1", label: "romantic" });
+    expect(links[0]).toMatchObject({ id: "r1", labels: ["romantic"] });
     expect([links[0].a, links[0].b].sort()).toEqual(["helena", "tomasz"]);
   });
 
@@ -64,7 +64,7 @@ describe("toLinks", () => {
     ]);
     const links = toLinks(byCharacter);
     expect(links).toHaveLength(1);
-    expect(links[0].label).toBe("mieszka z · romantic");
+    expect(links[0].labels).toEqual(["mieszka z", "romantic"]);
   });
 
   it("keeps separate pairs apart", () => {
@@ -86,9 +86,9 @@ describe("orderForRim", () => {
       { id: "d", name: "D" },
     ];
     const chained: MapLink[] = [
-      { id: "1", a: "a", b: "b", label: "x" },
-      { id: "2", a: "b", b: "c", label: "x" },
-      { id: "3", a: "c", b: "d", label: "x" },
+      { id: "1", a: "a", b: "b", labels: ["x"] },
+      { id: "2", a: "b", b: "c", labels: ["x"] },
+      { id: "3", a: "c", b: "d", labels: ["x"] },
     ];
     const order = orderForRim(chain, chained).map((c) => c.id);
     const gap = (x: string, y: string) => {
@@ -142,9 +142,9 @@ describe("layoutCircle", () => {
     // The bug this replaces: a fixed fraction from the `a` end piles every label onto
     // whichever character is stored as `a` — here, the hub.
     const hub: MapLink[] = [
-      { id: "r1", a: "helena", b: "tomasz", label: "a" },
-      { id: "r2", a: "helena", b: "antoni", label: "b" },
-      { id: "r3", a: "helena", b: "wiktor", label: "c" },
+      { id: "r1", a: "helena", b: "tomasz", labels: ["a"] },
+      { id: "r2", a: "helena", b: "antoni", labels: ["b"] },
+      { id: "r3", a: "helena", b: "wiktor", labels: ["c"] },
     ];
     const map = layoutCircle(CAST, hub);
     const helena = map.nodes.find((n) => n.id === "helena");
@@ -181,7 +181,7 @@ describe("layoutCircle", () => {
       { id: "a", name: "A" },
       { id: "b", name: "B" },
     ];
-    const long: MapLink[] = [{ id: "r", a: "a", b: "b", label: "a-very-long-custom-relationship-type" }];
+    const long: MapLink[] = [{ id: "r", a: "a", b: "b", labels: ["a-very-long-custom-relationship-type"] }];
     const map = layoutCircle(pair, long, { arcPerNode: 40, pad: 10 });
     const drawn = map.edges[0].segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0);
     const node = map.nodes;
@@ -201,7 +201,7 @@ describe("layoutEgo", () => {
   });
 
   it("gives a neighbour ONE spoke however many ways they are connected", () => {
-    const twice: MapLink[] = [{ id: "r1", a: "helena", b: "tomasz", label: "romantic · mieszka z" }];
+    const twice: MapLink[] = [{ id: "r1", a: "helena", b: "tomasz", labels: ["romantic", "mieszka z"] }];
     const map = layoutEgo(CAST, twice, "helena");
     expect(map.edges).toHaveLength(1);
     expect(map.nodes.filter((n) => n.id === "tomasz")).toHaveLength(1);
@@ -231,7 +231,7 @@ describe("defaultFocus", () => {
   it("opens on the busiest character, so the first drawing is not empty", () => {
     // In LINKS all three connected characters have degree 2, so that set tests the tiebreak,
     // not "busiest". Give Helena a fourth link to make her genuinely the busiest.
-    const busier: MapLink[] = [...LINKS, { id: "r4", a: "helena", b: "wiktor", label: "ally" }];
+    const busier: MapLink[] = [...LINKS, { id: "r4", a: "helena", b: "wiktor", labels: ["ally"] }];
     expect(defaultFocus(CAST, busier)).toBe("helena");
     // And with the original set the tie falls to the first name alphabetically.
     expect(defaultFocus(CAST, LINKS)).toBe("antoni");

@@ -28,7 +28,8 @@ export interface MapNode {
 /** One connection, already split into the two visible segments with the gap between them. */
 export interface MapEdge {
   id: string;
-  label: string;
+  /** One entry per way this pair is connected; the caller stacks them on the edge. */
+  labels: string[];
   /** Two segments; the second is null when the edge was too short to cut a gap into. */
   segments: { x1: number; y1: number; x2: number; y2: number }[];
   labelX: number;
@@ -49,7 +50,8 @@ export interface MapLink {
   id: string;
   a: string;
   b: string;
-  label: string;
+  /** Two characters can be connected more than once, so an edge carries every type name. */
+  labels: string[];
 }
 
 /** Arc reserved per node on the rim. 132 px fits "ANTAGONIST" at the label size. */
@@ -62,13 +64,17 @@ export const ARC_PER_NODE = 132;
  */
 export const labelWidth = (text: string): number => text.length * 5.9;
 
+/** Stacked labels are centred on the edge, so the gap must clear the widest of them. */
+export const widestLabel = (labels: readonly string[]): number =>
+  labels.reduce((w, t) => Math.max(w, labelWidth(t)), 0);
+
 /**
  * `buildConnections` indexes every relationship under BOTH of its characters, which is right
  * for the list and wrong for the map: drawing both entries would put two lines on top of each
  * other. De-duplicate on the connection id, which is the relationship row.
  */
 export function toLinks(connectionsByCharacter: ReadonlyMap<string, Connection[]>): MapLink[] {
-  const seen = new Map<string, { id: string; a: string; b: string; labels: string[] }>();
+  const seen = new Map<string, MapLink>();
   for (const [characterId, connections] of connectionsByCharacter) {
     for (const c of connections) {
       // One edge per PAIR, not per relationship. Two characters can be connected more than
@@ -85,7 +91,7 @@ export function toLinks(connectionsByCharacter: ReadonlyMap<string, Connection[]
       }
     }
   }
-  return [...seen.values()].map(({ id, a, b, labels }) => ({ id, a, b, label: labels.join(" · ") }));
+  return [...seen.values()];
 }
 
 /**
@@ -232,8 +238,9 @@ export function layoutCircle(
     const labelY = p.y + (q.y - p.y) * t;
     edges.push({
       id: l.id,
-      label: l.label,
-      segments: segmentsWithGap(p, q, labelX, labelY, labelWidth(l.label) + 5),
+      labels: l.labels,
+      // The gap has to clear the WIDEST of the stacked names, not the first one.
+      segments: segmentsWithGap(p, q, labelX, labelY, widestLabel(l.labels) + 5),
       labelX,
       labelY,
       labelAngle: readableAngle(q.x - p.x, q.y - p.y),
@@ -261,7 +268,7 @@ export function layoutEgo(
   const focus = byId.get(focusId);
   const spokes = links
     .filter((l) => l.a === focusId || l.b === focusId)
-    .map((l) => ({ id: l.id, other: l.a === focusId ? l.b : l.a, label: l.label }));
+    .map((l) => ({ id: l.id, other: l.a === focusId ? l.b : l.a, labels: l.labels }));
 
   const radius = options.radius ?? Math.max(118, (spokes.length * ARC_PER_NODE) / (2 * Math.PI));
   const pad = options.pad ?? 74;
@@ -312,8 +319,8 @@ export function layoutEgo(
     const labelY = cy + radius * 0.6 * Math.sin(angle);
     edges.push({
       id: s.id,
-      label: s.label,
-      segments: segmentsWithGap({ x: cx, y: cy }, { x, y }, labelX, labelY, labelWidth(s.label) + 5),
+      labels: s.labels,
+      segments: segmentsWithGap({ x: cx, y: cy }, { x, y }, labelX, labelY, widestLabel(s.labels) + 5),
       labelX,
       labelY,
       labelAngle: readableAngle(x - cx, y - cy),
