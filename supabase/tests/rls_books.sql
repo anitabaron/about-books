@@ -349,11 +349,15 @@ begin
     raise exception 'FAIL constraint: a character was related to itself';
   end if;
 
+  -- A foreign key now, not a check: the five shared types are rows in
+  -- relationship_type_presets, so an unknown one is refused by referential integrity.
+  -- Narrowed on purpose -- catching check_violation here would pass for the wrong reason
+  -- if the foreign key were ever dropped and the old list restored.
   denied := false;
   begin
     insert into public.relationships (user_id, character_a_id, character_b_id, type)
       values (a_id, a_c1, a_c2, 'nemesis');
-  exception when check_violation then
+  exception when foreign_key_violation then
     denied := true;
   end;
   if not denied then
@@ -761,6 +765,128 @@ begin
     'a connection carries exactly one type source; a type in use cannot be deleted but a book '
     'delete still cascades; reader A can act on own rows (incl. default auth.uid()); reader B '
     'isolated; anon denied';
+end $$;
+
+-- ============================================================================
+-- relationship_type_presets -- the five shared types, as rows.
+-- Unlike every other table here, these rows belong to nobody, so the usual
+-- per-reader negatives do not apply. The guarantees that DO matter are the
+-- opposite pair: every signed-in reader must be able to READ all five (a
+-- select-only table with a broken read policy still passes every negative
+-- assertion ever written), and no reader may WRITE any of them.
+-- ============================================================================
+
+do $$
+declare
+  a_id   uuid := 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+  a_book uuid;
+  a_c1   uuid;
+  a_c2   uuid;
+  n      int;
+  denied boolean;
+begin
+  -- Its own book, not the shared fixture: the relationship_types block above deletes that
+  -- one to assert the book-delete cascade, so reusing it would fail on a foreign key and
+  -- look like a defect in this table.
+  perform set_config('role', 'postgres', true);
+  insert into public.books (user_id, title) values (a_id, 'Preset fixture book')
+    returning id into a_book;
+
+  ----------------------------------------------------------------- positive
+  -- Reader A sees all five. Asserted by count, not by existence: a policy that
+  -- leaked only some rows would satisfy "can read" and still break the dropdown.
+  perform set_config('role', 'authenticated', true);
+  perform set_config('request.jwt.claims', json_build_object('sub', a_id, 'role', 'authenticated')::text, true);
+
+  select count(*) into n from public.relationship_type_presets;
+  if n <> 5 then
+    raise exception 'FAIL presets: reader A sees % of the 5 shared types', n;
+  end if;
+
+  ----------------------------------------------------------------- negative
+  -- No write policy and no write grant, so all three are refused. Each traps its
+  -- own exception: an unwrapped violation would abort the script and read as a
+  -- failure of whatever ran next.
+  denied := false;
+  begin
+    insert into public.relationship_type_presets (slug, sort_order) values ('nemesis', 6);
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL presets: a reader added a shared type';
+  end if;
+
+  denied := false;
+  begin
+    update public.relationship_type_presets set slug = 'kin' where slug = 'family';
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL presets: a reader renamed a shared type';
+  end if;
+
+  denied := false;
+  begin
+    delete from public.relationship_type_presets where slug = 'other';
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL presets: a reader deleted a shared type';
+  end if;
+
+  ----------------------------------------------------------------- anon
+  -- Structural, not policy-based: anon holds no grant at all, so this is 42501
+  -- rather than an empty set.
+  perform set_config('role', 'anon', true);
+  denied := false;
+  begin
+    perform 1 from public.relationship_type_presets;
+  exception when insufficient_privilege then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL presets: anon reached the shared types';
+  end if;
+
+  ----------------------------------------------------------- referential
+  -- The foreign key replaced a check constraint, so an unknown type must still be
+  -- refused -- and a preset in use must not be deletable, even as superuser.
+  perform set_config('role', 'postgres', true);
+  insert into public.characters (user_id, book_id, name)
+    values (a_id, a_book, 'Preset fixture 1') returning id into a_c1;
+  insert into public.characters (user_id, book_id, name)
+    values (a_id, a_book, 'Preset fixture 2') returning id into a_c2;
+
+  denied := false;
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type)
+      values (a_id, a_c1, a_c2, 'nemesis');
+  exception when foreign_key_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL presets: a connection was given a type that is not a shared type';
+  end if;
+
+  insert into public.relationships (user_id, character_a_id, character_b_id, type)
+    values (a_id, a_c1, a_c2, 'ally');
+
+  denied := false;
+  begin
+    delete from public.relationship_type_presets where slug = 'ally';
+  exception when foreign_key_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL presets: a shared type in use by a connection was deleted';
+  end if;
+
+  raise notice 'PASS relationship_type_presets: every signed-in reader reads all five; none '
+    'can insert, rename or delete one; anon denied at the grant level; an unknown type is '
+    'refused by the foreign key and a type in use cannot be deleted';
 end $$;
 
 rollback;

@@ -102,6 +102,21 @@ export type Database = {
           },
         ]
       }
+      relationship_type_presets: {
+        Row: {
+          slug: string
+          sort_order: number
+        }
+        Insert: {
+          slug: string
+          sort_order: number
+        }
+        Update: {
+          slug?: string
+          sort_order?: number
+        }
+        Relationships: []
+      }
       relationship_types: {
         Row: {
           book_id: string
@@ -189,6 +204,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "relationship_types"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "relationships_type_fkey"
+            columns: ["type"]
+            isOneToOne: false
+            referencedRelation: "relationship_type_presets"
+            referencedColumns: ["slug"]
           },
         ]
       }
