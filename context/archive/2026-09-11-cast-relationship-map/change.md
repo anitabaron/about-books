@@ -1,10 +1,10 @@
 ---
 change_id: cast-relationship-map
 title: Visual relationship map — circle and person views
-status: implemented
+status: archived
 created: 2026-09-11
 updated: 2026-09-11
-archived_at: null
+archived_at: 2026-09-11T10:48:00Z
 ---
 
 ## Notes
