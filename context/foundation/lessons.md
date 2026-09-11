@@ -118,3 +118,10 @@ TBD stub in a cookbook before writing a shell helper. That is why the rule belon
   meant to check, not at what it does on the way there. The `GIT_INDEX_FILE` workaround
   earlier in this project was the same shape — it silently reverted a manifest and two
   documentation files.
+
+## Restart the dev server before debugging CSS that is already correct
+
+- **Context**: any `.astro` component with a scoped `<style>` block, while iterating against `npm run dev`
+- **Problem**: an edit to a scoped `<style>` can stop reaching the browser while markup from the same file keeps hot-reloading — the rule sits in the file and the browser computes the old value (`display: block` where the file says `flex`; `--muted-fg` where it says `--accent`). Hit three times in one session; twice it cost a rewritten selector that never needed changing.
+- **Rule**: when a scoped `<style>` change does not appear after a hard reload, restart the dev server before touching the CSS. Confirm which state you are looking at with `getComputedStyle`, not with the rendering — "it looks unchanged" is not evidence that the code is wrong.
+- **Applies to**: implement, impl-review

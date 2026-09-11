@@ -53,9 +53,9 @@ Run these against `npm run dev -- --host` on a real phone.
 
 ## 2. Do in the same pass as the archive
 
-- [ ] **`change.md` test-data note is stale.** It says book *Dune* with
+- [ ] **`change.md` test-data note is stale.** It says book _Dune_ with
       Paul/Chani/Duncan and readers `ra@t.test` / `rb@t.test` / `probe-123456`.
-      `supabase/seed.sql` replaced all of that: the fixture is *Solaris* with
+      `supabase/seed.sql` replaced all of that: the fixture is _Solaris_ with
       Kris Kelvin / Harey / Snaut, and the readers are
       `reader-a@local.test` / `reader-b@local.test`, password `local-dev-password`.
       Anyone following the old note hits "Invalid login credentials" and goes
@@ -67,11 +67,13 @@ Run these against `npm run dev -- --host` on a real phone.
 
 ## 3. Housekeeping — nobody's job yet, so it is nobody's
 
-- [ ] **Two worktrees on disk.** `.claude/worktrees/reading-room-ui` (everything
-      in it is merged into `main`; safe to remove with its branch) and
-      `.claude/worktrees/s04-collection-filter`, which belongs to another session
-      — leave that one alone unless its owner says otherwise.
-- [ ] **A dev server** may still be running on `192.168.100.236:4321`.
+- [x] ~~`.claude/worktrees/reading-room-ui`~~ — removed 2026-09-11 with its
+      branch, after confirming `main..worktree-reading-room-ui` was empty and the
+      tree had nothing uncommitted.
+- [ ] **`.claude/worktrees/s04-collection-filter`** belongs to another session.
+      Leave it alone unless its owner says otherwise.
+- [x] ~~Dev server~~ — stopped 2026-09-11. Restart with `npm run dev -- --host`
+      for the §1 pass.
 - [ ] **`context/changes/bootstrap-verification/`** is not a change. It holds one
       `verification.md` from the 2026-06-30 bootstrap and will never be archived
       by `/10x-archive`. Move it or delete it; it should not sit among active
