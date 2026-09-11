@@ -100,17 +100,19 @@ Slices below assume these are present and do NOT re-scaffold them.
 
 Phase-2 requirements, in the return order the PRD itself sets. Nothing here is cancelled — moving one into a milestone means editing its `Priority:` line in the PRD and adding a slice.
 
+**Shipped since, and removed from the list below** (recorded here because `## Done` is
+`/10x-archive`'s to write, and none of these traced to a roadmap item with an ID):
+editing and deleting a book → `context/archive/2026-09-10-book-edit-and-delete/`; the
+confirmation step before destructive actions, which shipped with it and inherited the nested
+`<details>` pattern from `ceb5bca`; FR-007's visual relationship map →
+`context/archive/2026-09-11-cast-relationship-map/`; and the retroactive mapping of the
+`src/lib/connections.ts` tests into the test plan's risk map, now §6 of
+`context/foundation/test-plan.md`.
+
 - **FR-005 — key events and their links to characters.** Why parked: PRD § Scope Triage, phase 2 item 1 (cheapest to add back: one table, one CRUD, one join). Note the consequence: US-01 and US-04 both have an acceptance criterion mentioning linked events, so both stay partially unmet until this ships.
 - **FR-006 / US-03 — AI enrich character hints.** Why parked: PRD § Scope Triage, phase 2 item 2. The PRD's secondary Success Criterion (65% of hints accepted unedited) cannot be measured until this ships. The `openai` package and `OPENAI_API_KEY` are already installed and declared, so nothing blocks its return.
 - **FR-002b — external book metadata lookup with prefilled cover and author.** Why parked: PRD § Scope Triage, phase 2 item 3 (largest surface for the least core value).
-- **FR-007 diagram view — visual relationship map.** Why parked: PRD § Scope Triage, phase 2 item 4; the list already solves the reader's problem.
 - **FR-008 — collection browse and search.** Why parked: PRD § Scope Triage, phase 2 item 5; a plain unsorted list plus the active/finished filter covers the collection today.
-- **Editing and deleting a book — follow-up to S-01 of M-1.** Why parked: FR-002 covers adding only, and FR-003's full CRUD is about characters, not books. Deferred during M-1 planning on 2026-09-09, and kept out of M-2 on 2026-09-10 because it is about books, not the relationship vocabulary — including it would dilute this milestone's Done-when. Needs no PRD change to come back. **The cost is small, and this is the first thing to pick up if time remains after Phase 3 — ahead of anything else parked:** `updateBookSchema` already exists unused, and the endpoints are a copy of `src/pages/api/characters/[id].ts` and `characters/[id]/delete.ts`. Raised again on 2026-09-10 and confirmed in the code — books support create and the finished-status update only, so a typo in a title is permanent. Not a PRD gap (FR-002 covers adding), and the rubric is satisfied by characters and relationships, which each carry all four operations.
-- **A confirmation step before destructive actions elsewhere in the app.** Why parked: character and relationship delete were put behind a nested `<details>` confirmation on 2026-09-10 (`ceb5bca`). Nothing else in the app deletes anything yet; when book delete returns, it inherits the same pattern rather than inventing one.
-- **The 12 `src/lib/connections.ts` tests need an entry in the test plan's risk map.**
-  Why parked: retroactive mapping costs nothing but has to happen when `/10x-test-plan` runs.
-  Tests that exist without a plan naming the risk they cover read as unmotivated, and the
-  rubric marks that criterion failed even though the tests are real and mutation-checked.
 - **The `@` path alias is declared in three places with nothing checking they agree:**
   `astro.config.mjs`, `tsconfig.json` and now `vitest.config.ts`. Why parked: the duplication
   is deliberate — `getViteConfig` from `astro/config` pulls in the Cloudflare adapter and fails
