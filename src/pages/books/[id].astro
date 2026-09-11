@@ -329,9 +329,18 @@ if (!book && !loadError) {
                           Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot be
                           undone.
                         </p>
-                        <Button type="submit" variant="destructive" size="sm">
-                          Yes, delete permanently
-                        </Button>
+                        <div class="confirm-actions">
+                          <Button type="submit" variant="destructive" size="sm">
+                            Yes, delete permanently
+                          </Button>
+                          {/* Closes the disclosure it sits in. With scripting off it does nothing
+                                  and the reader closes the panel by pressing the opener again, which is
+                                  how it worked before this button existed -- so nothing is lost, and
+                                  nothing about the destructive path depends on JavaScript. */}
+                          <button type="button" class="cancel" onclick="this.closest('details').open = false">
+                            Cancel
+                          </button>
+                        </div>
                       </form>
                     </details>
                     <Button type="submit" form={`edit-character-${character.id}`} size="sm">
@@ -435,9 +444,18 @@ if (!book && !loadError) {
                                     Remove the <strong>{connection.typeLabel}</strong> connection with{" "}
                                     <strong>{connection.otherName}</strong>?
                                   </p>
-                                  <Button type="submit" variant="destructive" size="sm">
-                                    Yes, remove it
-                                  </Button>
+                                  <div class="confirm-actions">
+                                    <Button type="submit" variant="destructive" size="sm">
+                                      Yes, remove it
+                                    </Button>
+                                    {/* Closes the disclosure it sits in. With scripting off it does nothing
+                                  and the reader closes the panel by pressing the opener again, which is
+                                  how it worked before this button existed -- so nothing is lost, and
+                                  nothing about the destructive path depends on JavaScript. */}
+                                    <button type="button" class="cancel" onclick="this.closest('details').open = false">
+                                      Cancel
+                                    </button>
+                                  </div>
                                 </form>
                               </details>
                             </div>
@@ -522,9 +540,18 @@ if (!book && !loadError) {
                               Delete <strong>{customType.name}</strong> from this book’s vocabulary? Connections using
                               it must be changed first.
                             </p>
-                            <Button type="submit" variant="destructive" size="sm">
-                              Yes, delete this type
-                            </Button>
+                            <div class="confirm-actions">
+                              <Button type="submit" variant="destructive" size="sm">
+                                Yes, delete this type
+                              </Button>
+                              {/* Closes the disclosure it sits in. With scripting off it does nothing
+                                  and the reader closes the panel by pressing the opener again, which is
+                                  how it worked before this button existed -- so nothing is lost, and
+                                  nothing about the destructive path depends on JavaScript. */}
+                              <button type="button" class="cancel" onclick="this.closest('details').open = false">
+                                Cancel
+                              </button>
+                            </div>
                           </form>
                         </details>
                       </div>
@@ -755,6 +782,38 @@ if (!book && !loadError) {
      `flex-basis: 100%` moved the bin down with it, which is movement for nothing: the
      reader pressed it where it was and expects it to stay there. Closed, the element is
      untouched, so the browser still hides the panel itself. */
+  .confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+  /* Quiet on purpose: cancelling is the safe path and must not compete with the
+     destructive one for attention. Same label device as the disclosure openers.
+
+     Pushed to the far edge with an auto margin rather than `space-between` on the
+     row: the two controls keep their positions if a third ever joins them, and it
+     matches how .edit-actions already separates Save from delete. */
+  .cancel {
+    margin-inline-start: auto;
+    background: none;
+    border: 0;
+    padding: 0 var(--space-2xs);
+    min-height: 28px;
+    cursor: pointer;
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--muted-fg);
+  }
+  .cancel:hover {
+    color: var(--ink-2);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
   .rel-controls .confirm[open] {
     display: contents;
   }
