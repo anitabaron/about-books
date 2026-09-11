@@ -318,6 +318,13 @@ export function layoutCircle(
   return { ...fitCanvas(nodes, edges, 16), nodes, edges };
 }
 
+/** How far along its spoke an edge label sits, measured from the focus. */
+const LABEL_T = 0.6;
+/** Clear space between the outer end of a label and the character's dot. */
+const NODE_GAP = 18;
+/** Clear space between the inner end of a label and the focus dot with its name. */
+const FOCUS_GAP = 26;
+
 /**
  * One character in the middle, only their own connections around them. The spoke count is
  * that character's degree, not the size of the cast, so this stays readable however large the
@@ -338,7 +345,23 @@ export function layoutEgo(
     .filter((l) => l.a === focusId || l.b === focusId)
     .map((l) => ({ id: l.id, other: l.a === focusId ? l.b : l.a, labels: l.labels }));
 
-  const radius = options.radius ?? Math.max(118, (spokes.length * ARC_PER_NODE) / (2 * Math.PI));
+  // The star has to be long enough for the WORDS, not just for the spokes. An edge label lies
+  // along its spoke, centred at LABEL_T of the way out, so a long reader-defined type reaches
+  // past the node it belongs to and crowds the focus at the other end -- and a radius derived
+  // only from the spoke count cannot know that. Solve for the radius each end needs and take
+  // the longest requirement:
+  //
+  //   outer:  LABEL_T*r + w/2 + NODE_GAP  <= r
+  //   inner:  LABEL_T*r - w/2             >= FOCUS_GAP
+  //
+  // With six spokes labelled "mieszka w kamienicy" (112 px) the old floor of 126 px left the
+  // label running from 19 px to 131 px along a 126 px spoke: over the node, into the middle.
+  const widest = widestLabel(spokes.flatMap((s) => s.labels));
+  const outerNeeds = (widest / 2 + NODE_GAP) / (1 - LABEL_T);
+  const innerNeeds = (widest / 2 + FOCUS_GAP) / LABEL_T;
+  const radius =
+    options.radius ??
+    Math.max(118, (spokes.length * ARC_PER_NODE) / (2 * Math.PI), spokes.length === 0 ? 0 : outerNeeds, innerNeeds);
   const pad = options.pad ?? 74;
   const size = Math.round(2 * (radius + pad));
   const cx = size / 2;
@@ -383,8 +406,8 @@ export function layoutEgo(
       focus: false,
     });
 
-    const labelX = cx + radius * 0.6 * cos;
-    const labelY = cy + radius * 0.6 * Math.sin(angle);
+    const labelX = cx + radius * LABEL_T * cos;
+    const labelY = cy + radius * LABEL_T * Math.sin(angle);
     edges.push({
       id: s.id,
       labels: s.labels,

@@ -226,6 +226,33 @@ describe("layoutEgo", () => {
     expect(map.nodes[0]).toMatchObject({ id: "wiktor", focus: true, isolated: true });
   });
 
+  it("grows the star for long labels, so a type name never runs over the node or the focus", () => {
+    // The defect this replaces: the radius came only from the spoke count, so six spokes
+    // labelled "mieszka w kamienicy" drew a 112px label along a 126px spoke -- over the
+    // character's dot at one end and into the middle at the other.
+    const cast = Array.from({ length: 6 }, (_, i) => ({ id: `c${i}`, name: `C${i}` }));
+    const hub = [{ id: "hub", name: "Hub" }, ...cast];
+    const long: MapLink[] = cast.map((c, i) => ({
+      id: `r${i}`,
+      a: "hub",
+      b: c.id,
+      labels: ["mieszka w kamienicy"],
+    }));
+    const map = layoutEgo(hub, long, "hub");
+    const focus = map.nodes.find((n) => n.focus);
+    const from = (x: number, y: number) => Math.hypot(x - (focus?.x ?? 0), y - (focus?.y ?? 0));
+    const half = labelWidth("mieszka w kamienicy") / 2;
+    const spoke = from(map.nodes[1].x, map.nodes[1].y);
+
+    expect(map.edges).toHaveLength(6);
+    for (const e of map.edges) {
+      // Measured ALONG the spoke, which is the direction the rotated label extends in.
+      const centre = from(e.labelX, e.labelY);
+      expect(centre - half).toBeGreaterThan(0); // does not reach the focus
+      expect(centre + half).toBeLessThan(spoke); // does not reach the character's dot
+    }
+  });
+
   it("returns an empty drawing for a focus that is not in the cast", () => {
     const map = layoutEgo(CAST, LINKS, "nobody");
     expect(map.nodes).toEqual([]);
