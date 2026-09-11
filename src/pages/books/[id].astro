@@ -1088,10 +1088,11 @@ if (!book && !loadError) {
     align-items: baseline;
     gap: var(--space-xs);
   }
-  /* The count belongs to the word it counts, and takes the accent: it is the one number in
-     this header, and "CAST 3" reads as a unit instead of being hunted for among the views. */
+  /* Ink, not accent: in this header the accent means "the view you are looking at", so an
+     accented number read as a fourth, selected tab. The count is a fact about the cast, not
+     a state of the page. */
   .sec-head .count {
-    color: var(--accent);
+    color: var(--ink);
   }
   .viewswitch .sep {
     color: var(--rule-strong);
