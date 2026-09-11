@@ -22,10 +22,15 @@ const buttonVariants = cva(
         link: "border-transparent bg-transparent text-signal underline decoration-1 underline-offset-4 hover:decoration-2",
       },
       size: {
-        default: "min-h-8 px-3 pointer-coarse:min-h-11",
-        sm: "min-h-7 px-2 pointer-coarse:min-h-9",
-        lg: "min-h-10 px-4 pointer-coarse:min-h-12",
-        icon: "size-8 px-0 pointer-coarse:size-11",
+        // Touch heights match the 36px field they sit under, so a form reads as
+        // one block rather than as controls of three different weights. WCAG 2.2
+        // AA asks 24px; 44px is AAA/HIG and was making every submit the loudest
+        // thing on a working screen. `lg` keeps the taller target for auth,
+        // where the button IS the page.
+        default: "min-h-8 px-3 pointer-coarse:min-h-9",
+        sm: "min-h-7 px-2 pointer-coarse:min-h-8",
+        lg: "min-h-10 px-4 pointer-coarse:min-h-11",
+        icon: "size-8 px-0 pointer-coarse:size-9",
       },
     },
     defaultVariants: {

@@ -10,6 +10,11 @@ const inputBase =
   "w-full min-h-11 rounded-none border-0 border-b bg-transparent py-2 pr-2 pl-7 font-[family-name:var(--font-serif)] text-base text-ink transition-colors outline-none placeholder:text-muted-fg";
 
 interface FormFieldProps {
+  /** Inspector density: label in a narrow left column instead of above the
+   *  field, no icon, 30px (36px on touch). Use it where the form is one block
+   *  among many on a working screen; leave it off on the auth pages, where the
+   *  form IS the screen and has room to breathe. */
+  dense?: boolean;
   id: string;
   name?: string;
   label: string;
@@ -24,6 +29,7 @@ interface FormFieldProps {
 }
 
 export function FormField({
+  dense = false,
   id,
   name,
   label,
@@ -36,6 +42,39 @@ export function FormField({
   icon,
   endContent,
 }: FormFieldProps) {
+  if (dense) {
+    return (
+      <div>
+        {/* .field comes from forms.css — the same grid the edit inspector uses,
+            so a form and the row it edits line up on the same column. */}
+        <div className="field">
+          <label htmlFor={id}>{label}</label>
+          <input
+            id={id}
+            name={name ?? id}
+            type={type}
+            value={value}
+            onChange={(e) => {
+              onChange(e.target.value);
+            }}
+            placeholder={placeholder}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? `${id}-error` : undefined}
+            className={cn(error && "border-b-signal")}
+          />
+        </div>
+        {error ? (
+          <p id={`${id}-error`} className="text-signal mt-0.5 flex items-center gap-1 text-[0.78rem]">
+            <CircleAlert className="size-3 shrink-0" />
+            {error}
+          </p>
+        ) : (
+          hint
+        )}
+      </div>
+    );
+  }
+
   return (
     <div>
       <label htmlFor={id} className="label mb-1 block">

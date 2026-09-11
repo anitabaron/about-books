@@ -49,11 +49,12 @@ export default function AddCharacterForm({ bookId, serverError }: Props) {
     <form
       method="POST"
       action={`/api/books/${bookId}/characters`}
-      className="flex flex-col gap-3"
+      className="flex flex-col gap-1.5"
       onSubmit={handleSubmit}
       noValidate
     >
       <FormField
+        dense
         id="name"
         label="Name"
         value={name}
@@ -67,6 +68,7 @@ export default function AddCharacterForm({ bookId, serverError }: Props) {
       />
 
       <FormField
+        dense
         id="description"
         label="Note"
         value={description}
@@ -78,7 +80,7 @@ export default function AddCharacterForm({ bookId, serverError }: Props) {
         error={errors.description}
         icon={<PenLine className="size-4" />}
         hint={
-          <p className="text-muted-fg mt-1 text-[0.833rem]">
+          <p className="text-muted-fg mt-0.5 text-[0.78rem]">
             Optional — a name alone is enough. Fill this in as you read.
           </p>
         }
@@ -86,7 +88,7 @@ export default function AddCharacterForm({ bookId, serverError }: Props) {
 
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText="Adding..." icon={<UserPlus className="size-4" />}>
+      <SubmitButton size="default" full={false} pendingText="Adding..." icon={<UserPlus className="size-4" />}>
         Add character
       </SubmitButton>
     </form>

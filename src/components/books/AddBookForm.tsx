@@ -44,8 +44,9 @@ export default function AddBookForm({ serverError }: Props) {
   }
 
   return (
-    <form method="POST" action="/api/books" className="flex flex-col gap-3 px-4" onSubmit={handleSubmit} noValidate>
+    <form method="POST" action="/api/books" className="flex flex-col gap-1.5 px-4" onSubmit={handleSubmit} noValidate>
       <FormField
+        dense
         id="title"
         label="Title"
         value={title}
@@ -59,6 +60,7 @@ export default function AddBookForm({ serverError }: Props) {
       />
 
       <FormField
+        dense
         id="author"
         label="Author"
         value={author}
@@ -69,12 +71,12 @@ export default function AddBookForm({ serverError }: Props) {
         placeholder="Frank Herbert"
         error={errors.author}
         icon={<User className="size-4" />}
-        hint={<p className="text-muted-fg mt-1 text-[0.833rem]">Optional — leave blank if you don&apos;t know it.</p>}
+        hint={<p className="text-muted-fg mt-0.5 text-[0.78rem]">Optional — leave blank if you don&apos;t know it.</p>}
       />
 
       <ServerError message={serverError} />
 
-      <SubmitButton pendingText="Adding..." icon={<BookPlus className="size-4" />}>
+      <SubmitButton size="default" full={false} pendingText="Adding..." icon={<BookPlus className="size-4" />}>
         Add book
       </SubmitButton>
     </form>

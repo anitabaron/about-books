@@ -68,11 +68,22 @@
   border-block-end-color: var(--focus);
 }
 
+/* KNOWN TRADE-OFF, taken deliberately on 2026-09-11 at the reader's request.
+ *
+ * These fields are 0.9rem at every pointer type. They used to step up to 16px
+ * under a coarse pointer for one reason only: iOS Safari zooms the viewport
+ * when a focused input is under 16px, and "no zooming" is an S-02 acceptance
+ * criterion. At 16px the typed text was the largest type on a working screen,
+ * which the reader judged the worse of the two costs.
+ *
+ * So: expect the viewport to zoom on focus on an iPhone. If that turns out to
+ * be the more annoying half, the fix is to put `font-size: var(--text-base)`
+ * back in this block — not to add `maximum-scale=1`, which kills pinch-zoom
+ * and fails WCAG 1.4.4. */
 @media (pointer: coarse) {
   .field input,
   .field select,
   .rel select {
-    font-size: var(--text-base);
     min-height: 36px;
     height: 36px;
   }
@@ -138,10 +149,10 @@
 .disclose-body {
   border-block-start: var(--rule-w) solid var(--rule);
   margin-block-start: 3px;
-  padding-block: var(--space-xs) var(--space-sm);
+  padding-block: 6px 8px;
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
   animation: disclose var(--dur-base) var(--ease-out);
 }
 @keyframes disclose {
