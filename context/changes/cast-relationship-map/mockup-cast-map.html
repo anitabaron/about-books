@@ -1,0 +1,427 @@
+<title>Cast Map Specimens</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --paper:      oklch(93% 0.014 84);
+    --paper-2:    oklch(90.5% 0.016 84);
+    --paper-3:    oklch(88% 0.018 84);
+    --ink:        oklch(20% 0.012 60);
+    --ink-2:      oklch(41% 0.012 62);
+    --muted:      oklch(48% 0.012 66);
+    --rule:       oklch(74% 0.014 80);
+    --rule-strong:oklch(52% 0.014 78);
+    --accent:     oklch(43% 0.15 30);
+    --ghost:      oklch(78% 0.055 205);
+
+    --serif: "Newsreader", ui-serif, Georgia, serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+    --lab: 0.66rem;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      oklch(18% 0.012 60);
+      --paper-2:    oklch(21.5% 0.013 60);
+      --paper-3:    oklch(25.5% 0.014 60);
+      --ink:        oklch(92% 0.01 82);
+      --ink-2:      oklch(74% 0.01 78);
+      --muted:      oklch(65% 0.01 72);
+      --rule:       oklch(32% 0.012 78);
+      --rule-strong:oklch(48% 0.012 78);
+      --accent:     oklch(62% 0.125 30);
+      --ghost:      oklch(48% 0.05 205);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:      oklch(18% 0.012 60);
+    --paper-2:    oklch(21.5% 0.013 60);
+    --paper-3:    oklch(25.5% 0.014 60);
+    --ink:        oklch(92% 0.01 82);
+    --ink-2:      oklch(74% 0.01 78);
+    --muted:      oklch(65% 0.01 72);
+    --rule:       oklch(32% 0.012 78);
+    --rule-strong:oklch(48% 0.012 78);
+    --accent:     oklch(62% 0.125 30);
+    --ghost:      oklch(48% 0.05 205);
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 62rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+  .lab {
+    font-family: var(--mono); font-size: var(--lab); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.16em; color: var(--muted);
+  }
+  .masthead { border-block-end: var(--rule-w, 2px) solid var(--ink); border-block-end-width: 2px; padding-block-end: 0.5rem; }
+  h1 {
+    font-family: var(--serif); font-weight: 600; font-size: clamp(1.7rem, 5vw, 2.4rem);
+    line-height: 1.15; margin: 0.35rem 0 0; text-wrap: balance;
+  }
+  .standfirst { color: var(--ink-2); max-width: 60ch; margin: 0.85rem 0 0; }
+  .standfirst strong { color: var(--ink); font-weight: 600; }
+
+  .plates { display: grid; gap: 2.5rem; margin-block-start: 2.5rem; }
+  @media (min-width: 56rem) { .plates { grid-template-columns: 1fr 1fr; } .plate.wide { grid-column: 1 / -1; } }
+
+  .plate { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+  .plate > figure { margin: 0; background: var(--paper-2); border: 1px solid var(--rule); padding: 0.5rem; }
+  .plate svg { display: block; width: 100%; height: auto; }
+  /* Etykiety są nienegocjowalne, więc to płótno nie kurczy się do ekranu — rośnie z obsadą,
+     a czytelnik je przewija w obu osiach. SVG dostaje tu swój naturalny rozmiar, nie 100%. */
+  .scrollbox { overflow: auto; max-height: 26rem; overscroll-behavior: contain; }
+  .scrollbox svg { width: auto; height: auto; }
+  .scrollnote {
+    font-family: var(--mono); font-size: var(--lab); letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); display: flex; justify-content: space-between;
+    gap: 1rem; padding: 0 0.15rem 0.4rem;
+  }
+  .picker { display: flex; flex-wrap: wrap; gap: 0.3rem; padding-block-end: 0.5rem; }
+  .picker button {
+    font-family: var(--mono); font-size: var(--lab); font-weight: 600; letter-spacing: 0.1em;
+    text-transform: uppercase; cursor: pointer; padding: 0.25rem 0.5rem; min-height: 28px;
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--rule); border-radius: 0;
+  }
+  .picker button:hover { color: var(--ink); border-color: var(--rule-strong); }
+  .picker button[aria-current="true"] { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+  .picker button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .plate h2 { font-size: 1.15rem; font-weight: 600; margin: 0; line-height: 1.25; }
+  .verdict { font-size: 0.92rem; color: var(--ink-2); margin: 0; max-width: 58ch; }
+  .verdict b { color: var(--ink); font-weight: 600; }
+  .tag { display: inline-block; margin-inline-end: 0.5rem; }
+  .tag.good { color: var(--accent); }
+
+  .node-name { font-family: var(--serif); font-size: 13px; fill: var(--ink); }
+  .node-name.dim { fill: var(--muted); font-style: italic; }
+  /* Otoczka w kolorze płótna, rysowana POD wypełnieniem (paint-order). Bez niej każda
+     krzyżująca się krawędź przechodzi przez wyraz i czyta się jak przekreślenie -- a że
+     etykieta leży nad własną kreską, przekreślały ją cudze, nie własna. */
+  .edge-label {
+    font-family: var(--mono); font-size: 8.5px; font-weight: 600; letter-spacing: 0.08em;
+    fill: var(--accent); text-transform: uppercase;
+    paint-order: stroke fill; stroke: var(--paper-2); stroke-width: 3px; stroke-linejoin: round;
+  }
+  .edge { stroke: var(--rule-strong); stroke-width: 1.1; fill: none; }
+  .edge.soft { stroke: var(--rule); }
+  .dot { fill: var(--ink); }
+  .dot.hollow { fill: var(--paper-2); stroke: var(--rule-strong); stroke-width: 1.2; }
+  .dot.focus { fill: var(--accent); }
+
+  .asks { margin-block-start: 3rem; border-block-start: 2px solid var(--ink); padding-block-start: 1rem; }
+  .asks ol { margin: 0.75rem 0 0; padding-inline-start: 1.2rem; display: grid; gap: 0.6rem; max-width: 60ch; }
+  .asks li::marker { font-family: var(--mono); font-size: 0.8rem; color: var(--accent); }
+  footer { margin-block-start: 2.5rem; color: var(--muted); font-size: 0.85rem; border-block-start: 1px solid var(--rule); padding-block-start: 0.75rem; }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="lab">Makieta &middot; dane przykładowe &middot; FR-007</div>
+    <h1>Mapa powiązań: trzy specymeny</h1>
+  </header>
+
+  <p class="standfirst">
+    Fikcyjna saga rodzinna: dziewięć postaci, dziesięć połączeń, w tym typ własny „mieszka z"
+    i Wiktor, którego jeszcze z nikim nie powiązano. Ten sam zbiór narysowany trzema sposobami.
+    Drugi specymen to ta sama metoda przy dwunastu postaciach i osiemnastu połączeniach,
+    narysowana już według Twojej decyzji: <strong>etykiety zostają zawsze</strong>, a płótno
+    rośnie i przewija się, zamiast kurczyć do ekranu.
+  </p>
+
+  <div class="plates">
+    <div class="plate">
+      <figure id="fig-a"></figure>
+      <h2>A &middot; Okrąg, dziewięć postaci</h2>
+      <p class="verdict">
+        <span class="lab tag good">Działa</span>
+        Kolejność na obwodzie <b>nie jest przypadkowa</b>: połączone postacie stoją obok siebie,
+        więc większość kresek biegnie krótkim łukiem zamiast przez środek. To sortowanie, nie
+        algorytm — i najtańsza poprawa czytelności, jaka tu istnieje. <b>Wiktor zawisa samotnie</b>:
+        jest w obsadzie, nie ma połączeń. Pokazać prawdę o danych czy oczyścić obraz?
+      </p>
+    </div>
+
+    <div class="plate">
+      <figure id="fig-c"></figure>
+      <h2>C &middot; Widok ego: Helena</h2>
+      <p class="verdict">
+        <span class="lab tag good">Skaluje się</span>
+        Jedna postać w środku, tylko jej sąsiedzi. Liczba szprych to stopień wierzchołka —
+        tu cztery, w Twoich prawdziwych danych 1–3 — więc <b>wielkość obsady przestaje mieć
+        znaczenie</b>. Każdy węzeł jest linkiem przestawiającym środek, więc nawigacja nie
+        potrzebuje JavaScriptu. To jest dosłownie US-01: od postaci do wszystkich jej powiązań
+        w jednej interakcji. <b>Kliknij nazwisko powyżej</b>, żeby przestawić środek — w aplikacji
+        każdy taki chip i każdy węzeł na mapie to zwykły link <code>?view=map&amp;focus=&lt;id&gt;</code>,
+        czyli jedno przeładowanie strony i zero JavaScriptu. Tutaj przerysowuję na skrypcie tylko
+        po to, żebyś mogła to poklikać.
+      </p>
+    </div>
+
+    <div class="plate wide">
+      <figure id="fig-b"></figure>
+      <h2>B &middot; Dwanaście postaci, etykiety zachowane</h2>
+      <p class="verdict">
+        <span class="lab tag good">Twoja decyzja</span>
+        Skoro etykiety zostają zawsze, płótno przestaje kurczyć się do ekranu i <b>rośnie z
+        obsadą</b>: każdy węzeł dostaje stały kawałek łuku, więc promień to <code>n &times; 132 / 2&pi;</code>,
+        a ramka przewija się w obu osiach. Etykiety <b>leżą na swoich kreskach</b>, obrócone do ich
+        kąta i <b>siedzą w przerwie wyciętej w kresce</b>. Dwie obrony, bo jedna nie wystarcza:
+        przerwa radzi sobie z własną krawędzią, a otoczka w kolorze płótna z <b>cudzymi</b>,
+        które przechodzą pod wyrazem — i z krótkimi cięciwami, gdzie na przerwę nie ma miejsca.
+        Te, które stanęłyby do góry nogami, są odwrócone o pół obrotu. Równoległy tekst
+        zajmuje pas wzdłuż linii zamiast prostokąta w poprzek, więc krzyżujące się cięciwy
+        przestają sobie kasować podpisy. Same przecięcia <b>nie znikają</b> — to właściwość metody.
+      </p>
+    </div>
+  </div>
+
+  <section class="asks">
+    <div class="lab">Co ta makieta rozstrzyga za nas, a czego nie</div>
+    <ol>
+      <li><b>Próg przełączenia</b> na widok ego. Patrząc na specymen B — przy ilu postaciach Twoim zdaniem robi się nieczytelnie? Proponowałam 9.</li>
+      <li><b>Postacie bez połączeń</b> — Wiktor w specymenie A. Zostaje na mapie czy znika?</li>
+      <li><s>Etykiety typów</s> — <b>rozstrzygnięte</b>: zostają zawsze, płótno rośnie i się przewija. Otwarte zostaje, <b>ile łuku dać na węzeł</b>: tu 132 px, co mieści „ANTAGONIST". Dłuższy typ własny wymusi więcej i jeszcze większe płótno.</li>
+      <li><b>Domyślne ognisko</b> widoku ego, gdy w adresie nie ma <code>focus</code>: postać o największej liczbie połączeń (tu Helena), pierwsza alfabetycznie, czy ostatnio dodana?</li>
+    </ol>
+  </section>
+
+  <footer>
+    Kolory, kroje i grubości kresek wzięte wprost z <code>src/styles/tokens.css</code> — to nie jest
+    osobny język wizualny, tylko ten sam papier i atrament co reszta aplikacji.
+  </footer>
+</div>
+
+<script>
+  /* Fikcyjna saga rodzinna. Kolejność na obwodzie NIE jest przypadkowa: postacie połączone
+     stoją obok siebie, przez co większość krawędzi biegnie krótkim łukiem, a nie przez środek.
+     To najtańsza poprawa czytelności okręgu i nic nie kosztuje — sortowanie, nie algorytm. */
+  const CAST = [
+    { id: "helena",  name: "Helena" },
+    { id: "tomasz",  name: "Tomasz" },
+    { id: "antoni",  name: "Antoni" },
+    { id: "zofia",   name: "Zofia" },
+    { id: "jadwiga", name: "Jadwiga" },
+    { id: "kamil",   name: "Kamil" },
+    { id: "ewa",     name: "Ewa" },
+    { id: "irena",   name: "Irena" },
+    { id: "wiktor",  name: "Wiktor" }
+  ];
+  const LINKS = [
+    { a: "helena",  b: "tomasz",  type: "romantic" },
+    { a: "tomasz",  b: "antoni",  type: "antagonist" },
+    { a: "antoni",  b: "zofia",   type: "family" },
+    { a: "zofia",   b: "jadwiga", type: "mieszka z" },
+    { a: "jadwiga", b: "kamil",   type: "romantic" },
+    { a: "kamil",   b: "ewa",     type: "mieszka z" },
+    { a: "ewa",     b: "helena",  type: "ally" },
+    { a: "helena",  b: "jadwiga", type: "family" },
+    { a: "helena",  b: "irena",   type: "antagonist" },
+    { a: "irena",   b: "zofia",   type: "ally" }
+  ];
+
+  const BIG_CAST = ["Paul","Jessica","Leto","Chani","Stilgar","Duncan","Gurney","Thufir","Yueh","Harkonnen","Feyd","Irulan"]
+    .map(n => ({ id: n.toLowerCase(), name: n }));
+  const BIG_LINKS = [
+    ["paul","jessica","family"],["paul","leto","family"],["jessica","leto","romantic"],
+    ["paul","chani","romantic"],["chani","stilgar","ally"],["paul","stilgar","ally"],
+    ["paul","duncan","ally"],["paul","gurney","ally"],["paul","thufir","ally"],
+    ["leto","yueh","ally"],["yueh","harkonnen","antagonist"],["paul","harkonnen","antagonist"],
+    ["harkonnen","feyd","family"],["paul","feyd","antagonist"],["paul","irulan","family"],
+    ["duncan","chani","ally"],["gurney","jessica","ally"],["thufir","harkonnen","antagonist"]
+  ].map(([a,b,type]) => ({ a, b, type }));
+
+  /* Etykiety są monospace'em (IBM Plex Mono 8.5 px + 0.08em świateł), więc szerokość da się
+     policzyć bez mierzenia w DOM: ~5.9 px na znak. To wystarcza, żeby wyciąć w kresce przerwę
+     odrobinę szerszą niż słowo. */
+  const labelWidth = t => t.length * 5.9;
+
+  /* Kreska rysowana jako dwa odcinki z luką wokół etykiety. Przy krótkich krawędziach luka
+     zjadłaby całą linię, więc zostawiamy minimum 22% długości po każdej stronie -- wtedy
+     kreska nadal czyta się jako połączenie, a nie jako dwie kropki. */
+  const edgeWithGap = (svg, p, q, gapCx, gapCy, gapW) => {
+    const dx = q.x - p.x, dy = q.y - p.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len, uy = dy / len;
+    const along = (gapCx - p.x) * ux + (gapCy - p.y) * uy;
+    const half = Math.min(gapW / 2, len * 0.25);
+    const a = Math.max(0, along - half), b = Math.min(len, along + half);
+    /* Próg nisko: przerwa ma się udać także na krótkich cięciwach, bo to właśnie tam
+       poprzednio nie działała i linia szła przez wyraz. Gdy nawet 10% nie zostaje,
+       kreska idzie w całości, a przed przekreśleniem broni otoczka etykiety. */
+    if (a <= len * 0.1 || b >= len * 0.9) {
+      svg.appendChild(svgEl("line", { class: "edge", x1: p.x, y1: p.y, x2: q.x, y2: q.y }));
+      return;
+    }
+    svg.appendChild(svgEl("line", { class: "edge", x1: p.x, y1: p.y, x2: p.x + ux * a, y2: p.y + uy * a }));
+    svg.appendChild(svgEl("line", { class: "edge", x1: p.x + ux * b, y1: p.y + uy * b, x2: q.x, y2: q.y }));
+  };
+
+  const svgEl = (n, attrs, text) => {
+    const el = document.createElementNS("http://www.w3.org/2000/svg", n);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    if (text != null) el.textContent = text;
+    return el;
+  };
+
+  /* The layout the plan describes: nodes evenly spaced on a circle, edges as straight
+     chords. O(n), deterministic — the same cast always draws the same picture. */
+  function circlePlate(target, cast, links, opts) {
+    /* Gdy etykiety muszą zostać, promień wynika z obsady, nie z ekranu: każdy węzeł
+       dostaje stały kawałek łuku (arcPerNode), więc nazwiska nigdy na siebie nie wchodzą.
+       r = n * arc / 2pi. Płótno rośnie, ramka je przewija. */
+    const r = opts.arcPerNode
+      ? Math.max((cast.length * opts.arcPerNode) / (2 * Math.PI), 90)
+      : Math.min(opts.w, opts.h) / 2 - opts.pad;
+    const W = opts.arcPerNode ? Math.round(2 * (r + opts.pad)) : opts.w;
+    const H = opts.arcPerNode ? Math.round(2 * (r + opts.pad)) : opts.h;
+    const cx = W / 2, cy = H / 2;
+    const pos = {};
+    cast.forEach((c, i) => {
+      const ang = -Math.PI / 2 + (i * 2 * Math.PI) / cast.length;
+      pos[c.id] = { x: cx + r * Math.cos(ang), y: cy + r * Math.sin(ang), ang };
+    });
+
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+    if (opts.arcPerNode) { svg.setAttribute("width", W); svg.setAttribute("height", H); }
+    svg.appendChild(svgEl("title", {}, opts.title));
+
+    const degree = {};
+    links.forEach(l => { degree[l.a] = (degree[l.a] || 0) + 1; degree[l.b] = (degree[l.b] || 0) + 1; });
+
+    links.forEach((l, i) => {
+      const p = pos[l.a], q = pos[l.b];
+      if (!opts.edgeLabels) {
+        svg.appendChild(svgEl("line", { class: "edge", x1: p.x, y1: p.y, x2: q.x, y2: q.y }));
+      }
+      if (opts.edgeLabels) {
+        /* Etykieta należy do środka SWOJEGO połączenia — stała frakcja liczona od końca `a`
+           zsuwała je wszystkie do tej postaci, która akurat była zapisana jako `a`, czyli
+           w gęstym grafie do jednego huba.
+
+           Żeby środki nakładających się cięciw nie siadały na sobie, każda etykieta dostaje
+           mikroprzesunięcie: wzdłuż kreski o ±6% i w poprzek o kilka pikseli, deterministycznie
+           z indeksu krawędzi. Wciąż "przy środku", ale nie w tym samym punkcie. */
+        const t = 0.5 + [0, 0.05, -0.05][i % 3];
+        const dx = q.x - p.x, dy = q.y - p.y;
+        const mx = p.x + dx * t, my = p.y + dy * t;
+
+        /* Obrót do kąta kreski. Powyżej +90 stopni i poniżej -90 tekst stanąłby do góry nogami,
+           więc obracamy go o pół obrotu -- czyta się wtedy z drugiej strony, ale czyta.
+           Obrót jest wokół (mx,my), a tekst siedzi 4 px wyżej, więc ten odstęp obraca się razem
+           z nim i etykieta zawsze leży NA kresce, nie w poprzek niej. */
+        edgeWithGap(svg, p, q, mx, my, labelWidth(l.type) + 5);
+
+        let deg = (Math.atan2(dy, dx) * 180) / Math.PI;
+        if (deg > 90) deg -= 180;
+        else if (deg < -90) deg += 180;
+
+        svg.appendChild(svgEl("text", {
+          class: "edge-label", x: mx, y: my + 3, "text-anchor": "middle",
+          transform: `rotate(${deg.toFixed(2)} ${mx.toFixed(2)} ${my.toFixed(2)})`
+        }, l.type));
+      }
+    });
+
+    cast.forEach(c => {
+      const p = pos[c.id];
+      const lone = !degree[c.id];
+      svg.appendChild(svgEl("circle", { class: lone ? "dot hollow" : "dot", cx: p.x, cy: p.y, r: lone ? 4 : 4.5 }));
+      const out = 14;
+      const lx = p.x + out * Math.cos(p.ang), ly = p.y + out * Math.sin(p.ang);
+      const right = Math.cos(p.ang) > 0.15, left = Math.cos(p.ang) < -0.15;
+      svg.appendChild(svgEl("text", {
+        class: lone ? "node-name dim" : "node-name",
+        x: lx, y: ly + 4,
+        "text-anchor": right ? "start" : left ? "end" : "middle"
+      }, c.name));
+    });
+    target.appendChild(svg);
+  }
+
+  /* The ego view: focus in the middle, its neighbours on a small ring. Spoke count is the
+     focus character's degree, not the size of the cast. */
+  function egoPlate(target, cast, links, focusId, opts) {
+    const W = opts.w, H = opts.h, cx = W / 2, cy = H / 2;
+    const byId = Object.fromEntries(cast.map(c => [c.id, c]));
+    const nbrs = links
+      .filter(l => l.a === focusId || l.b === focusId)
+      .map(l => ({ other: l.a === focusId ? l.b : l.a, type: l.type }));
+    const r = Math.min(W, H) / 2 - opts.pad;
+
+    const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, role: "img" });
+    svg.appendChild(svgEl("title", {}, opts.title));
+
+    nbrs.forEach((n, i) => {
+      const ang = -Math.PI / 2 + (i * 2 * Math.PI) / Math.max(nbrs.length, 3);
+      const x = cx + r * Math.cos(ang), y = cy + r * Math.sin(ang);
+      const mx = cx + (r * 0.6) * Math.cos(ang), my = cy + (r * 0.6) * Math.sin(ang);
+      edgeWithGap(svg, { x: cx, y: cy }, { x, y }, mx, my, labelWidth(n.type) + 5);
+      let deg = (ang * 180) / Math.PI;
+      if (deg > 90) deg -= 180;
+      else if (deg < -90) deg += 180;
+      svg.appendChild(svgEl("text", {
+        class: "edge-label", x: mx, y: my + 3, "text-anchor": "middle",
+        transform: `rotate(${deg.toFixed(2)} ${mx.toFixed(2)} ${my.toFixed(2)})`
+      }, n.type));
+      svg.appendChild(svgEl("circle", { class: "dot", cx: x, cy: y, r: 4.5 }));
+      const right = Math.cos(ang) > 0.15, left = Math.cos(ang) < -0.15;
+      svg.appendChild(svgEl("text", {
+        class: "node-name", x: x + 13 * Math.cos(ang), y: y + 13 * Math.sin(ang) + 4,
+        "text-anchor": right ? "start" : left ? "end" : "middle"
+      }, byId[n.other].name));
+    });
+
+    svg.appendChild(svgEl("circle", { class: "dot focus", cx, cy, r: 6.5 }));
+    svg.appendChild(svgEl("text", { class: "node-name", x: cx, y: cy + 22, "text-anchor": "middle" }, byId[focusId].name));
+    target.appendChild(svg);
+  }
+
+  circlePlate(document.getElementById("fig-a"), CAST, LINKS,
+    { w: 460, h: 380, pad: 62, edgeLabels: true, title: "Dziewięć postaci na okręgu, dziesięć połączeń" });
+  /* Wybór ogniska. W aplikacji to linki i przeładowanie strony; tutaj skrypt, żeby dało się
+     poklikać. Postacie bez połączeń są wyłączone — ego view nie ma czego dla nich narysować. */
+  const figC = document.getElementById("fig-c");
+  const picker = document.createElement("div");
+  picker.className = "picker";
+  figC.appendChild(picker);
+  const holder = document.createElement("div");
+  figC.appendChild(holder);
+
+  const degreeOf = id => LINKS.filter(l => l.a === id || l.b === id).length;
+
+  function drawEgo(focusId) {
+    holder.replaceChildren();
+    egoPlate(holder, CAST, LINKS, focusId,
+      { w: 460, h: 380, pad: 60, title: `${CAST.find(c => c.id === focusId).name} i jej powiązania` });
+    [...picker.children].forEach(b => b.setAttribute("aria-current", String(b.dataset.id === focusId)));
+  }
+
+  CAST.forEach(c => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.dataset.id = c.id;
+    b.textContent = c.name;
+    const d = degreeOf(c.id);
+    if (!d) { b.disabled = true; b.title = "Brak połączeń — nie ma czego narysować"; b.style.opacity = "0.45"; }
+    else b.addEventListener("click", () => drawEgo(c.id));
+    picker.appendChild(b);
+  });
+  drawEgo("helena");
+  const figB = document.getElementById("fig-b");
+  const box = document.createElement("div");
+  box.className = "scrollbox";
+  figB.appendChild(box);
+  circlePlate(box, BIG_CAST, BIG_LINKS,
+    { pad: 96, arcPerNode: 132, edgeLabels: true, title: "Dwanaście postaci, etykiety zachowane, płótno przewijane" });
+  const note = document.createElement("div");
+  note.className = "scrollnote";
+  const svgB = box.querySelector("svg");
+  note.innerHTML = `<span>Płótno ${svgB.getAttribute("width")}&times;${svgB.getAttribute("height")} px</span><span>&#8596; &#8597; przewijaj</span>`;
+  figB.insertBefore(note, box);
+</script>

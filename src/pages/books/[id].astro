@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase";
 import type { Book, Character, Relationship, RelationshipTypeRow } from "@/types";
 import { RELATIONSHIP_TYPES } from "@/types";
 import { buildConnections } from "@/lib/connections";
+import { defaultFocus, layoutCircle, layoutEgo, toLinks } from "@/lib/diagram";
 
 type BookRow = Pick<Book, "id" | "title" | "author" | "created_at" | "finished_at">;
 type CharacterRow = Pick<Character, "id" | "name" | "description" | "created_at">;
@@ -68,6 +69,14 @@ if (!supabase) {
 // A top-level `return` in Astro frontmatter crashes @typescript-eslint/no-misused-promises
 // ("Expected node to have a parent"), so the status is set on Astro.response instead. Same
 // result — a real 404 — with no early return and no rule suppression.
+/* The list stays the default view -- FR-007 says so, and it is the one that works at three
+   characters. `circle` draws the whole cast, `person` draws one character's own connections.
+   An unrecognised value falls back to the list rather than an error page, same as ?status=. */
+const CAST_VIEWS = ["list", "circle", "person"] as const;
+type CastView = (typeof CAST_VIEWS)[number];
+const requestedView = Astro.url.searchParams.get("view");
+const castView: CastView = CAST_VIEWS.find((v) => v === requestedView) ?? "list";
+
 const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
 
 // The types this reader coined for THIS book. Loaded once and passed to buildConnections,
@@ -117,6 +126,24 @@ if (supabase && characters.length > 0) {
     connectionsByCharacter = buildConnections(characters, rels, customTypes);
   }
 }
+
+const mapLinks = toLinks(connectionsByCharacter);
+/* A focus naming a character this reader cannot see falls back to the busiest one rather than
+   drawing an empty frame -- and RLS already made another reader's id indistinguishable from a
+   typo, so there is nothing to report. */
+const requestedFocus = Astro.url.searchParams.get("focus");
+const focusId =
+  castView === "person"
+    ? (characters.find((c) => c.id === requestedFocus)?.id ?? defaultFocus(characters, mapLinks))
+    : null;
+const castMap =
+  castView === "circle"
+    ? layoutCircle(characters, mapLinks)
+    : castView === "person" && focusId
+      ? layoutEgo(characters, mapLinks, focusId)
+      : null;
+const viewHref = (v: CastView, focus?: string) =>
+  v === "list" ? `/books/${bookId}` : `/books/${bookId}?view=${v}${focus ? `&focus=${focus}` : ""}`;
 
 // Precomputed so the template stays a plain map: each row carries its own connections and
 // the other cast members it can be related to.
@@ -252,7 +279,23 @@ if (!book && !loadError) {
 
         <p class="sec-head">
           <span class="label">Cast</span>
-          <span class="label">{characters.length}</span>
+          <span class="viewswitch label">
+            <span class="count">{characters.length}</span>
+            {/* Plain links, so switching view is a request and the map needs no JavaScript. */}
+            {CAST_VIEWS.map((v) => (
+              <>
+                {/* aria-hidden: the dot is a rule between items, not something to read out. */}
+                <span class="sep" aria-hidden="true">
+                  &middot;
+                </span>
+                <a
+                  href={viewHref(v, v === "person" && focusId ? focusId : undefined)}
+                  aria-current={castView === v}
+                  set:text={v}
+                />
+              </>
+            ))}
+          </span>
         </p>
 
         {loadError && <p class="error-text pad">{loadError}</p>}
@@ -261,159 +304,226 @@ if (!book && !loadError) {
           <p class="note-text empty">No characters yet. Add the first name you meet.</p>
         )}
 
-        <ul class="list">
-          {castRows.map(({ character, connections, others }) => (
-            <Row title={character.name} note={character.description}>
-              {/* No heading, ever: a character with no relationships renders nothing here at all.
+        {castMap && (
+          <figure class="castmap">
+            {castView === "person" && (
+              /* The picker doubles as the answer to "who is in the middle": every character is
+                 a link, and one with no connections is still listed -- it just draws alone. */
+              <nav class="focuspick">
+                {characters.map((c) =>
+                  connectionsByCharacter.get(c.id)?.length ? (
+                    <a href={viewHref("person", c.id)} aria-current={c.id === focusId} set:text={c.name} />
+                  ) : (
+                    /* No connections, so nothing to draw around them. Shown rather than hidden --
+                       they are in the cast -- but not offered as a destination. */
+                    <span class="empty" title="No connections yet" set:text={c.name} />
+                  ),
+                )}
+              </nav>
+            )}
+            <div class="mapscroll">
+              <svg
+                width={castMap.width}
+                height={castMap.height}
+                viewBox={`0 0 ${castMap.width} ${castMap.height}`}
+                role="img"
+                aria-label={`Relationship map for ${book.title}. The same connections are listed above in the list view.`}
+              >
+                {castMap.edges.map((edge) => (
+                  <>
+                    {edge.segments.map((seg) => (
+                      <line class="mapedge" x1={seg.x1} y1={seg.y1} x2={seg.x2} y2={seg.y2} />
+                    ))}
+                    <text
+                      class="maplabel"
+                      x={edge.labelX}
+                      y={edge.labelY + 3}
+                      text-anchor="middle"
+                      transform={`rotate(${edge.labelAngle.toFixed(2)} ${edge.labelX.toFixed(2)} ${edge.labelY.toFixed(2)})`}
+                      set:text={edge.label}
+                    />
+                  </>
+                ))}
+                {castMap.nodes.map((node) => (
+                  <a href={viewHref("person", node.id)}>
+                    <circle
+                      class:list={["mapdot", { hollow: node.isolated, focus: node.focus }]}
+                      cx={node.x}
+                      cy={node.y}
+                      r={node.focus ? 6.5 : 4.5}
+                    />
+                    <text
+                      class:list={["mapname", { dim: node.isolated }]}
+                      x={node.labelX}
+                      y={node.labelY}
+                      text-anchor={node.anchor}
+                      set:text={node.name}
+                    />
+                  </a>
+                ))}
+              </svg>
+            </div>
+          </figure>
+        )}
+
+        {castView === "list" && (
+          <ul class="list">
+            {castRows.map(({ character, connections, others }) => (
+              <Row title={character.name} note={character.description}>
+                {/* No heading, ever: a character with no relationships renders nothing here at all.
                   That is the state the cast view is in before any relationship exists -- the first
                   thing a reader ever sees -- and an empty heading under every name would make a
                   working page look broken. */}
-              {connections.length > 0 && (
-                <ul class="conns">
-                  {connections.map((connection) => (
-                    <li>
-                      <span class="conn-type label">{connection.typeLabel}</span>
-                      <span class="conn-name">{connection.otherName}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                {connections.length > 0 && (
+                  <ul class="conns">
+                    {connections.map((connection) => (
+                      <li>
+                        <span class="conn-type label">{connection.typeLabel}</span>
+                        <span class="conn-name">{connection.otherName}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
 
-              {/* Native <details> disclosure: no island and no client JavaScript, so edit and
+                {/* Native <details> disclosure: no island and no client JavaScript, so edit and
                   delete keep working with scripting disabled. */}
-              <details class="disclose">
-                <summary>Edit</summary>
-                <div class="disclose-body">
-                  {/* Both forms are empty shells: every control lives in the stack below and
+                <details class="disclose">
+                  <summary>Edit</summary>
+                  <div class="disclose-body">
+                    {/* Both forms are empty shells: every control lives in the stack below and
                       reaches its form with `form=`. That is what lets Name, Note and Link read
                       as one block of fields with a single Save/Delete row underneath, even
                       though three different endpoints are involved. A <form> cannot nest
                       inside another, so this is the only way to interleave them. */}
-                  <form method="POST" action={`/api/characters/${character.id}`} id={`edit-character-${character.id}`}>
-                    <input type="hidden" name="book_id" value={book.id} />
-                  </form>
-                  {others.length > 0 && (
                     <form
                       method="POST"
-                      action={`/api/characters/${character.id}/relationships`}
-                      id={`character-${character.id}-relationships`}
-                    />
-                  )}
-
-                  <div class="stack">
-                    <div class="field">
-                      <label for={`name-${character.id}`}>Name</label>
-                      <input
-                        id={`name-${character.id}`}
-                        form={`edit-character-${character.id}`}
-                        name="name"
-                        value={character.name}
+                      action={`/api/characters/${character.id}`}
+                      id={`edit-character-${character.id}`}
+                    >
+                      <input type="hidden" name="book_id" value={book.id} />
+                    </form>
+                    {others.length > 0 && (
+                      <form
+                        method="POST"
+                        action={`/api/characters/${character.id}/relationships`}
+                        id={`character-${character.id}-relationships`}
                       />
-                    </div>
-                    <div class="field field-note">
-                      <label for={`desc-${character.id}`}>Note</label>
-                      <textarea
-                        id={`desc-${character.id}`}
-                        form={`edit-character-${character.id}`}
-                        name="description"
-                        rows="2"
-                        placeholder="Add a note as you read"
-                        set:text={character.description ?? ""}
-                      />
-                    </div>
+                    )}
 
-                    {connectionsErrorFor === character.id && formError && <p class="error-text">{formError}</p>}
+                    <div class="stack">
+                      <div class="field">
+                        <label for={`name-${character.id}`}>Name</label>
+                        <input
+                          id={`name-${character.id}`}
+                          form={`edit-character-${character.id}`}
+                          name="name"
+                          value={character.name}
+                        />
+                      </div>
+                      <div class="field field-note">
+                        <label for={`desc-${character.id}`}>Note</label>
+                        <textarea
+                          id={`desc-${character.id}`}
+                          form={`edit-character-${character.id}`}
+                          name="description"
+                          rows="2"
+                          placeholder="Add a note as you read"
+                          set:text={character.description ?? ""}
+                        />
+                      </div>
 
-                    {others.length > 0 ? (
-                      <div class="rel">
-                        <label for={`newrel-type-${character.id}`}>Link</label>
-                        <div class="rel-controls">
-                          {/* Type before person, matching the editor rows below: a reader knows
+                      {connectionsErrorFor === character.id && formError && <p class="error-text">{formError}</p>}
+
+                      {others.length > 0 ? (
+                        <div class="rel">
+                          <label for={`newrel-type-${character.id}`}>Link</label>
+                          <div class="rel-controls">
+                            {/* Type before person, matching the editor rows below: a reader knows
                               WHAT the relationship is before they pick who it is with, and the
                               two rows must not disagree. One field, two meanings -- a shared literal or a custom
                               type's id; <optgroup> is native, so the merged list costs no
                               JavaScript and the endpoint decides the column by shape. */}
-                          <select
-                            id={`newrel-type-${character.id}`}
-                            form={`character-${character.id}-relationships`}
-                            name="type"
-                          >
-                            <optgroup label="Shared">
-                              {RELATIONSHIP_TYPES.map((relationshipType) => (
-                                <option value={relationshipType}>{relationshipType}</option>
-                              ))}
-                            </optgroup>
-                            {customTypes.length > 0 && (
-                              <optgroup label="Your types for this book">
-                                {customTypes.map((customType) => (
-                                  <option value={customType.id}>{customType.name}</option>
+                            <select
+                              id={`newrel-type-${character.id}`}
+                              form={`character-${character.id}-relationships`}
+                              name="type"
+                            >
+                              <optgroup label="Shared">
+                                {RELATIONSHIP_TYPES.map((relationshipType) => (
+                                  <option value={relationshipType}>{relationshipType}</option>
                                 ))}
                               </optgroup>
-                            )}
-                          </select>
-                          <select
-                            form={`character-${character.id}-relationships`}
-                            name="other_character_id"
-                            aria-label={`Character to link with ${character.name}`}
-                          >
-                            {others.map((other) => (
-                              <option value={other.id}>{other.name}</option>
-                            ))}
-                          </select>
-                          <Button
-                            type="submit"
-                            form={`character-${character.id}-relationships`}
-                            variant="outline"
-                            size="sm"
-                          >
-                            Add
-                          </Button>
+                              {customTypes.length > 0 && (
+                                <optgroup label="Your types for this book">
+                                  {customTypes.map((customType) => (
+                                    <option value={customType.id}>{customType.name}</option>
+                                  ))}
+                                </optgroup>
+                              )}
+                            </select>
+                            <select
+                              form={`character-${character.id}-relationships`}
+                              name="other_character_id"
+                              aria-label={`Character to link with ${character.name}`}
+                            >
+                              {others.map((other) => (
+                                <option value={other.id}>{other.name}</option>
+                              ))}
+                            </select>
+                            <Button
+                              type="submit"
+                              form={`character-${character.id}-relationships`}
+                              variant="outline"
+                              size="sm"
+                            >
+                              Add
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                    ) : (
-                      <p class="note-small">Add another character to this book before creating a relationship.</p>
-                    )}
-                  </div>
+                      ) : (
+                        <p class="note-small">Add another character to this book before creating a relationship.</p>
+                      )}
+                    </div>
 
-                  {/* Save left, Delete right, on the last line. The confirmation stays a nested
+                    {/* Save left, Delete right, on the last line. The confirmation stays a nested
                       <details>: the destructive control only exists once the reader has opened
                       it, so a mis-tap costs a click, not a character. A JS confirm() would not
                       survive scripting being off. */}
-                  <div class="edit-actions">
-                    <details class="confirm">
-                      <summary>Delete</summary>
-                      <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
-                        <p>
-                          Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot be
-                          undone.
-                        </p>
-                        <div class="confirm-actions">
-                          <Button type="submit" variant="destructive" size="sm">
-                            Yes, delete permanently
-                          </Button>
-                          {/* Closes the disclosure it sits in. With scripting off it does nothing
+                    <div class="edit-actions">
+                      <details class="confirm">
+                        <summary>Delete</summary>
+                        <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
+                          <p>
+                            Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot
+                            be undone.
+                          </p>
+                          <div class="confirm-actions">
+                            <Button type="submit" variant="destructive" size="sm">
+                              Yes, delete permanently
+                            </Button>
+                            {/* Closes the disclosure it sits in. With scripting off it does nothing
                                   and the reader closes the panel by pressing the opener again, which is
                                   how it worked before this button existed -- so nothing is lost, and
                                   nothing about the destructive path depends on JavaScript. */}
-                          <button type="button" class="cancel" onclick="this.closest('details').open = false">
-                            Cancel
-                          </button>
-                        </div>
-                      </form>
-                    </details>
-                    <Button type="submit" form={`edit-character-${character.id}`} size="sm">
-                      Save
-                    </Button>
-                  </div>
+                            <button type="button" class="cancel" onclick="this.closest('details').open = false">
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      </details>
+                      <Button type="submit" form={`edit-character-${character.id}`} size="sm">
+                        Save
+                      </Button>
+                    </div>
 
-                  {/* Managing connections lives inside the disclosure on purpose: the always-visible list
+                    {/* Managing connections lives inside the disclosure on purpose: the always-visible list
                       above stays a clean scan, and edit/delete controls do not compete with it. */}
-                  {connections.length > 0 && (
-                    <div class="sub">
-                      <p class="sub-label label">Change or remove</p>
-                      {connections.map((connection) => (
-                        <div class="conn-edit">
-                          {/* Controls live OUTSIDE this form and reach it with `form=`, so the
+                    {connections.length > 0 && (
+                      <div class="sub">
+                        <p class="sub-label label">Change or remove</p>
+                        {connections.map((connection) => (
+                          <div class="conn-edit">
+                            {/* Controls live OUTSIDE this form and reach it with `form=`, so the
                               bin can share their row: a <form> cannot nest inside another, and
                               the delete needs its own. Same shape as the character row above.
 
@@ -422,135 +532,144 @@ if (!book && !loadError) {
                               alone put the same id in the document twice — and a duplicate id
                               silently associates both rows' controls with the first form, which
                               would submit the other end's anchor_id and rewrite the wrong end. */}
-                          <form
-                            method="POST"
-                            action={`/api/relationships/${connection.id}`}
-                            id={`edit-rel-${character.id}-${connection.id}`}
-                          >
-                            {/* The anchor tells the route which end to keep; it re-reads the row to work
+                            <form
+                              method="POST"
+                              action={`/api/relationships/${connection.id}`}
+                              id={`edit-rel-${character.id}-${connection.id}`}
+                            >
+                              {/* The anchor tells the route which end to keep; it re-reads the row to work
                                 out which column that is. */}
-                            <input type="hidden" name="anchor_id" value={character.id} />
-                          </form>
-                          {/* One row, the same shape as the add form above: type, person,
+                              <input type="hidden" name="anchor_id" value={character.id} />
+                            </form>
+                            {/* One row, the same shape as the add form above: type, person,
                                 button. Two stacked rows cost ~40px per connection and made an
                                 edit look like a different kind of control from an add. */}
-                          <div class="rel">
-                            <label for={`rel-type-${character.id}-${connection.id}`}>Edit</label>
-                            <div class="rel-controls">
-                              <select
-                                id={`rel-type-${character.id}-${connection.id}`}
-                                name="type"
-                                form={`edit-rel-${character.id}-${connection.id}`}
-                                aria-label={`Relationship type with ${connection.otherName}`}
-                              >
-                                <optgroup label="Shared">
-                                  {RELATIONSHIP_TYPES.map((relationshipType) => (
-                                    <option
-                                      value={relationshipType}
-                                      selected={relationshipType === connection.typeValue}
-                                    >
-                                      {relationshipType}
-                                    </option>
-                                  ))}
-                                </optgroup>
-                                {customTypes.length > 0 && (
-                                  <optgroup label="Your types for this book">
-                                    {customTypes.map((customType) => (
-                                      <option value={customType.id} selected={customType.id === connection.typeValue}>
-                                        {customType.name}
+                            <div class="rel">
+                              <label for={`rel-type-${character.id}-${connection.id}`}>Edit</label>
+                              <div class="rel-controls">
+                                <select
+                                  id={`rel-type-${character.id}-${connection.id}`}
+                                  name="type"
+                                  form={`edit-rel-${character.id}-${connection.id}`}
+                                  aria-label={`Relationship type with ${connection.otherName}`}
+                                >
+                                  <optgroup label="Shared">
+                                    {RELATIONSHIP_TYPES.map((relationshipType) => (
+                                      <option
+                                        value={relationshipType}
+                                        selected={relationshipType === connection.typeValue}
+                                      >
+                                        {relationshipType}
                                       </option>
                                     ))}
                                   </optgroup>
-                                )}
-                              </select>
-                              <select
-                                name="other_character_id"
-                                form={`edit-rel-${character.id}-${connection.id}`}
-                                aria-label={`Character connected to ${character.name}`}
-                              >
-                                {others.map((other) => (
-                                  <option value={other.id} selected={other.id === connection.otherId}>
-                                    {other.name}
-                                  </option>
-                                ))}
-                              </select>
-                              {/* A glyph, not the black Save from the block above. Correcting an
+                                  {customTypes.length > 0 && (
+                                    <optgroup label="Your types for this book">
+                                      {customTypes.map((customType) => (
+                                        <option value={customType.id} selected={customType.id === connection.typeValue}>
+                                          {customType.name}
+                                        </option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                </select>
+                                <select
+                                  name="other_character_id"
+                                  form={`edit-rel-${character.id}-${connection.id}`}
+                                  aria-label={`Character connected to ${character.name}`}
+                                >
+                                  {others.map((other) => (
+                                    <option value={other.id} selected={other.id === connection.otherId}>
+                                      {other.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                {/* A glyph, not the black Save from the block above. Correcting an
                                     existing connection is a smaller act than saving the character,
                                     and two solid buttons in one disclosure read as two equally
                                     important commits. Paired with the bin beside it, both quiet. */}
-                              <Button
-                                type="submit"
-                                form={`edit-rel-${character.id}-${connection.id}`}
-                                variant="ghost"
-                                size="sm"
-                                aria-label={`Save the connection with ${connection.otherName}`}
-                              >
-                                <Check className="size-3.5" aria-hidden="true" />
-                              </Button>
-                              <details class="confirm icon">
-                                <summary
-                                  aria-label={`Remove the ${connection.typeLabel} connection with ${connection.otherName}`}
+                                <Button
+                                  type="submit"
+                                  form={`edit-rel-${character.id}-${connection.id}`}
+                                  variant="ghost"
+                                  size="sm"
+                                  aria-label={`Save the connection with ${connection.otherName}`}
                                 >
-                                  <Trash2 className="size-3.5" aria-hidden="true" />
-                                </summary>
-                                <form
-                                  method="POST"
-                                  action={`/api/relationships/${connection.id}/delete`}
-                                  class="confirm-body"
-                                >
-                                  <p>
-                                    Remove the <strong>{connection.typeLabel}</strong> connection with{" "}
-                                    <strong>{connection.otherName}</strong>?
-                                  </p>
-                                  <div class="confirm-actions">
-                                    <Button type="submit" variant="destructive" size="sm">
-                                      Yes, remove it
-                                    </Button>
-                                    {/* Closes the disclosure it sits in. With scripting off it does nothing
+                                  <Check className="size-3.5" aria-hidden="true" />
+                                </Button>
+                                <details class="confirm icon">
+                                  <summary
+                                    aria-label={`Remove the ${connection.typeLabel} connection with ${connection.otherName}`}
+                                  >
+                                    <Trash2 className="size-3.5" aria-hidden="true" />
+                                  </summary>
+                                  <form
+                                    method="POST"
+                                    action={`/api/relationships/${connection.id}/delete`}
+                                    class="confirm-body"
+                                  >
+                                    <p>
+                                      Remove the <strong>{connection.typeLabel}</strong> connection with{" "}
+                                      <strong>{connection.otherName}</strong>?
+                                    </p>
+                                    <div class="confirm-actions">
+                                      <Button type="submit" variant="destructive" size="sm">
+                                        Yes, remove it
+                                      </Button>
+                                      {/* Closes the disclosure it sits in. With scripting off it does nothing
                                   and the reader closes the panel by pressing the opener again, which is
                                   how it worked before this button existed -- so nothing is lost, and
                                   nothing about the destructive path depends on JavaScript. */}
-                                    <button type="button" class="cancel" onclick="this.closest('details').open = false">
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </form>
-                              </details>
+                                      <button
+                                        type="button"
+                                        class="cancel"
+                                        onclick="this.closest('details').open = false"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </form>
+                                </details>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </details>
-            </Row>
-          ))}
-        </ul>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </details>
+              </Row>
+            ))}
+          </ul>
+        )}
 
         {/* The vocabulary lives behind a disclosure, closed by default: a reader who is happy
             with the five shared types never opens it and sees the page they had before. It sits
             after the cast because reading the cast is the point of this screen and managing a
             word list is not. */}
-        <details class="disclose block-disclose vocab">
-          <summary>
-            Relationship types{customTypes.length > 0 && <span class="count">&nbsp;&middot; {customTypes.length}</span>}
-          </summary>
+        {/* The vocabulary belongs to the list view: on a diagram the type names are already
+            on the edges, so a second copy underneath is noise. */}
+        {castView === "list" && (
+          <details class="disclose block-disclose vocab">
+            <summary>
+              Relationship types
+              {customTypes.length > 0 && <span class="count">&nbsp;&middot; {customTypes.length}</span>}
+            </summary>
 
-          <div class="disclose-body">
-            {/* The five are worth listing — a reader deciding whether to invent a
+            <div class="disclose-body">
+              {/* The five are worth listing — a reader deciding whether to invent a
                 word needs to see what already exists. Everything else the three
                 sentences here used to say, the rows below show. */}
-            <p class="vocab-note">
-              <span class="label">Predefined</span>
-              {RELATIONSHIP_TYPES.join(" · ")}
-            </p>
+              <p class="vocab-note">
+                <span class="label">Predefined</span>
+                {RELATIONSHIP_TYPES.join(" · ")}
+              </p>
 
-            {customTypes.length > 0 && (
-              <ul class="list vocab-list">
-                {customTypes.map((customType) => (
-                  <li id={`relationship-type-${customType.id}`} class="vocab-item">
-                    {/* Rename is the half that repairs a typo -- delete cannot, because the
+              {customTypes.length > 0 && (
+                <ul class="list vocab-list">
+                  {customTypes.map((customType) => (
+                    <li id={`relationship-type-${customType.id}`} class="vocab-item">
+                      {/* Rename is the half that repairs a typo -- delete cannot, because the
                         foreign key refuses to remove a type a connection still points at.
                         One update to this row changes the name on every connection holding it.
 
@@ -558,85 +677,86 @@ if (!book && !loadError) {
                         row and reach this form with `form=`, because a <form> cannot nest
                         inside another and the delete needs its own. Same row shape as the
                         connection editors above, so the two read as the same kind of thing. */}
-                    <form
-                      method="POST"
-                      action={`/api/relationship-types/${customType.id}`}
-                      id={`rename-type-${customType.id}`}
-                    />
+                      <form
+                        method="POST"
+                        action={`/api/relationship-types/${customType.id}`}
+                        id={`rename-type-${customType.id}`}
+                      />
 
-                    {relationshipTypeErrorFor === customType.id && formError && <p class="error-text">{formError}</p>}
+                      {relationshipTypeErrorFor === customType.id && formError && <p class="error-text">{formError}</p>}
 
-                    <div class="rel">
-                      <label for={`rename-${customType.id}`}>Edit</label>
-                      <div class="rel-controls">
-                        <input
-                          id={`rename-${customType.id}`}
-                          form={`rename-type-${customType.id}`}
-                          name="name"
-                          value={customType.name}
-                          maxlength="40"
-                        />
-                        <Button
-                          type="submit"
-                          form={`rename-type-${customType.id}`}
-                          variant="ghost"
-                          size="sm"
-                          aria-label={`Save the name ${customType.name}`}
-                        >
-                          <Check className="size-3.5" aria-hidden="true" />
-                        </Button>
-                        <details class="confirm icon">
-                          <summary aria-label={`Delete the type ${customType.name}`}>
-                            <Trash2 className="size-3.5" aria-hidden="true" />
-                          </summary>
-                          <form
-                            method="POST"
-                            action={`/api/relationship-types/${customType.id}/delete`}
-                            class="confirm-body"
+                      <div class="rel">
+                        <label for={`rename-${customType.id}`}>Edit</label>
+                        <div class="rel-controls">
+                          <input
+                            id={`rename-${customType.id}`}
+                            form={`rename-type-${customType.id}`}
+                            name="name"
+                            value={customType.name}
+                            maxlength="40"
+                          />
+                          <Button
+                            type="submit"
+                            form={`rename-type-${customType.id}`}
+                            variant="ghost"
+                            size="sm"
+                            aria-label={`Save the name ${customType.name}`}
                           >
-                            <p>
-                              Delete <strong>{customType.name}</strong> from this book’s vocabulary? Connections using
-                              it must be changed first.
-                            </p>
-                            <div class="confirm-actions">
-                              <Button type="submit" variant="destructive" size="sm">
-                                Yes, delete this type
-                              </Button>
-                              {/* Closes the disclosure it sits in. With scripting off it does nothing
+                            <Check className="size-3.5" aria-hidden="true" />
+                          </Button>
+                          <details class="confirm icon">
+                            <summary aria-label={`Delete the type ${customType.name}`}>
+                              <Trash2 className="size-3.5" aria-hidden="true" />
+                            </summary>
+                            <form
+                              method="POST"
+                              action={`/api/relationship-types/${customType.id}/delete`}
+                              class="confirm-body"
+                            >
+                              <p>
+                                Delete <strong>{customType.name}</strong> from this book’s vocabulary? Connections using
+                                it must be changed first.
+                              </p>
+                              <div class="confirm-actions">
+                                <Button type="submit" variant="destructive" size="sm">
+                                  Yes, delete this type
+                                </Button>
+                                {/* Closes the disclosure it sits in. With scripting off it does nothing
                                   and the reader closes the panel by pressing the opener again, which is
                                   how it worked before this button existed -- so nothing is lost, and
                                   nothing about the destructive path depends on JavaScript. */}
-                              <button type="button" class="cancel" onclick="this.closest('details').open = false">
-                                Cancel
-                              </button>
-                            </div>
-                          </form>
-                        </details>
+                                <button type="button" class="cancel" onclick="this.closest('details').open = false">
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          </details>
+                        </div>
                       </div>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
-            {relationshipTypesError && <p class="error-text">{relationshipTypesError}</p>}
+              {relationshipTypesError && <p class="error-text">{relationshipTypesError}</p>}
 
-            {/* The fragment target sits on content INSIDE the <details>, not on the element
+              {/* The fragment target sits on content INSIDE the <details>, not on the element
                 itself: browsers that expand a closed disclosure to reach a fragment then open
                 it, and the rest simply scroll here. No JavaScript either way. */}
-            <form method="POST" action={`/api/books/${book.id}/relationship-types`} id="relationship-types-add">
-              <div class="rel">
-                <label for="relationship-type-name">New</label>
-                <div class="rel-controls">
-                  <input id="relationship-type-name" name="name" placeholder="lives with" maxlength="40" />
-                  <Button type="submit" variant="outline" size="sm">
-                    Add
-                  </Button>
+              <form method="POST" action={`/api/books/${book.id}/relationship-types`} id="relationship-types-add">
+                <div class="rel">
+                  <label for="relationship-type-name">New</label>
+                  <div class="rel-controls">
+                    <input id="relationship-type-name" name="name" placeholder="lives with" maxlength="40" />
+                    <Button type="submit" variant="outline" size="sm">
+                      Add
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </form>
-          </div>
-        </details>
+              </form>
+            </div>
+          </details>
+        )}
       </>
     )
   }
@@ -944,6 +1064,150 @@ if (!book && !loadError) {
   }
   .rel-controls .confirm[open] > .confirm-body {
     flex-basis: 100%;
+  }
+
+  /* ── Cast map ──────────────────────────────────────────────────────────
+     Every rule here was settled by drawing context/changes/cast-relationship-map/
+     mockup-cast-map.html and looking at it; the geometry lives in src/lib/diagram.ts. */
+
+  .viewswitch {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+  }
+  .viewswitch .count {
+    color: var(--muted-fg);
+  }
+  .viewswitch .sep {
+    color: var(--rule-strong);
+  }
+  .viewswitch a {
+    color: var(--muted-fg);
+    text-decoration: none;
+  }
+  .viewswitch a:hover {
+    color: var(--ink-2);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .viewswitch a[aria-current="true"] {
+    color: var(--accent);
+  }
+
+  .castmap {
+    margin: 0;
+    padding: var(--space-xs) 0 var(--space-md);
+    border-block-end: var(--rule-w) solid var(--rule);
+  }
+  /* The canvas is sized by the cast, not by the screen -- keeping every label is what costs
+     this -- so the frame scrolls in both axes and the SVG keeps its natural size. */
+  .mapscroll {
+    overflow: auto;
+    overscroll-behavior: contain;
+    max-height: 70vh;
+    /* Centre a drawing that fits; scroll only one that does not. `safe` keeps the left edge
+       reachable when it overflows -- plain `center` pushes the start of the content out of
+       the scrollable area, where it cannot be scrolled back to. */
+    display: flex;
+    justify-content: safe center;
+  }
+  /* The gutter belongs to the SVG, not to the scroll container: padding on a scrolling box
+     counts toward its scrollable width, which produced a horizontal scrollbar on a drawing
+     that fitted. */
+  .mapscroll svg {
+    display: block;
+    flex: none;
+    margin-inline: var(--space-md);
+  }
+
+  .focuspick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs) var(--space-xs);
+    padding: 0 var(--space-md) var(--space-xs);
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+  }
+  .focuspick a,
+  .focuspick .empty {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding-inline: var(--space-xs);
+    border: var(--rule-w) solid var(--rule);
+    color: var(--muted-fg);
+    text-decoration: none;
+  }
+  .focuspick a:hover {
+    color: var(--ink);
+    border-color: var(--rule-strong);
+  }
+  .focuspick a[aria-current="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--paper);
+  }
+  .focuspick a:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+  .focuspick .empty {
+    opacity: 0.45;
+  }
+
+  .mapedge {
+    stroke: var(--rule-strong);
+    stroke-width: 1.1;
+    fill: none;
+  }
+  /* Two defences against a struck-through label, because one is not enough: diagram.ts cuts a
+     gap for the label's OWN edge, and this halo -- drawn under the fill by paint-order -- takes
+     care of other edges crossing underneath, and of labels too long for the gap they were
+     allowed. */
+  .maplabel {
+    font-family: var(--font-label);
+    font-size: 8.5px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    fill: var(--accent);
+    paint-order: stroke fill;
+    stroke: var(--paper);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+  .mapdot {
+    fill: var(--ink);
+  }
+  /* Hollow: a character with no connections is still in the cast, so the map shows them rather
+     than quietly dropping them. */
+  .mapdot.hollow {
+    fill: var(--paper);
+    stroke: var(--rule-strong);
+    stroke-width: 1.2;
+  }
+  .mapdot.focus {
+    fill: var(--accent);
+  }
+  .mapname {
+    font-family: var(--font-serif);
+    font-size: 13px;
+    fill: var(--ink);
+  }
+  .mapname.dim {
+    fill: var(--muted-fg);
+    font-style: italic;
+  }
+  .castmap a:hover .mapname {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .castmap a:focus-visible .mapdot {
+    stroke: var(--focus);
+    stroke-width: 2.5;
   }
 
   .conns li {
