@@ -455,9 +455,12 @@ if (!book && !loadError) {
           </summary>
 
           <div class="disclose-body">
-            <p class="note-small">
-              Five types are shared by every book: {RELATIONSHIP_TYPES.join(", ")}. Add your own for connections this
-              book needs and others do not — “lives with”, “serves”.
+            {/* The five are worth listing — a reader deciding whether to invent a
+                word needs to see what already exists. Everything else the three
+                sentences here used to say, the rows below show. */}
+            <p class="vocab-note">
+              <span class="label">Predefined</span>
+              {RELATIONSHIP_TYPES.join(" · ")}
             </p>
 
             {customTypes.length > 0 && (
@@ -796,6 +799,16 @@ if (!book && !loadError) {
   .confirm-body strong {
     color: var(--ink);
     font-weight: 600;
+  }
+
+  .vocab-note {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-xs);
+    margin: 0 0 var(--space-2xs);
+    font-size: 0.9rem;
+    color: var(--ink-2);
   }
 
   .vocab-list {
