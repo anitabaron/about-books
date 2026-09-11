@@ -125,3 +125,37 @@ TBD stub in a cookbook before writing a shell helper. That is why the rule belon
 - **Problem**: an edit to a scoped `<style>` can stop reaching the browser while markup from the same file keeps hot-reloading — the rule sits in the file and the browser computes the old value (`display: block` where the file says `flex`; `--muted-fg` where it says `--accent`). Hit three times in one session; twice it cost a rewritten selector that never needed changing.
 - **Rule**: when a scoped `<style>` change does not appear after a hard reload, restart the dev server before touching the CSS. Confirm which state you are looking at with `getComputedStyle`, not with the rendering — "it looks unchanged" is not evidence that the code is wrong.
 - **Applies to**: implement, impl-review
+
+## An assertion that can fail is not yet an assertion that fails on THIS bug
+
+**Rule.** When a test guards a threshold — clearance, spacing, timing, a size — assert the
+value the design actually calls for, not the boundary at which the thing breaks outright.
+`> 0` is not a spacing rule; `>= the gap we designed` is. Then mutate the code back to the
+defect and watch the test fail. A test that survives that mutation measures nothing, however
+precisely its name describes the bug.
+
+**What happened.** The cast map drew relationship labels along the line between two
+characters, sized from the number of characters and not from the length of the words, so a
+long reader-defined type ran over the dots at both ends. Anita reported it twice — once for
+the person view, once for the circle view.
+
+The person-view fix came with a test asserting the label stays clear of both ends. It caught
+the regression, so the same shape was reused for the circle view. It passed — and it also
+passed with the fix reverted. The circle's geometry leaves **7.76 px** of clearance at the
+defect: enough to satisfy "greater than zero", and visibly a label touching a dot. The
+assertion could fail, just not on the thing it was written for. Tightening it to the designed
+14 px made the mutation fail, reporting exactly 7.76.
+
+The near-miss is the point: the test was written, named after the bug, run, and green, and it
+would have shipped as evidence that the circle view was fixed.
+
+**How to apply.**
+
+- Run the mutation before believing the test, not after the review asks. It is one edit and
+  one `npm test`.
+- Prefer the constant the code uses over a literal in the test — importing `CHORD_GAP` keeps
+  the assertion in step with the design instead of encoding a number that slowly stops being
+  true.
+- This is the sibling of "a probe must be able to fail for the reason you are testing" above.
+  That entry is about sending the wrong request; this one is about asking the right question
+  with the bar set too low. Both pass, both prove nothing, and both look like coverage.
