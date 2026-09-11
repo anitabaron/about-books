@@ -278,16 +278,24 @@ if (!book && !loadError) {
         </details>
 
         <p class="sec-head">
-          <span class="label">Cast</span>
-          <span class="viewswitch label">
+          <span class="label">
+            Cast{" "}
+            <span class="sep" aria-hidden="true">
+              &middot;
+            </span>
             <span class="count">{characters.length}</span>
+          </span>
+          <span class="viewswitch label">
             {/* Plain links, so switching view is a request and the map needs no JavaScript. */}
-            {CAST_VIEWS.map((v) => (
+            {CAST_VIEWS.map((v, i) => (
               <>
-                {/* aria-hidden: the dot is a rule between items, not something to read out. */}
-                <span class="sep" aria-hidden="true">
-                  &middot;
-                </span>
+                {/* A rule BETWEEN items, so none before the first -- and aria-hidden, because
+                    it separates rather than says anything. */}
+                {i > 0 && (
+                  <span class="sep" aria-hidden="true">
+                    &middot;
+                  </span>
+                )}
                 <a
                   href={viewHref(v, v === "person" && focusId ? focusId : undefined)}
                   aria-current={castView === v}
@@ -1080,8 +1088,10 @@ if (!book && !loadError) {
     align-items: baseline;
     gap: var(--space-xs);
   }
-  .viewswitch .count {
-    color: var(--muted-fg);
+  /* The count belongs to the word it counts, and takes the accent: it is the one number in
+     this header, and "CAST 3" reads as a unit instead of being hunted for among the views. */
+  .sec-head .count {
+    color: var(--accent);
   }
   .viewswitch .sep {
     color: var(--rule-strong);
