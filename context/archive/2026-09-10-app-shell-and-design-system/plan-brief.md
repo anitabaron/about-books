@@ -37,35 +37,35 @@ Nothing purple, gradient, blurred, glass or rounded anywhere.
 
 ## Key Decisions Made
 
-| Decision | Choice | Why (1 sentence) | Source |
-| --- | --- | --- | --- |
-| UI language | English, everywhere | Settles the question the roadmap left open at S-01, at the one moment it is cheap. | User |
-| Scope | Tokens + shell + every screen | A half-redesigned app has two levels of polish and reads as unfinished. | User |
-| Theme route | Custom, not catalog | 16 of Hallmark's 21 themes have no palette in this install, and the genre's cluster is two themes. | User |
-| Dark mode | Tokens now, switch later | Computing both ramps together keeps them coherent; the toggle is cheap to add and expensive to verify. | User |
-| Paper | Not `#fff` | "Light but not glaringly light" is precisely what pure white fails at. Value superseded below. | Plan |
-| Accent | One colour, never blue | Blue is what every model reaches for. Hue superseded below. | Plan |
-| Accent intensity | Low chroma **and** low lightness | Reconciles Hallmark's 0.12 chroma floor with "no intense colours" — dark green reads quiet, the same chroma at L 70 % would not. | Plan |
-| Primary button | Ink-filled, not accent-filled | Keeps the accent under the 3 % budget; both reference apps do the same. | Plan |
-| Status colour | None — finished books are greyed and dated | A green "finished" badge would collide with the accent's meaning. | Plan |
-| Typography | A reading serif for names, never Inter | Newsreader carries the bookish register at heading sizes without ornament. Pairing superseded below. | Plan |
-| Density | From row height and hairlines, **not** small type | Body stays at the 16 px floor — it is a reading app, and 44 px touch targets cap the density anyway. | Plan |
-| Row title size | Same size as body; the *family* changes | This is why four type sizes are enough for the whole app. | Plan |
-| Shell | N3 side-rail, collapsing to a top bar + native disclosure | The right archetype for a two-level app, and categorically not the AI nav. | Plan |
-| Panes | Two, not three | S-03 decided against a character detail page; a third Finder column would require one. | Plan |
-| shadcn tokens | Names kept, values re-pointed | `button.tsx` and every future `shadcn add` keep working with no edit. | Plan |
-| Landing page | Long Document + masthead + statement footer | The product has no metrics, quotes or screenshots; a prose page needs no fabrication. | Plan |
-| Where the accent lives | Relationship types, breadcrumb, rail marker, focus | The first draft put it only on desktop-only and state-only surfaces, so it rendered nowhere on a phone. | Mockup |
-| Visual direction | Letterpress broadsheet, both surfaces | Accepted from a second mockup after a near-white system had already been accepted; see plan.md § The broadsheet turn. | User |
-| Paper | Cream `oklch(93% 0.014 84)` | A printed ground, not a screen one. Costs 5.5 points of brightness — recorded, not hidden. | User |
-| Accent hue | Brick `oklch(43% 0.15 30)` | Supersedes spruce. One red, doing accent and destructive duty both. | User |
-| Destructive | The same red + word + outline | No room for a second red; hue was never allowed to be the sole signal anyway. | Plan |
-| Families | Anton (`/` only) · Newsreader · IBM Plex Mono | Mono carries every label, serif every piece of reading matter; IBM Plex Sans has no role left. | Plan |
-| Radius | `0`, product-wide | Square reads printed, rounded reads software. One survivor looks like an oversight. | Plan |
-| Hierarchy | Three rule weights, 1 / 2 / 3 px | Rules now carry what colour used to. | Plan |
-| Edit disclosure | Inspector: labels left, selects on one row | 44 px controls with stacked labels came out ~460 px tall on a phone; this lands near 180 px. | Mockup |
-| Inspector fields | Underlined, not boxed | `--rule-strong` is already at the WCAG 1.4.11 3:1 floor, so weight came off the edges instead of the value. | Mockup |
-| Inspector input size | 30 px / 14 px on fine, 36 px / 16 px on coarse | The 16 px floor exists only to stop iOS zooming — a touch concern, not a desktop one. | Mockup |
+| Decision               | Choice                                                    | Why (1 sentence)                                                                                                                 | Source |
+| ---------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| UI language            | English, everywhere                                       | Settles the question the roadmap left open at S-01, at the one moment it is cheap.                                               | User   |
+| Scope                  | Tokens + shell + every screen                             | A half-redesigned app has two levels of polish and reads as unfinished.                                                          | User   |
+| Theme route            | Custom, not catalog                                       | 16 of Hallmark's 21 themes have no palette in this install, and the genre's cluster is two themes.                               | User   |
+| Dark mode              | Tokens now, switch later                                  | Computing both ramps together keeps them coherent; the toggle is cheap to add and expensive to verify.                           | User   |
+| Paper                  | Not `#fff`                                                | "Light but not glaringly light" is precisely what pure white fails at. Value superseded below.                                   | Plan   |
+| Accent                 | One colour, never blue                                    | Blue is what every model reaches for. Hue superseded below.                                                                      | Plan   |
+| Accent intensity       | Low chroma **and** low lightness                          | Reconciles Hallmark's 0.12 chroma floor with "no intense colours" — dark green reads quiet, the same chroma at L 70 % would not. | Plan   |
+| Primary button         | Ink-filled, not accent-filled                             | Keeps the accent under the 3 % budget; both reference apps do the same.                                                          | Plan   |
+| Status colour          | None — finished books are greyed and dated                | A green "finished" badge would collide with the accent's meaning.                                                                | Plan   |
+| Typography             | A reading serif for names, never Inter                    | Newsreader carries the bookish register at heading sizes without ornament. Pairing superseded below.                             | Plan   |
+| Density                | From row height and hairlines, **not** small type         | Body stays at the 16 px floor — it is a reading app, and 44 px touch targets cap the density anyway.                             | Plan   |
+| Row title size         | Same size as body; the _family_ changes                   | This is why four type sizes are enough for the whole app.                                                                        | Plan   |
+| Shell                  | N3 side-rail, collapsing to a top bar + native disclosure | The right archetype for a two-level app, and categorically not the AI nav.                                                       | Plan   |
+| Panes                  | Two, not three                                            | S-03 decided against a character detail page; a third Finder column would require one.                                           | Plan   |
+| shadcn tokens          | Names kept, values re-pointed                             | `button.tsx` and every future `shadcn add` keep working with no edit.                                                            | Plan   |
+| Landing page           | Long Document + masthead + statement footer               | The product has no metrics, quotes or screenshots; a prose page needs no fabrication.                                            | Plan   |
+| Where the accent lives | Relationship types, breadcrumb, rail marker, focus        | The first draft put it only on desktop-only and state-only surfaces, so it rendered nowhere on a phone.                          | Mockup |
+| Visual direction       | Letterpress broadsheet, both surfaces                     | Accepted from a second mockup after a near-white system had already been accepted; see plan.md § The broadsheet turn.            | User   |
+| Paper                  | Cream `oklch(93% 0.014 84)`                               | A printed ground, not a screen one. Costs 5.5 points of brightness — recorded, not hidden.                                       | User   |
+| Accent hue             | Brick `oklch(43% 0.15 30)`                                | Supersedes spruce. One red, doing accent and destructive duty both.                                                              | User   |
+| Destructive            | The same red + word + outline                             | No room for a second red; hue was never allowed to be the sole signal anyway.                                                    | Plan   |
+| Families               | Anton (`/` only) · Newsreader · IBM Plex Mono             | Mono carries every label, serif every piece of reading matter; IBM Plex Sans has no role left.                                   | Plan   |
+| Radius                 | `0`, product-wide                                         | Square reads printed, rounded reads software. One survivor looks like an oversight.                                              | Plan   |
+| Hierarchy              | Three rule weights, 1 / 2 / 3 px                          | Rules now carry what colour used to.                                                                                             | Plan   |
+| Edit disclosure        | Inspector: labels left, selects on one row                | 44 px controls with stacked labels came out ~460 px tall on a phone; this lands near 180 px.                                     | Mockup |
+| Inspector fields       | Underlined, not boxed                                     | `--rule-strong` is already at the WCAG 1.4.11 3:1 floor, so weight came off the edges instead of the value.                      | Mockup |
+| Inspector input size   | 30 px / 14 px on fine, 36 px / 16 px on coarse            | The 16 px floor exists only to stop iOS zooming — a touch concern, not a desktop one.                                            | Mockup |
 
 ## Scope
 
@@ -90,14 +90,14 @@ stays a native POST — nothing in this change needs client JavaScript.
 
 ## Phases at a Glance
 
-| Phase | What it delivers | Key risk |
-| --- | --- | --- |
-| 1. Tokens + document shell | The system, judgeable in isolation; title + viewport fixed | Deleting the Tailwind entry directives un-styles the app while the build still passes |
-| 2. Shell + primitives | Rail, top bar, `Row`, button, fields — navigation where there was none | The sticky rail needs `overflow-x: clip`; `hidden` silently breaks it |
-| 3. `/books` | **The brief made visible** — the Finder list | Depends on S-04's `finished_at`; the empty state must not cost a screenful |
-| 4. `/books/[id]` | The densest screen; card-in-card nesting removed | The JS-off guarantee from S-03 is easy to break while restyling |
-| 5. Auth + account | Signed-out surfaces; the language question closed | A regex sweep over Zod messages that changes the schema, not just the text |
-| 6. Landing + verification | Long Document page; the four-width and 58-gate sweep | Writing a landing page tempts invented metrics — gate 46 |
+| Phase                      | What it delivers                                                       | Key risk                                                                              |
+| -------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| 1. Tokens + document shell | The system, judgeable in isolation; title + viewport fixed             | Deleting the Tailwind entry directives un-styles the app while the build still passes |
+| 2. Shell + primitives      | Rail, top bar, `Row`, button, fields — navigation where there was none | The sticky rail needs `overflow-x: clip`; `hidden` silently breaks it                 |
+| 3. `/books`                | **The brief made visible** — the Finder list                           | Depends on S-04's `finished_at`; the empty state must not cost a screenful            |
+| 4. `/books/[id]`           | The densest screen; card-in-card nesting removed                       | The JS-off guarantee from S-03 is easy to break while restyling                       |
+| 5. Auth + account          | Signed-out surfaces; the language question closed                      | A regex sweep over Zod messages that changes the schema, not just the text            |
+| 6. Landing + verification  | Long Document page; the four-width and 58-gate sweep                   | Writing a landing page tempts invented metrics — gate 46                              |
 
 **Prerequisites:** S-04 committed. **Phases 1–4 cannot be split; 5 and 6 can slip.**
 **Estimated effort:** Two sessions. Phase 4 is the largest single template.
@@ -114,7 +114,7 @@ stays a native POST — nothing in this change needs client JavaScript.
   its planning must not inherit this.
 - **The class sweep is the shape `lessons.md` warns about.** `bg-white/10`, `rounded-2xl`,
   `text-purple-300` recur dozens of times across two large templates, and the containers are
-  being *removed*, not recoloured — a regex will report success and leave the markup wrong.
+  being _removed_, not recoloured — a regex will report success and leave the markup wrong.
   Verify by structure. Deleting `@utility bg-cosmic` first makes the build enumerate the call
   sites for you.
 - **The JS-off guarantee is easy to lose.** Every `<details>`, `<form>` and `<select>` on

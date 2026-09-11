@@ -7,19 +7,23 @@ updated: 2026-09-11
 archived_at: 2026-09-11T12:15:09Z
 ---
 
-> **Archived shipped, not verified.** Closed on 2026-09-11 at the reader's
-> decision, with plan criteria **6.15 / 7.8** (the 320 / 414 / 768 px sweep),
-> **7.10** (contrast measured rather than computed) and **7.12** (keyboard
-> traversal) never run. They were not skipped for haste: `resize_window` reports
-> success in this environment without changing the viewport, so everything
-> narrow was measured by forcing the mobile branch in the DOM — honest heights,
-> but no exercise of width- or pointer-based media queries.
+> **Verified after archiving.** Closed on 2026-09-11 with plan criteria
+> **6.15 / 7.8** (the 320 / 414 / 768 px sweep), **7.10** (contrast) and **7.12**
+> (keyboard traversal) not yet run — this session could not resize the browser,
+> so narrow layouts had been measured by forcing the mobile branch in the DOM
+> rather than seen. The reader ran them on a device the same day and reported
+> all three, plus the two open judgement calls (26px fields and 32px buttons
+> under a thumb; iOS zoom-on-focus at 0.9rem), as acceptable.
 >
-> `todo.md` travels with this folder and still holds the full list, including two
-> judgement calls left to a real device (whether 26px fields and 32px buttons are
-> comfortable under a thumb, and whether iOS zoom-on-focus is the worse of the
-> two costs) and one known cosmetic defect (§ 2b). Archived folders are read-only
-> by convention, so anything acted on from that list belongs in a new change.
+> Recorded here rather than left stale: the earlier note said the opposite, and
+> an archive carrying a claim that has since been answered is worse than one
+> amended. What it is **not** is an instrument reading — 7.10 asked for measured
+> contrast ratios, and what closed it was a reader's judgement on a real screen.
+> If a number is ever needed, it still has to be taken.
+>
+> One known cosmetic defect stands, in `todo.md` § 2b: the book-edit panel lays
+> out 26px narrower than the page. Anything acted on from that list belongs in a
+> new change — this folder is read-only by convention.
 
 ## Notes
 
@@ -116,9 +120,12 @@ _depends_ on S-04's filter existing, because the library screen groups by status
   must still work after.
 - No database change, no migration, no RLS work, no `db:types`. `npm run db:verify-rls` should
   pass untouched — if it does not, something outside this change's scope broke.
-- Test data in the local stack: book _Dune_, characters Paul Atreides / Chani / Duncan Idaho,
-  one relationship (Chani ↔ Duncan, family). Readers `ra@t.test` / `rb@t.test`, password
-  `probe-123456`.
+- Test data in the local stack, per `supabase/seed.sql`: book _Solaris_, characters
+  Kris Kelvin / Harey / Snaut. Readers `reader-a@local.test` / `reader-b@local.test`,
+  password `local-dev-password`.
+  _(Inherited from S-04, which named Dune, Paul/Chani/Duncan and `ra@t.test` /
+  `probe-123456` — all replaced by the seed. Corrected 2026-09-11: anyone following
+  the old values got "Invalid login credentials" and went hunting for a bug in auth.)_
 
 **Deadline context.** `hard_deadline: 2026-09-12` applies to M-1. This change is not part of
 M-1 and must not be allowed to delay S-04 or S-05.

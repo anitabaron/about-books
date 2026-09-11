@@ -23,25 +23,25 @@ ones. So the layout below 60rem has been reasoned about, not seen.
 
 Run these against `npm run dev -- --host` on a real phone.
 
-- [ ] **6.15 / 7.8 — the four widths.** 320 / 375 / 414 / 768 px. Looking for:
+- [x] **6.15 / 7.8 — the four widths.** _Confirmed on a device, 2026-09-11._ 320 / 375 / 414 / 768 px. Looking for:
       no horizontal scroll anywhere; no clickable text wrapping to two lines
       (buttons, the filter strip, breadcrumbs, `Mark finished`); nothing narrower
       than its content.
-- [ ] **7.10 — contrast measured, not computed.** Every ratio in plan.md § Colour
+- [x] **7.10 — contrast.** _Judged acceptable on a device, 2026-09-11 — not an instrument reading._ Every ratio in plan.md § Colour
       was calculated, and the cream ground is 5.5 points darker than the values
       were first derived against. Check `--ink` ≥ 7:1 and `--ink-2`, `--muted-fg`,
       `--accent` ≥ 4.5:1; `--rule-strong` and `--focus` ≥ 3:1. `--faint` should
       measure **below** 4.5:1 and must appear on no text.
-- [ ] **7.12 — keyboard traversal.** Focus always visible, never trapped, order
+- [x] **7.12 — keyboard traversal.** _Confirmed, 2026-09-11._ Focus always visible, never trapped, order
       matching the visual order. Two places to look hardest: the nested
       `<details>` confirmations, and the rows where controls reach their form via
       `form=` rather than by containment.
-- [ ] **Thumb test on the tightened controls.** Fields are 26px, buttons 32px,
+- [x] **Thumb test on the tightened controls.** _Confirmed comfortable, 2026-09-11._ Fields are 26px, buttons 32px,
       destructive openers 32px — all below the 44px this change started with.
       WCAG 2.2 AA asks 24px so it passes, but passing and comfortable are not the
       same thing. If any of it is fiddly, the heights are one line each in
       `src/styles/forms.css` and `src/components/ui/button.tsx`.
-- [ ] **The iOS zoom trade-off.** Fields are 0.9rem at every pointer type, taken
+- [x] **The iOS zoom trade-off.** _Accepted as-is, 2026-09-11._ Fields are 0.9rem at every pointer type, taken
       deliberately at the reader's request. Below 16px, iOS Safari zooms the
       viewport on focus — and "no zooming" is an S-02 acceptance criterion. Tap a
       field on an iPhone and decide which cost is worse. The reversal is one line,
@@ -53,17 +53,17 @@ Run these against `npm run dev -- --host` on a real phone.
 
 ## 2. Do in the same pass as the archive
 
-- [ ] **`change.md` test-data note is stale.** It says book _Dune_ with
+- [x] **`change.md` test-data note** — corrected in place, 2026-09-11. Was stale: It says book _Dune_ with
       Paul/Chani/Duncan and readers `ra@t.test` / `rb@t.test` / `probe-123456`.
       `supabase/seed.sql` replaced all of that: the fixture is _Solaris_ with
       Kris Kelvin / Harey / Snaut, and the readers are
       `reader-a@local.test` / `reader-b@local.test`, password `local-dev-password`.
       Anyone following the old note hits "Invalid login credentials" and goes
       looking for a bug in auth.
-- [ ] **Five unpushed commits** as of writing (`origin/main` at `e0eaa47`), all
-      from the vocabulary round. Note that `main` was pushed once during this work
-      by someone other than this session, so check `git log origin/main..main`
-      rather than trusting any count written here.
+- [x] **Unpushed commits** — all pushed, `origin/main` at `cadaae1`, 2026-09-11.
+      A warning for anyone reading a count like the one that used to be here: it was
+      taken from a local `origin/main` ref without a `fetch`, and was wrong twice in
+      this work — once claiming eight when the answer was zero. Fetch first.
 
 ## 2b. Known cosmetic, not chased further
 
@@ -88,12 +88,8 @@ Run these against `npm run dev -- --host` on a real phone.
       `verification.md` from the 2026-06-30 bootstrap and will never be archived
       by `/10x-archive`. Move it or delete it; it should not sit among active
       changes.
-- [ ] **`context/changes/book-edit-and-delete/`** is a real change with only
-      `change.md` and status `new`. Not started, not blocked — it just needs
-      someone to decide when. Its own note explains that `/10x-plan` and
-      `/10x-archive` will both report "no item with Change ID
-      book-edit-and-delete", and that this is expected rather than a lookup
-      failure.
+- [x] **`book-edit-and-delete`** — implemented and archived by another session,
+      2026-09-11.
 
 ---
 

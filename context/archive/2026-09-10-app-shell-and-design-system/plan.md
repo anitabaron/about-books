@@ -34,7 +34,7 @@ bg-white/10 backdrop-blur-xl` one more time.
   nothing in the product imports except the landing page.
 - **`src/components/ui/button.tsx`** is stock shadcn CVA and consumes `bg-primary`,
   `text-primary-foreground`, `border-input`, `ring-ring`, `bg-destructive`. It is the one
-  component worth keeping — but only if the shadcn token *names* survive the retint.
+  component worth keeping — but only if the shadcn token _names_ survive the retint.
 - **The forms are server-rendered and JS-optional by design.** `/books/[id]` uses native
   `<details>` with plain `<form method="POST">` inside; S-03's plan records this as
   deliberate. `AddBookForm` / `AddCharacterForm` are `client:load` islands but degrade to a
@@ -48,7 +48,7 @@ bg-white/10 backdrop-blur-xl` one more time.
     beside the five built-ins; `finished_at` and the finish/reopen form are in place.
   - **Two interaction decisions were made there that this change must preserve, not undo:**
     the "Add a character" form is now itself a collapsed `<details>`, and every destructive
-    action sits behind a *nested* `<details>` confirmation, so a mis-tap costs a click rather
+    action sits behind a _nested_ `<details>` confirmation, so a mis-tap costs a click rather
     than a character. Both are load-bearing on a phone and neither was in this plan.
   - `src/pages/books.astro` grew its status filter (+66 lines).
   - `src/lib/connections.ts` was extracted with `buildConnections()`, and
@@ -93,7 +93,7 @@ JavaScript disabled; and all 58 Hallmark slop-test gates pass.
 - `src/styles/global.css:1-2` — `@import "tailwindcss"` and `@import "tw-animate-css"` must
   stay first. Tailwind v4 resolves `@theme inline` against whatever `:root` it can see, so
   tokens can live in a separate imported file as long as that import sits with the others.
-- `src/components/ui/button.tsx` reads shadcn token *names*, not values. Retinting those names
+- `src/components/ui/button.tsx` reads shadcn token _names_, not values. Retinting those names
   in place means the button, and every future `npx shadcn@latest add`, works with no edit.
   Renaming them means touching every component forever.
 - `src/pages/books/[id].astro:184` — the `castRows.map` `<li>` is the row primitive to extract.
@@ -102,9 +102,9 @@ JavaScript disabled; and all 58 Hallmark slop-test gates pass.
   guarded; a signed-out visitor is redirected to `/auth/signin`, so no app screen ever has to
   render a signed-out state. **`/` is the only unguarded page**, which is why it — and only it
   — needs two states.
-  *(An earlier revision of this plan claimed `/books` was unguarded. That came from the
+  _(An earlier revision of this plan claimed `/books` was unguarded. That came from the
   roadmap's Baseline paragraph, which is stale, and was written as if it were a reading of the
-  file. Corrected 2026-09-10 against `middleware.ts` itself.)*
+  file. Corrected 2026-09-10 against `middleware.ts` itself.)_
 - `context/foundation/lessons.md` — a scripted edit reports that it ran, not that it did the
   right thing. This change sweeps repeated class strings across large templates; check the
   rendered structure, not the diff stat.
@@ -128,12 +128,12 @@ JavaScript disabled; and all 58 Hallmark slop-test gates pass.
 - **No three-pane Finder column view.** Tempting given the reference, but S-03 decided against a
   character detail page — connections render inline precisely so reaching them costs zero
   interactions. A third pane would need that page to exist. Two panes.
-- **No colour-*coded* relationship types.** Five types × five hues would put colour on most of
+- **No colour-_coded_ relationship types.** Five types × five hues would put colour on most of
   the page and break the accent budget. All five types share the **one** accent — the colour
-  says "this word came from the system", it does not encode *which* word. Which type it is
+  says "this word came from the system", it does not encode _which_ word. Which type it is
   stays carried by the word itself.
 - **No status colour.** A finished book is greyed and dated, the way Finder greys an inactive
-  item — never badged. With one red doing accent *and* destructive duty, there is no third hue
+  item — never badged. With one red doing accent _and_ destructive duty, there is no third hue
   to spend on status, and inventing one would break the budget.
 - **No second hue in the app.** `--ghost` (the poster's pale teal offset layer) is declared in
   `tokens.css` but must be referenced by `/` alone. An app screen reading it is a bug.
@@ -174,7 +174,7 @@ proven rather than assumed.
   for the app, editorial for the landing page — and that split is gone. One voice.
 - **Theme route:** custom (tuned). Palette and pairing are built for this brief; every
   Hallmark rule and all 58 gates still apply.
-- **Vibe:** *letterpress broadsheet, cream stock, one brick red.*
+- **Vibe:** _letterpress broadsheet, cream stock, one brick red._
 - **Axes:** light / display-condensed-bold / warm ~30°.
 - **Enrichment:** none — typography only. The poster hero is set type, not an image.
 
@@ -190,37 +190,37 @@ accent budget and the brief's "no intense colours".
 
 ```css
 /* ── Light ──────────────────────────────────────────────────────────── */
---paper:        oklch(93%   0.014 84);   /* cream stock                        */
---paper-2:      oklch(90.5% 0.016 84);   /* rail, sticky heads                 */
---paper-3:      oklch(88%   0.018 84);   /* row hover / selected wash          */
+--paper: oklch(93% 0.014 84); /* cream stock                        */
+--paper-2: oklch(90.5% 0.016 84); /* rail, sticky heads                 */
+--paper-3: oklch(88% 0.018 84); /* row hover / selected wash          */
 
---ink:          oklch(20%   0.012 60);   /* warm printing black                */
---ink-2:        oklch(41%   0.012 62);   /* secondary text                     */
---muted-fg:     oklch(48%   0.012 66);   /* meta, labels, placeholder          */
---faint:        oklch(62%   0.010 70);   /* DECORATIVE ONLY — never body copy  */
+--ink: oklch(20% 0.012 60); /* warm printing black                */
+--ink-2: oklch(41% 0.012 62); /* secondary text                     */
+--muted-fg: oklch(48% 0.012 66); /* meta, labels, placeholder          */
+--faint: oklch(62% 0.01 70); /* DECORATIVE ONLY — never body copy  */
 
---rule:         oklch(74%   0.014 80);   /* hairline                           */
---rule-strong:  oklch(52%   0.014 78);   /* control boundaries — WCAG 1.4.11   */
+--rule: oklch(74% 0.014 80); /* hairline                           */
+--rule-strong: oklch(52% 0.014 78); /* control boundaries — WCAG 1.4.11   */
 
---accent:       oklch(43%   0.150 30);   /* brick                              */
---accent-ink:   var(--paper);
---focus:        oklch(48%   0.170 30);
---ghost:        oklch(78%   0.055 205);  /* POSTER ONLY — landing hero layer   */
+--accent: oklch(43% 0.15 30); /* brick                              */
+--accent-ink: var(--paper);
+--focus: oklch(48% 0.17 30);
+--ghost: oklch(78% 0.055 205); /* POSTER ONLY — landing hero layer   */
 
 /* ── Dark (computed now, unswitched) ────────────────────────────────── */
---paper:        oklch(18%   0.012 60);
---paper-2:      oklch(21.5% 0.013 60);   /* elevation goes LIGHTER             */
---paper-3:      oklch(25.5% 0.014 60);
---ink:          oklch(92%   0.010 82);
---ink-2:        oklch(74%   0.010 78);
---muted-fg:     oklch(65%   0.010 72);
---faint:        oklch(52%   0.009 70);
---rule:         oklch(32%   0.012 78);
---rule-strong:  oklch(48%   0.012 78);
---accent:       oklch(62%   0.125 30);
---accent-ink:   oklch(18%   0.012 60);
---focus:        oklch(68%   0.140 30);
---ghost:        oklch(48%   0.050 205);
+--paper: oklch(18% 0.012 60);
+--paper-2: oklch(21.5% 0.013 60); /* elevation goes LIGHTER             */
+--paper-3: oklch(25.5% 0.014 60);
+--ink: oklch(92% 0.01 82);
+--ink-2: oklch(74% 0.01 78);
+--muted-fg: oklch(65% 0.01 72);
+--faint: oklch(52% 0.009 70);
+--rule: oklch(32% 0.012 78);
+--rule-strong: oklch(48% 0.012 78);
+--accent: oklch(62% 0.125 30);
+--accent-ink: oklch(18% 0.012 60);
+--focus: oklch(68% 0.14 30);
+--ghost: oklch(48% 0.05 205);
 ```
 
 **Four consequences of moving off near-white, each of which bit during the mockup:**
@@ -231,7 +231,7 @@ accent budget and the brief's "no intense colours".
   re-deriving it is the mistake to watch for.
 - **`--rule-strong` moved to L 52 %** to hold 3:1 against the darker ground.
 - **The dark ramp's neutral hue is 60, not 84.** Cream at 84° inverts to a muddy olive; the
-  warm-black family the print reference actually uses sits nearer 60°. The *accent* hue never
+  warm-black family the print reference actually uses sits nearer 60°. The _accent_ hue never
   moves between ramps (30° both) — that rule still holds; the neutral family is its own anchor.
 - **Contrast is tighter everywhere**, because the ground is 5.5 points darker. Every ratio in
   this section is computed, not measured. **Measuring them is a Phase 1 exit criterion**, and
@@ -241,7 +241,7 @@ accent budget and the brief's "no intense colours".
 draft in which the accent rendered nowhere at all on a phone:
 
 1. **Relationship types** down every cast list — always visible, every viewport. The type is
-   the only vocabulary on the page that comes from the *system* rather than the reader.
+   the only vocabulary on the page that comes from the _system_ rather than the reader.
 2. The `Books` breadcrumb link.
 3. The active rail item's left marker (≥ 60 rem).
 4. The focus ring.
@@ -258,16 +258,16 @@ concession: colour was never allowed to be the sole signal.
 
 Three families, which is Hallmark's ceiling — and the third is confined to one page.
 
-| Role | Face | Source | Used for |
-| --- | --- | --- | --- |
-| Poster | **Anton** | Google | the landing hero on `/` **and nowhere else** |
-| Serif | **Newsreader** 400/500/600/700, roman | Google | names, titles, notes, body prose, inputs |
-| Label | **IBM Plex Mono** 400/500/600 | Google | every label, meta, button, count, nav item |
+| Role   | Face                                  | Source | Used for                                     |
+| ------ | ------------------------------------- | ------ | -------------------------------------------- |
+| Poster | **Anton**                             | Google | the landing hero on `/` **and nowhere else** |
+| Serif  | **Newsreader** 400/500/600/700, roman | Google | names, titles, notes, body prose, inputs     |
+| Label  | **IBM Plex Mono** 400/500/600         | Google | every label, meta, button, count, nav item   |
 
 ```css
---font-poster: "Anton", "Arial Narrow", sans-serif;   /* landing page only */
---font-serif:  "Newsreader", ui-serif, Georgia, serif;
---font-label:  "IBM Plex Mono", ui-monospace, monospace;
+--font-poster: "Anton", "Arial Narrow", sans-serif; /* landing page only */
+--font-serif: "Newsreader", ui-serif, Georgia, serif;
+--font-label: "IBM Plex Mono", ui-monospace, monospace;
 ```
 
 **IBM Plex Sans is dropped.** The mono carries every label and the serif carries every piece
@@ -277,8 +277,13 @@ one — there is no role left for it.
 **The one shared device, on both surfaces:**
 
 ```css
-.label { font-family: var(--font-label); text-transform: uppercase;
-         letter-spacing: 0.14em; font-weight: 600; font-size: var(--text-label); }
+.label {
+  font-family: var(--font-label);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 600;
+  font-size: var(--text-label);
+}
 ```
 
 Mono uppercase with wide tracking is the loudest signal of the reference and it costs nothing
@@ -291,16 +296,16 @@ the poster; shipping it to `/books` is dead bytes on a Workers cold start.
 **Scale — a 1.2 ladder for the app, plus one poster clamp.**
 
 ```css
---text-label:   0.66rem;    /* 10.6px — mono caps ONLY; never sentence text   */
---text-xs:      0.833rem;   /* 13.3px — meta                                  */
---text-base:    1rem;       /* 16px   — body, notes, inputs on touch          */
---text-md:      1.2rem;     /* 19.2px — section h2                            */
---text-lg:      1.44rem;    /* 23px   — page h1 (book title)                  */
---text-poster:  clamp(3.1rem, 13cqi, 7rem);   /* landing hero only            */
+--text-label: 0.66rem; /* 10.6px — mono caps ONLY; never sentence text   */
+--text-xs: 0.833rem; /* 13.3px — meta                                  */
+--text-base: 1rem; /* 16px   — body, notes, inputs on touch          */
+--text-md: 1.2rem; /* 19.2px — section h2                            */
+--text-lg: 1.44rem; /* 23px   — page h1 (book title)                  */
+--text-poster: clamp(3.1rem, 13cqi, 7rem); /* landing hero only            */
 ```
 
 `--text-label` sits below the 14 px body floor deliberately, and is fenced accordingly: it may
-carry only uppercase mono words of one or two syllables. The floor protects *reading*; a
+carry only uppercase mono words of one or two syllables. The floor protects _reading_; a
 tracked-out four-letter cap is not reading. **A sentence set in `--text-label` is a bug.**
 
 **Density still does not come from small type.** Body and notes stay at the 16 px floor.
@@ -309,24 +314,35 @@ Compactness comes from row height, hairlines and rhythm.
 ### Space, rules, radii, motion
 
 ```css
---space-3xs: 0.125rem;  --space-2xs: 0.25rem;  --space-xs:  0.5rem;
---space-sm:  0.75rem;   --space-md:  1rem;     --space-lg:  1.5rem;
---space-xl:  2.5rem;    --space-2xl: 4rem;
+--space-3xs: 0.125rem;
+--space-2xs: 0.25rem;
+--space-xs: 0.5rem;
+--space-sm: 0.75rem;
+--space-md: 1rem;
+--space-lg: 1.5rem;
+--space-xl: 2.5rem;
+--space-2xl: 4rem;
 
---row-h: 2.75rem;              /* 2.25rem under (pointer: fine) */
---rule-w:       1px;           /* hairline dividers             */
---rule-w-mid:   2px;           /* section heads, mobile top bar */
---rule-w-thick: 3px;           /* masthead pair, active marker  */
+--row-h: 2.75rem; /* 2.25rem under (pointer: fine) */
+--rule-w: 1px; /* hairline dividers             */
+--rule-w-mid: 2px; /* section heads, mobile top bar */
+--rule-w-thick: 3px; /* masthead pair, active marker  */
 
---radius: 0;                   /* everywhere — see below        */
+--radius: 0; /* everywhere — see below        */
 
---dur-fast: 90ms;  --dur-base: 140ms;
+--dur-fast: 90ms;
+--dur-base: 140ms;
 --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
---ease-in:  cubic-bezier(0.55, 0, 1, 0.45);
+--ease-in: cubic-bezier(0.55, 0, 1, 0.45);
 --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
 
---z-base: 1; --z-raised: 10; --z-dropdown: 100;
---z-sticky: 200; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
+--z-base: 1;
+--z-raised: 10;
+--z-dropdown: 100;
+--z-sticky: 200;
+--z-modal: 400;
+--z-toast: 500;
+--z-tooltip: 600;
 ```
 
 **Radius is zero, product-wide.** Square corners read as printed, rounded ones read as
@@ -365,20 +381,25 @@ The shadcn token **names** are kept and re-pointed, so `button.tsx`, `cn()` and 
 `npx shadcn@latest add` keep working untouched:
 
 ```css
---background: var(--paper);        --foreground: var(--ink);
---card: var(--paper);              --card-foreground: var(--ink);
---muted: var(--paper-2);           --muted-foreground: var(--muted-fg);
---border: var(--rule);             --input: var(--rule-strong);
+--background: var(--paper);
+--foreground: var(--ink);
+--card: var(--paper);
+--card-foreground: var(--ink);
+--muted: var(--paper-2);
+--muted-foreground: var(--muted-fg);
+--border: var(--rule);
+--input: var(--rule-strong);
 --ring: var(--focus);
---primary: var(--ink);             --primary-foreground: var(--paper);
---secondary: var(--paper-2);       --secondary-foreground: var(--ink);
---destructive: var(--accent);      /* one red — see § Colour */
+--primary: var(--ink);
+--primary-foreground: var(--paper);
+--secondary: var(--paper-2);
+--secondary-foreground: var(--ink);
+--destructive: var(--accent); /* one red — see § Colour */
 --radius: 0;
 ```
 
-Note the collision: shadcn's `--muted` is a *surface* while the text token is `--muted-fg`.
+Note the collision: shadcn's `--muted` is a _surface_ while the text token is `--muted-fg`.
 `--primary` maps to ink, not accent — see the accent budget.
-
 
 ## Critical Implementation Details
 
@@ -390,13 +411,13 @@ the `@layer base` block stays.
 
 **Deleting `@utility bg-cosmic` breaks the build loudly, and that is useful.** Tailwind v4
 errors on an unknown utility class, so any `bg-cosmic` left in a template surfaces at build
-time rather than rendering a white page. Remove the utility *first*, then let the build
+time rather than rendering a white page. Remove the utility _first_, then let the build
 enumerate the call sites. Do not grep-and-replace ahead of it.
 
 **The class sweep is the exact shape `lessons.md` warns about.** `bg-white/10`,
 `backdrop-blur-xl`, `rounded-2xl`, `border-white/10`, `text-purple-300`, `text-blue-100/60`
 recur dozens of times across two large templates. A regex pass will report a plausible number
-of replacements and still leave the markup wrong, because the *containers themselves* are
+of replacements and still leave the markup wrong, because the _containers themselves_ are
 being removed, not recoloured. Rewrite each template's markup deliberately; then verify with
 `grep -nE 'purple|blue-100|white/1[05]|backdrop-blur|rounded-2xl|bg-cosmic' src/` returning
 nothing.
@@ -486,6 +507,7 @@ render-blocking third-party round trip on a Workers cold start.
 **Intent**: Fix three starter defects that no amount of styling covers.
 
 **Contract**:
+
 - `title` default becomes `"about-books"`, not `"10x Astro Starter"`.
 - Viewport becomes
   `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`.
@@ -511,6 +533,7 @@ is justified — status semantics — and none of them appear in normal use.
 ### Success Criteria:
 
 #### Automated
+
 - [ ] 1.1 `npx astro check` passes
 - [ ] 1.2 `npm run lint` passes
 - [ ] 1.3 `npm run build` succeeds
@@ -518,6 +541,7 @@ is justified — status semantics — and none of them appear in normal use.
 - [ ] 1.5 `grep -rn 'bg-cosmic' src/` returns only the call sites the build already named
 
 #### Manual
+
 - [ ] 1.6 Measured in devtools, not trusted from the plan: `--ink` ≥ 7:1, `--ink-2` ≥ 4.5:1,
       `--muted-fg` ≥ 4.5:1, `--accent` ≥ 4.5:1, `--danger` ≥ 4.5:1, `--rule-strong` ≥ 3:1,
       `--focus` ≥ 3:1 — all against `--paper`
@@ -636,10 +660,10 @@ Retint them rather than adding a parallel set.
 whole viewport when a focused input's font-size is below 16 px, and "no zooming" is an S-02
 acceptance criterion. Fine pointers have no such rule. So:
 
-| | Height | Type |
-| --- | --- | --- |
-| `pointer: fine` | 30 px | 0.875 rem (14 px) |
-| `pointer: coarse` | 36 px | 1 rem (16 px) |
+|                   | Height | Type              |
+| ----------------- | ------ | ----------------- |
+| `pointer: fine`   | 30 px  | 0.875 rem (14 px) |
+| `pointer: coarse` | 36 px  | 1 rem (16 px)     |
 
 **Selects must carry `appearance: none`** plus a data-URI chevron. The native select chrome
 sets its own minimum height and will silently ignore the 30 px — this is the one control where
@@ -674,12 +698,14 @@ block with `role="alert"`.
 ### Success Criteria:
 
 #### Automated
+
 - [ ] 2.1 `npx astro check` passes
 - [ ] 2.2 `npm run lint` passes
 - [ ] 2.3 `npm run build` succeeds
 - [ ] 2.4 `npx prettier --check` clean on touched files
 
 #### Manual
+
 - [ ] 2.5 The rail is reachable and usable at 320 / 375 / 414 / 768 / 1280 px
 - [ ] 2.6 The mobile disclosure opens, navigates and signs out with JavaScript disabled
 - [ ] 2.7 No horizontal scroll at any of the four mobile widths, with a 120-character book title
@@ -737,6 +763,7 @@ library on a phone should not cost a screenful.
 ### Success Criteria:
 
 #### Automated
+
 - [ ] 3.1 `npx astro check` passes
 - [ ] 3.2 `npm run lint` passes
 - [ ] 3.3 `npm run build` succeeds
@@ -744,6 +771,7 @@ library on a phone should not cost a screenful.
 - [ ] 3.5 `npx prettier --check` clean on touched files
 
 #### Manual
+
 - [ ] 3.6 Twelve books fit on one 375 × 812 screen without scrolling past the fold
 - [ ] 3.7 Adding a book still works with JavaScript disabled
 - [ ] 3.8 A book with no author renders "Author unknown" and does not shift the row height
@@ -824,6 +852,7 @@ The panel becomes a plain block: one line, one explanation in `--muted-fg`, one 
 ### Success Criteria:
 
 #### Automated
+
 - [ ] 4.1 `npx astro check` passes
 - [ ] 4.2 `npm run lint` passes — **exit 2 here means the frontmatter grew a top-level
       `return`; see `lessons.md`, it is a tool crash, not a finding**
@@ -832,10 +861,11 @@ The panel becomes a plain block: one line, one explanation in `--muted-fg`, one 
 - [ ] 4.5 `npx prettier --check` clean on touched files
 
 #### Manual
+
 - [ ] 4.6 A cast of eight characters with connections is scannable without expanding anything
 - [ ] 4.7 Connections still appear under **both** characters of a relationship
 - [ ] 4.8 A character with no connections renders no heading, no "None", no bare separator
-- [ ] 4.9 Add, edit and delete — character *and* relationship — all work with JavaScript off
+- [ ] 4.9 Add, edit and delete — character _and_ relationship — all work with JavaScript off
 - [ ] 4.10 Mark-finished and reopen still work and are idempotent on a double submit
 - [ ] 4.11 No nested bordered container anywhere on the page
 - [ ] 4.12 A 404 for another reader's book id renders the plain not-found block
@@ -894,6 +924,7 @@ diffing the schema structure, not the line count (`lessons.md`, third entry).
 ### Success Criteria:
 
 #### Automated
+
 - [ ] 5.1 `npx astro check` passes
 - [ ] 5.2 `npm run lint` passes
 - [ ] 5.3 `npm run build` succeeds
@@ -901,6 +932,7 @@ diffing the schema structure, not the line count (`lessons.md`, third entry).
 - [ ] 5.5 `grep -rnE '[ąćęłńóśźż]' src/` returns nothing outside comments
 
 #### Manual
+
 - [ ] 5.6 Sign up → confirm-email → sign in → `/books` works end to end
 - [ ] 5.7 A validation error and a server error each render in English, legibly, with a border
       **and** a message
@@ -975,11 +1007,11 @@ broadsheet prints a figure.
 
 Three counts, and only three:
 
-| Label | Source |
-| --- | --- |
-| `BOOKS` | `books`, all rows |
+| Label        | Source                                                               |
+| ------------ | -------------------------------------------------------------------- |
+| `BOOKS`      | `books`, all rows                                                    |
 | `CHARACTERS` | `characters`, all rows — RLS scopes it to the reader, no join needed |
-| `FINISHED` | `books` where `finished_at is not null` |
+| `FINISHED`   | `books` where `finished_at is not null`                              |
 
 Beneath them, **Reading now** — the active books as `Row`s linking to `/books/[id]`, plus a
 single `Open the library` action to `/books`. That is the click path the reader asked for.
@@ -1062,6 +1094,7 @@ rather than to justify them.
 ### Success Criteria:
 
 #### Automated
+
 - [ ] 6.1 `npx astro check` passes
 - [ ] 6.2 `npm run lint` passes
 - [ ] 6.3 `npm run build` succeeds
@@ -1069,6 +1102,7 @@ rather than to justify them.
 - [ ] 6.5 `npx prettier --check` clean on touched files
 
 #### Manual
+
 - [ ] 6.6 Signed out, `/` renders the poster and offers Sign in / Sign up
 - [ ] 6.7 Signed in, `/` renders the dashboard and **no sign-in control appears anywhere** —
       masthead, rail, or mobile disclosure
@@ -1105,6 +1139,7 @@ reduced-motion pass and a keyboard pass across every screen. Then update
 ### Success Criteria:
 
 #### Automated
+
 - [ ] 7.1 `npx astro check`, `npm run lint`, `npm run build` all clean
 - [ ] 7.2 `npm run db:verify-rls` passes, unchanged from before the whole change
 - [ ] 7.3 `grep -rnE 'purple|blue-100|white/1[05]|backdrop-blur|rounded-|bg-cosmic|bg-clip-text' src/`
@@ -1115,6 +1150,7 @@ reduced-motion pass and a keyboard pass across every screen. Then update
 - [ ] 7.7 `npx prettier --check` clean on every file this change touched
 
 #### Manual
+
 - [ ] 7.8 Every screen at **320 / 375 / 414 / 768 px** — no horizontal scroll, no two-line
       clickable text, no element narrower than its content
 - [ ] 7.9 All 58 Hallmark slop-test gates pass; gates 19, 23, 34, 38a, 43, 46, 47, 49–54
@@ -1181,7 +1217,7 @@ Four defects that every automated gate passed:
   Anton was being loaded only for the signed-out poster — the figures would have silently
   fallen back to Arial Narrow. Caught by grepping which files reference `--font-poster`.
 - **`/dashboard` uses `Astro.response` + a `Location` header**, not `return
-  Astro.redirect()`. A top-level `return` in frontmatter is the exact construct
+Astro.redirect()`. A top-level `return` in frontmatter is the exact construct
   `lessons.md` records as crashing the linter with exit 2.
 
 ### Review round on a real phone (2026-09-10)
@@ -1191,7 +1227,7 @@ several of them contradict something the plan asserted:
 
 1. **Sign in / Sign up moved into the masthead's top row.** Sharing one wrapping row
    with three section links pushed them onto the last line at 375 px — "Sign in" at the
-   *bottom* of the masthead, which is the one control a visitor must never hunt for.
+   _bottom_ of the masthead, which is the one control a visitor must never hunt for.
    The tagline took their place in the nav row.
 2. **The mobile disclosure is labelled "Menu", not "Library".** Sign-out lives inside
    it. It was reachable the whole time and the reader could not find it, which is what
@@ -1212,7 +1248,7 @@ several of them contradict something the plan asserted:
 7. **The wordmark took three attempts.** Serif caps read as neither mark nor title;
    Anton shouted inside a UI (and forced the poster face onto every page, so the fence
    came off and then went back on); the mono read as a stamp. It ends as the page-title
-   face set exactly like a page title — Newsreader 700, *no uppercasing*. Forcing caps
+   face set exactly like a page title — Newsreader 700, _no uppercasing_. Forcing caps
    was the mistake all three times.
 8. **The wordmark carries the poster's two offset layers** — pale up-left, brand red
    down-right. `--ghost` is therefore no longer poster-only, and `white-space: nowrap`
@@ -1295,16 +1331,16 @@ so the whole product moves.
 
 What changed from the accepted near-white system:
 
-| | Was | Now |
-| --- | --- | --- |
-| Paper | `oklch(98.5% 0.004 85)` near-white | `oklch(93% 0.014 84)` cream |
-| Accent | spruce `oklch(43% 0.115 168)` | brick `oklch(43% 0.15 30)` |
-| Families | Newsreader + IBM Plex Sans | Anton (`/` only) + Newsreader + IBM Plex Mono |
-| Labels | small-caps sans | mono uppercase, tracked 0.14em |
-| Radius | 3 / 5 / 8 px | `0` everywhere |
-| Rules | one hairline weight | three weights: 1 / 2 / 3 px |
-| Genre | modern-minimal app + editorial landing | editorial, one voice |
-| Destructive | its own `--danger` hue | the accent red + word + outline |
+|             | Was                                    | Now                                           |
+| ----------- | -------------------------------------- | --------------------------------------------- |
+| Paper       | `oklch(98.5% 0.004 85)` near-white     | `oklch(93% 0.014 84)` cream                   |
+| Accent      | spruce `oklch(43% 0.115 168)`          | brick `oklch(43% 0.15 30)`                    |
+| Families    | Newsreader + IBM Plex Sans             | Anton (`/` only) + Newsreader + IBM Plex Mono |
+| Labels      | small-caps sans                        | mono uppercase, tracked 0.14em                |
+| Radius      | 3 / 5 / 8 px                           | `0` everywhere                                |
+| Rules       | one hairline weight                    | three weights: 1 / 2 / 3 px                   |
+| Genre       | modern-minimal app + editorial landing | editorial, one voice                          |
+| Destructive | its own `--danger` hue                 | the accent red + word + outline               |
 
 What did **not** change, because it was already settled and the reference did not argue with
 it: the N3 side-rail, the two-pane shape, hairline rows instead of cards, the inspector
@@ -1313,7 +1349,7 @@ relationship types.
 
 **The honest cost, recorded so nobody rediscovers it as a bug:** cream at L 93 % is 5.5 points
 darker than the near-white ground, which is a real move away from "bright" — and the reader's
-stated liking for Claude Desktop was partly *because* it is bright. Body notes are also now a
+stated liking for Claude Desktop was partly _because_ it is bright. Body notes are also now a
 serif at ~0.9 rem in a dense list, which is more work to read than a UI sans. Both were shown
 side by side on a phone before acceptance. Neither is free.
 
