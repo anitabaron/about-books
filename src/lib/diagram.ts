@@ -58,6 +58,15 @@ export interface MapLink {
 export const ARC_PER_NODE = 132;
 
 /**
+ * How far an edge label is nudged off its chord's midpoint, as a fraction of the chord. It
+ * exists so the midpoints of crossing chords do not land on the same spot; it is declared here
+ * because the rim's radius has to allow for it as well as use it.
+ */
+const CHORD_NUDGE = 0.05;
+/** Clear space between the end of an edge label and the character's dot at that end. */
+export const CHORD_GAP = 14;
+
+/**
  * Labels are monospace (IBM Plex Mono at 8.5px plus 0.08em tracking), so the width follows
  * from the character count — roughly 5.9 px each. This has to work without measuring, because
  * the layout runs on the server where there is nothing to measure.
@@ -256,12 +265,36 @@ function segmentsWithGap(
 export function layoutCircle(
   characters: readonly ConnectionCharacter[],
   links: readonly MapLink[],
-  options: { arcPerNode?: number; pad?: number } = {},
+  options: { arcPerNode?: number; pad?: number; radius?: number } = {},
 ): CastMap {
   const arc = options.arcPerNode ?? ARC_PER_NODE;
   const pad = options.pad ?? 86;
   const ordered = orderForRim(characters, links);
-  const radius = Math.max((ordered.length * arc) / (2 * Math.PI), 96);
+
+  // The rim has to be wide enough for the WORDS on the chords, not just for the names on the
+  // rim. `arc` reserves room beside each character; it says nothing about an edge label, which
+  // lies along the chord between two of them. A chord between neighbours is the short one --
+  // at six characters it is the same length as the radius -- so a long reader-defined type
+  // runs over both dots at once. Same defect as layoutEgo had, one function along.
+  //
+  // For each edge: the chord it sits on is 2R*sin(pi*d/n) where d is how many seats apart its
+  // two characters are, and the label needs (half its width + a gap) to fit on each side of
+  // its nudged centre. Solve for R and take the edge that asks for most.
+  const seats = ordered.length;
+  const seatOf = new Map(ordered.map((c, i) => [c.id, i]));
+  let labelRadius = 0;
+  for (const l of links) {
+    const a = seatOf.get(l.a);
+    const b = seatOf.get(l.b);
+    if (a === undefined || b === undefined) continue;
+    const apart = Math.abs(a - b);
+    const seatsApart = Math.min(apart, seats - apart);
+    if (seatsApart === 0) continue;
+    const chordNeeded = (widestLabel(l.labels) / 2 + CHORD_GAP) / (0.5 - CHORD_NUDGE);
+    labelRadius = Math.max(labelRadius, chordNeeded / (2 * Math.sin((Math.PI * seatsApart) / seats)));
+  }
+
+  const radius = options.radius ?? Math.max((seats * arc) / (2 * Math.PI), 96, labelRadius);
   const size = Math.round(2 * (radius + pad));
   const cx = size / 2;
   const cy = size / 2;
@@ -274,7 +307,7 @@ export function layoutCircle(
 
   const placed = new Map<string, { x: number; y: number; angle: number }>();
   const nodes: MapNode[] = ordered.map((c, i) => {
-    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / ordered.length;
+    const angle = -Math.PI / 2 + (i * 2 * Math.PI) / seats;
     const x = cx + radius * Math.cos(angle);
     const y = cy + radius * Math.sin(angle);
     placed.set(c.id, { x, y, angle });
@@ -301,7 +334,7 @@ export function layoutCircle(
     // Midpoint of THIS edge, nudged along it so the midpoints of crossing chords do not land
     // on the same spot. A fixed fraction from the `a` end instead piles every label onto
     // whichever character happens to be stored as `a` — in a dense graph, one hub.
-    const t = 0.5 + [0, 0.05, -0.05][i % 3];
+    const t = 0.5 + [0, CHORD_NUDGE, -CHORD_NUDGE][i % 3];
     const labelX = p.x + (q.x - p.x) * t;
     const labelY = p.y + (q.y - p.y) * t;
     edges.push({

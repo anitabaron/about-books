@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ARC_PER_NODE,
+  CHORD_GAP,
   defaultFocus,
   labelWidth,
   layoutCircle,
@@ -154,6 +155,41 @@ describe("layoutCircle", () => {
     expect(spread).toBeGreaterThan(20);
   });
 
+  it("widens the rim for long labels, so a type name never runs over the dots it joins", () => {
+    // The CIRCLE half of the defect fixed in layoutEgo: the radius came from the node count
+    // alone, so six characters all connected to one hub drew a 112px label on a 126px chord.
+    // Neighbouring seats give the SHORTEST chord, which is why a hub is the worst case.
+    const hub = [{ id: "hub", name: "Hub" }, ...Array.from({ length: 6 }, (_, i) => ({ id: `c${i}`, name: `C${i}` }))];
+    const spokes: MapLink[] = Array.from({ length: 6 }, (_, i) => ({
+      id: `r${i}`,
+      a: "hub",
+      b: `c${i}`,
+      labels: ["mieszka w kamienicy"],
+    }));
+    const map = layoutCircle(hub, spokes);
+    const at = new Map(map.nodes.map((n) => [n.id, n]));
+    const half = labelWidth("mieszka w kamienicy") / 2;
+
+    expect(map.edges).toHaveLength(6);
+    for (const link of spokes) {
+      const edge = map.edges.find((e) => e.id === link.id);
+      const a = at.get(link.a);
+      const b = at.get(link.b);
+      expect(edge && a && b).toBeTruthy();
+      if (!edge || !a || !b) continue;
+
+      // Measured ALONG the chord, which is the direction the rotated label extends in. The
+      // label sits at a nudged midpoint, so both ends have to be checked, not just one.
+      // The designed clearance, not merely "does not overlap the dot's centre". Measured:
+      // the old radius left 7.8px here, which is a label touching a dot -- and an assertion
+      // of `> 0` passed it happily. A test that cannot fail on the bug it names is worthless.
+      const chord = Math.hypot(b.x - a.x, b.y - a.y);
+      const fromA = Math.hypot(edge.labelX - a.x, edge.labelY - a.y);
+      expect(fromA - half).toBeGreaterThanOrEqual(CHORD_GAP - 0.01);
+      expect(chord - fromA - half).toBeGreaterThanOrEqual(CHORD_GAP - 0.01);
+    }
+  });
+
   it("never rotates a label past upright", () => {
     const map = layoutCircle(CAST, LINKS);
     for (const e of map.edges) {
@@ -182,7 +218,9 @@ describe("layoutCircle", () => {
       { id: "b", name: "B" },
     ];
     const long: MapLink[] = [{ id: "r", a: "a", b: "b", labels: ["a-very-long-custom-relationship-type"] }];
-    const map = layoutCircle(pair, long, { arcPerNode: 40, pad: 10 });
+    // An explicit radius, because the rim now grows to fit its labels: without forcing one,
+    // the drawing would simply be big enough and this protection would never be reached.
+    const map = layoutCircle(pair, long, { radius: 40, pad: 10 });
     const drawn = map.edges[0].segments.reduce((sum, s) => sum + Math.hypot(s.x2 - s.x1, s.y2 - s.y1), 0);
     const node = map.nodes;
     const whole = Math.hypot(node[1].x - node[0].x, node[1].y - node[0].y);
