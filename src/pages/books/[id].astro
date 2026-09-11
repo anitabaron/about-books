@@ -314,9 +314,6 @@ if (!book && !loadError) {
                       it, so a mis-tap costs a click, not a character. A JS confirm() would not
                       survive scripting being off. */}
                   <div class="edit-actions">
-                    <Button type="submit" form={`edit-character-${character.id}`} size="sm">
-                      Save
-                    </Button>
                     <details class="confirm">
                       <summary>Delete</summary>
                       <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
@@ -329,6 +326,9 @@ if (!book && !loadError) {
                         </Button>
                       </form>
                     </details>
+                    <Button type="submit" form={`edit-character-${character.id}`} size="sm">
+                      Save
+                    </Button>
                   </div>
 
                   {/* Managing connections lives inside the disclosure on purpose: the always-visible list
@@ -714,11 +714,13 @@ if (!book && !loadError) {
     color: var(--muted-fg);
   }
 
-  /* One control row per connection, so the padding was doing all the work and
-     the gap none. 3px is enough to keep the rule off the selects. */
+  /* One control row per connection, so the padding does all the work and the
+     gap none. Asymmetric — 7 above, 3 below — because each select carries its
+     underline at the bottom of its own box, so the visual mass sits low and a
+     symmetric pad reads as crowded at the top. */
   .conn-edit {
     border-block-start: var(--rule-w) solid var(--rule);
-    padding-block: 3px;
+    padding-block: 7px 3px;
   }
 
   /* Nested confirmation. Deleting is rare and saving is constant, so the

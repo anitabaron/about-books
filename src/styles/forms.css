@@ -153,7 +153,9 @@
 .disclose-body {
   border-block-start: var(--rule-w) solid var(--rule);
   margin-block-start: 3px;
-  padding-block: 6px 8px;
+  /* 2px at the foot, not 8: the row this sits in already contributes its own
+     bottom padding, and the two stacked read as a gap nobody asked for. */
+  padding-block: 6px 2px;
   display: flex;
   flex-direction: column;
   gap: 6px;
