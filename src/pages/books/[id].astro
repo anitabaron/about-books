@@ -540,11 +540,12 @@ if (!book && !loadError) {
                               bin can share their row: a <form> cannot nest inside another, and
                               the delete needs its own. Same shape as the character row above.
 
-                              The id carries BOTH ids, not just the connection's. A relationship
-                              renders under both of its characters, so keying on the connection
-                              alone put the same id in the document twice — and a duplicate id
-                              silently associates both rows' controls with the first form, which
-                              would submit the other end's anchor_id and rewrite the wrong end. */}
+                              The id carries BOTH ids, though a connection now renders under one
+                              character only, so the connection id alone would be unique. It
+                              stays compound because that uniqueness is a property of the data
+                              model, not of this template: a duplicate id here fails silently,
+                              associating two rows' controls with the first form, and the
+                              character id costs nothing to keep as a guard against that. */}
                             <form
                               method="POST"
                               action={`/api/relationships/${connection.id}`}

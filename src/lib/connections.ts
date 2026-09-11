@@ -50,9 +50,14 @@ export function resolveTypeLabel(
 }
 
 /**
- * Index every relationship under BOTH of its characters, so a connection renders beneath each
- * end. Relationships are undirected: which id sits in `character_a_id` depends only on whose
- * row the connection was created from, so neither column may be treated as the anchor.
+ * Index every relationship under `character_a_id` alone, so a connection renders once: on the
+ * card of the character it was created from. That column is the anchor -- the create route
+ * writes the posting character into it -- and the reverse direction is a separate note the
+ * reader may record or leave out, not something this function invents on her behalf.
+ *
+ * It used to index under both ends, on the reasoning that a relationship is undirected. In use
+ * that read as duplication: one connection appeared twice in the cast, and a character everyone
+ * else pointed at collected a wall of entries she had never written.
  *
  * Pure by design -- no Supabase client, no `Astro` globals -- because this is the one place
  * the two-source type contract can be checked by a command rather than by remembering. The
@@ -72,26 +77,23 @@ export function buildConnections(
     const resolved = resolveTypeLabel(rel, typeNamesById);
     if (resolved === null) continue;
 
-    for (const [selfId, otherId] of [
-      [rel.character_a_id, rel.character_b_id],
-      [rel.character_b_id, rel.character_a_id],
-    ]) {
-      const otherName = nameById.get(otherId);
-      // Defensive: a relationship reaching outside this cast is skipped rather than rendered
-      // as "undefined". The create route requires a shared book, so this should be unreachable.
-      if (!nameById.has(selfId) || otherName === undefined) continue;
+    const selfId = rel.character_a_id;
+    const otherId = rel.character_b_id;
+    const otherName = nameById.get(otherId);
+    // Defensive: a relationship reaching outside this cast is skipped rather than rendered
+    // as "undefined". The create route requires a shared book, so this should be unreachable.
+    if (!nameById.has(selfId) || otherName === undefined) continue;
 
-      const list = byCharacter.get(selfId) ?? [];
-      list.push({
-        id: rel.id,
-        otherId,
-        otherName,
-        typeLabel: resolved.label,
-        isCustomType: resolved.isCustom,
-        typeValue: resolved.value,
-      });
-      byCharacter.set(selfId, list);
-    }
+    const list = byCharacter.get(selfId) ?? [];
+    list.push({
+      id: rel.id,
+      otherId,
+      otherName,
+      typeLabel: resolved.label,
+      isCustomType: resolved.isCustom,
+      typeValue: resolved.value,
+    });
+    byCharacter.set(selfId, list);
   }
 
   return byCharacter;

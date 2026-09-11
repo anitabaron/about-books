@@ -696,9 +696,11 @@ begin
   end if;
 
   ----------------------------------------------------------------- duplikaty par
-  -- The same pair with the same type is one connection, however it was entered. The index
-  -- normalises the order, so B->A after A->B must be refused too -- that reversal is how the
-  -- duplicate actually gets made, once from each end.
+  -- A connection belongs to the character it was created FROM, so direction is part of its
+  -- identity. The same direction with the same type is one connection recorded twice -- a
+  -- double submit -- and is refused. The REVERSE is a different note the reader may choose to
+  -- make ("A -- daughter -> B" and "B -- mother -> A") and must be accepted; refusing it is
+  -- exactly the behaviour the index used to have and that one-way connections removed.
   perform set_config('role', 'postgres', true);
   insert into public.characters (user_id, book_id, name)
     values (a_id, a_book2, 'Dup fixture 1') returning id into a_c1;
@@ -710,13 +712,23 @@ begin
   denied := false;
   begin
     insert into public.relationships (user_id, character_a_id, character_b_id, type)
-      values (a_id, a_c2, a_c1, 'ally');
+      values (a_id, a_c1, a_c2, 'ally');
   exception when unique_violation then
     denied := true;
   end;
   if not denied then
-    raise exception 'FAIL unique pair: the same pair was recorded twice, entered from the other end';
+    raise exception 'FAIL unique pair: the same connection was recorded twice in the same direction';
   end if;
+
+  -- The reverse direction is a separate note, not a duplicate. This assertion is what fails
+  -- loudly if the pair is ever normalised again with least()/greatest().
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type)
+      values (a_id, a_c2, a_c1, 'ally');
+  exception when unique_violation then
+    raise exception 'FAIL unique pair: the reverse direction was refused -- is the index '
+      'normalising the pair again?';
+  end;
 
   -- A second TYPE between the same pair is a different connection and must still be allowed.
   begin
@@ -726,15 +738,17 @@ begin
     raise exception 'FAIL unique pair: a second type between the same pair was refused';
   end;
 
-  -- And a custom type on that pair too. Both of these assertions depend on
-  -- `nulls not distinct`: every row has exactly one null among the two type columns, so with
-  -- the default the index would treat every row as distinct and reject nothing at all.
+  -- And the same for a custom type -- repeated in the SAME direction, because the reversal is
+  -- now legal and would no longer prove anything. This assertion is the project's only check
+  -- that the index carries `nulls not distinct`: every row has exactly one null among the two
+  -- type columns, so under the default nulls-are-distinct rule the index would treat every row
+  -- as unique and reject nothing at all.
   insert into public.relationships (user_id, character_a_id, character_b_id, type, custom_type_id)
     values (a_id, a_c1, a_c2, null, a_type2);
   denied := false;
   begin
     insert into public.relationships (user_id, character_a_id, character_b_id, type, custom_type_id)
-      values (a_id, a_c2, a_c1, null, a_type2);
+      values (a_id, a_c1, a_c2, null, a_type2);
   exception when unique_violation then
     denied := true;
   end;

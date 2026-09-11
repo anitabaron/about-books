@@ -57,10 +57,10 @@ describe("resolveTypeLabel", () => {
 });
 
 describe("buildConnections", () => {
-  it("indexes a connection under BOTH characters", () => {
+  it("indexes a connection under the character it was created from, and NOT under the other", () => {
     const byCharacter = buildConnections([HAREY, SNAUT], [rel()]);
 
-    expect([...byCharacter.keys()].sort()).toEqual([HAREY.id, SNAUT.id].sort());
+    expect([...byCharacter.keys()]).toEqual([HAREY.id]);
     expect(byCharacter.get(HAREY.id)).toEqual([
       {
         id: "r-1",
@@ -71,19 +71,26 @@ describe("buildConnections", () => {
         typeValue: "romantic",
       },
     ]);
-    expect(byCharacter.get(SNAUT.id)).toEqual([
-      {
-        id: "r-1",
-        otherId: HAREY.id,
-        otherName: "Harey",
-        typeLabel: "romantic",
-        isCustomType: false,
-        typeValue: "romantic",
-      },
-    ]);
+    // The mirror this replaces: Snaut never wrote this down, so it is not on her card.
+    expect(byCharacter.has(SNAUT.id)).toBe(false);
   });
 
-  it("carries a custom type's name to both ends", () => {
+  it("tells a recorded reverse apart from a mirror", () => {
+    // Two rows, one each way, which is what the reader gets if she chooses to note both
+    // directions. Each card shows exactly its own note -- a restored mirror would instead put
+    // two entries on each card, and the label under Snaut would read "romantic".
+    const byCharacter = buildConnections(
+      [HAREY, SNAUT],
+      [rel(), rel({ id: "r-2", character_a_id: SNAUT.id, character_b_id: HAREY.id, type: "ally" })],
+    );
+
+    expect(byCharacter.get(HAREY.id)).toHaveLength(1);
+    expect(byCharacter.get(SNAUT.id)).toHaveLength(1);
+    expect(byCharacter.get(HAREY.id)?.[0]).toMatchObject({ otherName: "Snaut", typeLabel: "romantic" });
+    expect(byCharacter.get(SNAUT.id)?.[0]).toMatchObject({ otherName: "Harey", typeLabel: "ally" });
+  });
+
+  it("carries a custom type's name to the anchor's card", () => {
     const byCharacter = buildConnections(
       [HAREY, SNAUT],
       [rel({ type: null, custom_type_id: LIVES_WITH.id })],
@@ -91,7 +98,7 @@ describe("buildConnections", () => {
     );
 
     expect(byCharacter.get(HAREY.id)?.[0]).toMatchObject({ typeLabel: "lives with", isCustomType: true });
-    expect(byCharacter.get(SNAUT.id)?.[0]).toMatchObject({ typeLabel: "lives with", isCustomType: true });
+    expect(byCharacter.has(SNAUT.id)).toBe(false);
   });
 
   it("never renders a label as undefined when the type row is unknown", () => {
@@ -132,7 +139,7 @@ describe("buildConnections", () => {
     );
 
     expect(byCharacter.get(HAREY.id)).toHaveLength(2);
-    expect(byCharacter.get(SNAUT.id)).toHaveLength(1);
-    expect(byCharacter.get(KELVIN.id)).toHaveLength(1);
+    // Both were written from Harey's card, so neither of the other two carries a copy.
+    expect([...byCharacter.keys()]).toEqual([HAREY.id]);
   });
 });

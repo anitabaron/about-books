@@ -5,9 +5,8 @@ import { updateRelationshipSchema } from "@/types";
 
 export const prerender = false;
 
-interface RelationshipEnds {
+interface RelationshipAnchor {
   character_a_id: string;
-  character_b_id: string;
 }
 
 export const POST: APIRoute = async (context) => {
@@ -63,22 +62,21 @@ export const POST: APIRoute = async (context) => {
     return backToBook("That character is not in this book");
   }
 
-  // The anchor can sit in EITHER column: which one depends only on whose row the
-  // relationship was created from. Read the row and write the replacement into the opposite
-  // end. Assuming the anchor is always character_a_id silently rewrites the wrong side.
+  // A connection belongs to the character it was created from, which is `character_a_id`, so
+  // the anchor can only be that column. The read still earns its place: it is what refuses a
+  // posted anchor that does not own this relationship, rather than letting the update rewrite
+  // somebody else's end.
   const { data: existing } = await supabase
     .from("relationships")
-    .select("character_a_id, character_b_id")
+    .select("character_a_id")
     .eq("id", relationshipId)
-    .maybeSingle<RelationshipEnds>();
+    .maybeSingle<RelationshipAnchor>();
 
   if (!existing) {
     return backToBook("Relationship not found");
   }
 
-  const anchorIsA = existing.character_a_id === anchor_id;
-  const anchorIsB = existing.character_b_id === anchor_id;
-  if (!anchorIsA && !anchorIsB) {
+  if (existing.character_a_id !== anchor_id) {
     return backToBook("That character is not part of this relationship");
   }
 
@@ -90,13 +88,9 @@ export const POST: APIRoute = async (context) => {
     return backToBook("That type is not in this book");
   }
 
-  const patch = anchorIsA
-    ? { character_b_id: other_character_id, ...typeColumns }
-    : { character_a_id: other_character_id, ...typeColumns };
-
   const { data: updated, error } = await supabase
     .from("relationships")
-    .update(patch)
+    .update({ character_b_id: other_character_id, ...typeColumns })
     .eq("id", relationshipId)
     .select("id")
     .maybeSingle<{ id: string }>();
