@@ -195,7 +195,13 @@ describe("layoutEgo", () => {
     const map = layoutEgo(CAST, LINKS, "helena");
     const focus = map.nodes.find((n) => n.focus);
     expect(focus?.id).toBe("helena");
-    expect(focus?.x).toBeCloseTo(map.width / 2, 5);
+    // Centre of the STAR, not of the canvas: the canvas is cropped to what is drawn, so a
+    // lopsided drawing no longer sits in the middle of its box -- and should not.
+    for (const e of map.edges) {
+      const [first] = e.segments;
+      expect(first.x1).toBeCloseTo(focus?.x ?? 0, 5);
+      expect(first.y1).toBeCloseTo(focus?.y ?? 0, 5);
+    }
     expect(map.edges).toHaveLength(2);
     expect(map.nodes.map((n) => n.id).sort()).toEqual(["antoni", "helena", "tomasz"]);
   });

@@ -139,6 +139,74 @@ export function orderForRim(
   return ordered;
 }
 
+/**
+ * Shrink the canvas to what is actually drawn and move the drawing into it.
+ *
+ * Both layouts place things on a circle, so the natural canvas is a square the size of the
+ * whole rim — but a drawing rarely fills it. A person view with two connections is a vertical
+ * strip down the middle of a square twice as wide as it needs, which produced a horizontal
+ * scrollbar for a drawing that had room to spare. Measuring the real extent, labels included,
+ * removes the scrollbar wherever it was not earned.
+ */
+function fitCanvas(nodes: MapNode[], edges: MapEdge[], pad: number): { width: number; height: number } {
+  const xs: number[] = [];
+  const ys: number[] = [];
+  const push = (x: number, y: number) => {
+    xs.push(x);
+    ys.push(y);
+  };
+
+  for (const n of nodes) {
+    push(n.x, n.y);
+    // Names are serif 13px, so roughly 6.5px a character; which side of labelX they occupy
+    // depends on the anchor.
+    const w = n.name.length * 6.5;
+    const left = n.anchor === "end" ? w : n.anchor === "middle" ? w / 2 : 0;
+    const right = n.anchor === "start" ? w : n.anchor === "middle" ? w / 2 : 0;
+    push(n.labelX - left, n.labelY - 13);
+    push(n.labelX + right, n.labelY + 5);
+  }
+  for (const e of edges) {
+    for (const s of e.segments) {
+      push(s.x1, s.y1);
+      push(s.x2, s.y2);
+    }
+    // Rotated, so the label can extend in either axis: take the widest either way.
+    const reach = Math.max(widestLabel(e.labels) / 2, e.labels.length * 6);
+    push(e.labelX - reach, e.labelY - reach);
+    push(e.labelX + reach, e.labelY + reach);
+  }
+
+  if (xs.length === 0) return { width: 2 * pad, height: 2 * pad };
+
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const dx = pad - minX;
+  const dy = pad - minY;
+
+  for (const n of nodes) {
+    n.x += dx;
+    n.y += dy;
+    n.labelX += dx;
+    n.labelY += dy;
+  }
+  for (const e of edges) {
+    for (const s of e.segments) {
+      s.x1 += dx;
+      s.y1 += dy;
+      s.x2 += dx;
+      s.y2 += dy;
+    }
+    e.labelX += dx;
+    e.labelY += dy;
+  }
+
+  return {
+    width: Math.ceil(Math.max(...xs) - minX + 2 * pad),
+    height: Math.ceil(Math.max(...ys) - minY + 2 * pad),
+  };
+}
+
 /** Rotate a label to its edge, flipping anything that would otherwise read upside down. */
 function readableAngle(dx: number, dy: number): number {
   let deg = (Math.atan2(dy, dx) * 180) / Math.PI;
@@ -247,7 +315,7 @@ export function layoutCircle(
     });
   });
 
-  return { width: size, height: size, nodes, edges };
+  return { ...fitCanvas(nodes, edges, 16), nodes, edges };
 }
 
 /**
@@ -327,7 +395,7 @@ export function layoutEgo(
     });
   });
 
-  return { width: size, height: size, nodes, edges };
+  return { ...fitCanvas(nodes, edges, 16), nodes, edges };
 }
 
 /**
