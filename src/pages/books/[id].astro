@@ -332,13 +332,36 @@ if (!book && !loadError) {
                       <p class="sub-label label">Change or remove</p>
                       {connections.map((connection) => (
                         <div class="conn-edit">
-                          <form method="POST" action={`/api/relationships/${connection.id}`} class="stack">
+                          {/* Controls live OUTSIDE this form and reach it with `form=`, so the
+                              bin can share their row: a <form> cannot nest inside another, and
+                              the delete needs its own. Same shape as the character row above.
+
+                              The id carries BOTH ids, not just the connection's. A relationship
+                              renders under both of its characters, so keying on the connection
+                              alone put the same id in the document twice — and a duplicate id
+                              silently associates both rows' controls with the first form, which
+                              would submit the other end's anchor_id and rewrite the wrong end. */}
+                          <form
+                            method="POST"
+                            action={`/api/relationships/${connection.id}`}
+                            id={`edit-rel-${character.id}-${connection.id}`}
+                          >
                             {/* The anchor tells the route which end to keep; it re-reads the row to work
                                 out which column that is. */}
                             <input type="hidden" name="anchor_id" value={character.id} />
-                            <div class="rel">
-                              <label for={`rel-type-${connection.id}`}>Type</label>
-                              <select id={`rel-type-${connection.id}`} name="type">
+                          </form>
+                          {/* One row, the same shape as the add form above: type, person,
+                                button. Two stacked rows cost ~40px per connection and made an
+                                edit look like a different kind of control from an add. */}
+                          <div class="rel">
+                            <label for={`rel-type-${character.id}-${connection.id}`}>Edit</label>
+                            <div class="rel-controls">
+                              <select
+                                id={`rel-type-${character.id}-${connection.id}`}
+                                name="type"
+                                form={`edit-rel-${character.id}-${connection.id}`}
+                                aria-label={`Relationship type with ${connection.otherName}`}
+                              >
                                 <optgroup label="Shared">
                                   {RELATIONSHIP_TYPES.map((relationshipType) => (
                                     <option
@@ -359,42 +382,43 @@ if (!book && !loadError) {
                                   </optgroup>
                                 )}
                               </select>
-                            </div>
-                            <div class="rel">
-                              <label for={`rel-who-${connection.id}`}>With</label>
-                              <div class="rel-controls">
-                                <select id={`rel-who-${connection.id}`} name="other_character_id">
-                                  {others.map((other) => (
-                                    <option value={other.id} selected={other.id === connection.otherId}>
-                                      {other.name}
-                                    </option>
-                                  ))}
-                                </select>
-                                <Button type="submit" size="sm">
-                                  Save
-                                </Button>
-                              </div>
-                            </div>
-                          </form>
-                          <a href="#relationship-types-add" class="hint">
-                            Need another word?
-                          </a>
-                          <details class="confirm">
-                            <summary>Remove relationship</summary>
-                            <form
-                              method="POST"
-                              action={`/api/relationships/${connection.id}/delete`}
-                              class="confirm-body"
-                            >
-                              <p>
-                                Remove the <strong>{connection.typeLabel}</strong> connection with{" "}
-                                <strong>{connection.otherName}</strong>? Both characters stay; only the connection goes.
-                              </p>
-                              <Button type="submit" variant="destructive" size="sm">
-                                Yes, remove it
+                              <select
+                                name="other_character_id"
+                                form={`edit-rel-${character.id}-${connection.id}`}
+                                aria-label={`Character connected to ${character.name}`}
+                              >
+                                {others.map((other) => (
+                                  <option value={other.id} selected={other.id === connection.otherId}>
+                                    {other.name}
+                                  </option>
+                                ))}
+                              </select>
+                              <Button type="submit" form={`edit-rel-${character.id}-${connection.id}`} size="sm">
+                                Save
                               </Button>
-                            </form>
-                          </details>
+                              <details class="confirm icon">
+                                <summary
+                                  aria-label={`Remove the ${connection.typeLabel} connection with ${connection.otherName}`}
+                                >
+                                  <Trash2 className="size-3.5" aria-hidden="true" />
+                                </summary>
+                                <form
+                                  method="POST"
+                                  action={`/api/relationships/${connection.id}/delete`}
+                                  class="confirm-body"
+                                >
+                                  <p>
+                                    Remove the <strong>{connection.typeLabel}</strong> connection with{" "}
+                                    <strong>{connection.otherName}</strong>? Both characters stay; only the connection
+                                    goes.
+                                  </p>
+                                  <Button type="submit" variant="destructive" size="sm">
+                                    Yes, remove it
+                                  </Button>
+                                </form>
+                              </details>
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -674,6 +698,10 @@ if (!book && !loadError) {
     color: var(--muted-fg);
   }
   .hint {
+    font-family: var(--font-label);
+    font-size: var(--text-label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
     color: var(--accent);
     text-decoration: none;
     justify-self: start;
