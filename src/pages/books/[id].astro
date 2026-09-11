@@ -577,15 +577,21 @@ if (!book && !loadError) {
     margin: var(--space-2xs) 0 0;
     padding: 0;
   }
-  /* A grid, not flex with a min-width. `min-width` is a floor, so any label wider
-     than it pushes the name right and the name column starts at a different x on
-     every row -- which is what a reader-defined type does: the shared five are
-     4-8 characters, but "mieszka z" is 9 and a custom name may be 40. The grid
-     fixes the column, so names align whatever the label, and a long label wraps
-     inside its own column instead of shoving the name out of line. */
+  /* One shared column for the whole list, sized by subgrid to the widest label
+     actually present -- not to a fixed 7.2em guess.
+     `min-width` was wrong because it is a floor: a label wider than it pushed
+     the name right and names started at a different x on every row. A fixed
+     column fixed that but overshot, leaving a gulf after short labels like
+     "family". max-content on the <ul> plus subgrid on each row gives both:
+     names align, and the gap is only as wide as this book's longest type. */
+  .conns {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+  }
   .conns li {
     display: grid;
-    grid-template-columns: 7.2em 1fr;
+    grid-template-columns: subgrid;
+    grid-column: 1 / -1;
     gap: var(--space-xs);
     align-items: baseline;
     line-height: 1.35;

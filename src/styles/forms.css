@@ -104,7 +104,10 @@
   list-style: none;
   display: inline-flex;
   align-items: center;
-  min-height: 44px;
+  /* 34px, not 44. WCAG 2.2 AA (2.5.8) asks 24px; 44px is AAA/HIG, and at one
+     "+ Edit" per cast member that ceiling was spending ~10px a row on air
+     around a 14px word. Still a comfortable thumb target, 10px shorter. */
+  min-height: 34px;
   cursor: pointer;
   font-family: var(--font-label);
   font-size: var(--text-label);
@@ -115,7 +118,7 @@
 }
 @media (pointer: fine) {
   .disclose > summary {
-    min-height: 26px;
+    min-height: 22px;
   }
 }
 .disclose > summary::-webkit-details-marker {
