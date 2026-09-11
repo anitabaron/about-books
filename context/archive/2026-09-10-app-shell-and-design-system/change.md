@@ -1,10 +1,10 @@
 ---
 change_id: app-shell-and-design-system
 title: Reading-room UI — token system, app shell, and every screen off the starter
-status: implementing
+status: archived
 created: 2026-09-10
-updated: 2026-09-10
-archived_at: null
+updated: 2026-09-11
+archived_at: 2026-09-11T12:15:09Z
 ---
 
 > **Archived shipped, not verified.** Closed on 2026-09-11 at the reader's
