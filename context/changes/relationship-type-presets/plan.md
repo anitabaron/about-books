@@ -362,19 +362,19 @@ written — and the fix is to rename that one row by hand and re-run.
 
 #### Automated
 
-- [x] 2.1 Migrations apply cleanly from scratch: `npx supabase db reset`
-- [x] 2.2 RLS, preset and drift assertions pass: `npm run db:verify-rls`
-- [x] 2.3 Mutation check: renaming a preset without the check list makes the drift assertion fail
-- [x] 2.4 Unit tests pass, including the rewritten classifier tests: `npm test`
-- [x] 2.5 `grep -rn "antagonist" src/` matches nothing outside generated types
-- [x] 2.6 Lint passes: `npm run lint`
-- [x] 2.7 Type check passes: `npx astro check`
+- [x] 2.1 Migrations apply cleanly from scratch: `npx supabase db reset` — 1b0b12c
+- [x] 2.2 RLS, preset and drift assertions pass: `npm run db:verify-rls` — 1b0b12c
+- [x] 2.3 Mutation check: renaming a preset without the check list makes the drift assertion fail — 1b0b12c
+- [x] 2.4 Unit tests pass, including the rewritten classifier tests: `npm test` — 1b0b12c
+- [x] 2.5 `grep -rn "antagonist" src/` matches nothing outside generated types — 1b0b12c
+- [x] 2.6 Lint passes: `npm run lint` — 1b0b12c
+- [x] 2.7 Type check passes: `npx astro check` — 1b0b12c
 
 #### Manual
 
-- [x] 2.8 Both dropdowns list the five with `friend` in place of `other`
-- [x] 2.9 The "Predefined" line reads the same five
-- [x] 2.10 Adding and editing a connection works with both type sources
-- [x] 2.11 Naming a reader-defined type `friend` is refused with the sentence
-- [x] 2.12 Naming one `other` is now allowed
-- [ ] 2.13 Deployed to production and an existing book renders every connection it had
+- [x] 2.8 Both dropdowns list the five with `friend` in place of `other` — 1b0b12c
+- [x] 2.9 The "Predefined" line reads the same five — 1b0b12c
+- [x] 2.10 Adding and editing a connection works with both type sources — 1b0b12c
+- [x] 2.11 Naming a reader-defined type `friend` is refused with the sentence — 1b0b12c
+- [x] 2.12 Naming one `other` is now allowed — 1b0b12c
+- [x] 2.13 Deployed to production and an existing book renders every connection it had — 1b0b12c
