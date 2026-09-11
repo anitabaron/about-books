@@ -166,66 +166,68 @@ if (!book && !loadError) {
               </button>
             </form>
           </div>
-          <h1 class="page-title">{book.title}</h1>
-          {/* Author left, dates right, on one line: the two answer different
+          <div class="title-row">
+            <h1 class="page-title">{book.title}</h1>
+            {/* Author left, dates right, on one line: the two answer different
               questions — which book this is, and how long it has been sitting
               here — so putting them at opposite ends lets each be found without
               reading the other. */}
-          {/* Editing a book is rare -- a typo in a title, or a book added by mistake -- so it
-              lives behind a disclosure like every other management control on this page, and
-              the header stays a header. `open` when its own error is showing, so a rejected
-              title is not hidden in a section that closed on reload. */}
-          <details class="disclose bookedit" open={bookError !== null}>
-            {/* Icon only, and sitting directly above the date: the words "Edit book" spelled
-                out a control used once or twice in a book's whole life, in a header the
-                reader passes on every single visit. */}
-            <summary aria-label={`Edit ${book.title}`}>
-              <Pencil className="size-3.5" aria-hidden="true" />
-            </summary>
-            <div class="disclose-body">
-              {bookError && <p class="error-text">{bookError}</p>}
-              <form method="POST" action={`/api/books/${book.id}`} id={`edit-book-${book.id}`} class="stack">
-                <div class="field">
-                  <label for={`book-title-${book.id}`}>Title</label>
-                  <input id={`book-title-${book.id}`} name="title" value={book.title} />
-                </div>
-                <div class="field">
-                  <label for={`book-author-${book.id}`}>Author</label>
-                  <input
-                    id={`book-author-${book.id}`}
-                    name="author"
-                    value={book.author ?? ""}
-                    placeholder="Author unknown"
-                  />
-                </div>
-              </form>
+            {/* Editing a book is rare -- a typo in a title, or a book added by mistake -- so it
+                lives behind a disclosure like every other management control on this page, and
+                the header stays a header. `open` when its own error is showing, so a rejected
+                title is not hidden in a section that closed on reload. */}
+            <details class="disclose bookedit" open={bookError !== null}>
+              {/* Icon only, at the end of the title line: the words "Edit book" spelled out
+                  a control used once or twice in a book's whole life, in a header the reader
+                  passes on every single visit. */}
+              <summary aria-label={`Edit ${book.title}`}>
+                <Pencil className="size-3.5" aria-hidden="true" />
+              </summary>
+              <div class="disclose-body">
+                {bookError && <p class="error-text">{bookError}</p>}
+                <form method="POST" action={`/api/books/${book.id}`} id={`edit-book-${book.id}`} class="stack">
+                  <div class="field">
+                    <label for={`book-title-${book.id}`}>Title</label>
+                    <input id={`book-title-${book.id}`} name="title" value={book.title} />
+                  </div>
+                  <div class="field">
+                    <label for={`book-author-${book.id}`}>Author</label>
+                    <input
+                      id={`book-author-${book.id}`}
+                      name="author"
+                      value={book.author ?? ""}
+                      placeholder="Author unknown"
+                    />
+                  </div>
+                </form>
 
-              {/* Save reaches its form with `form=` because the delete needs a form of its own
-                  and a <form> cannot nest inside another. Same shape as the character row. */}
-              <div class="edit-actions">
-                <details class="confirm">
-                  <summary>Delete book</summary>
-                  <form method="POST" action={`/api/books/${book.id}/delete`} class="confirm-body">
-                    <p>
-                      Delete <strong>{book.title}</strong>? Its characters, their connections and any relationship types
-                      you defined for it go too. This cannot be undone.
-                    </p>
-                    <div class="confirm-actions">
-                      <Button type="submit" variant="destructive" size="sm">
-                        Yes, delete this book
-                      </Button>
-                      <button type="button" class="cancel" onclick="this.closest('details').open = false">
-                        Cancel
-                      </button>
-                    </div>
-                  </form>
-                </details>
-                <Button type="submit" form={`edit-book-${book.id}`} size="sm">
-                  Save
-                </Button>
+                {/* Save reaches its form with `form=` because the delete needs a form of its own
+                    and a <form> cannot nest inside another. Same shape as the character row. */}
+                <div class="edit-actions">
+                  <details class="confirm">
+                    <summary>Delete book</summary>
+                    <form method="POST" action={`/api/books/${book.id}/delete`} class="confirm-body">
+                      <p>
+                        Delete <strong>{book.title}</strong>? Its characters, their connections and any relationship
+                        types you defined for it go too. This cannot be undone.
+                      </p>
+                      <div class="confirm-actions">
+                        <Button type="submit" variant="destructive" size="sm">
+                          Yes, delete this book
+                        </Button>
+                        <button type="button" class="cancel" onclick="this.closest('details').open = false">
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </details>
+                  <Button type="submit" form={`edit-book-${book.id}`} size="sm">
+                    Save
+                  </Button>
+                </div>
               </div>
-            </div>
-          </details>
+            </details>
+          </div>
           <div class="bookmeta">
             <span class="label">{book.author ?? "Author unknown"}</span>
             <span class="label bookdates">
@@ -242,7 +244,7 @@ if (!book && !loadError) {
             `open` when there is an error to show -- otherwise a rejected name would land in
             a collapsed section. Server-rendered attribute, so no JavaScript decides it. */}
         <details class="disclose block-disclose" open={addCharacterError !== null}>
-          <summary>Add a character</summary>
+          <summary>Add character</summary>
           <div class="disclose-body">
             <AddCharacterForm bookId={book.id} serverError={addCharacterError} client:load />
           </div>
@@ -314,7 +316,7 @@ if (!book && !loadError) {
                         id={`desc-${character.id}`}
                         form={`edit-character-${character.id}`}
                         name="description"
-                        rows="3"
+                        rows="2"
                         placeholder="Add a note as you read"
                         set:text={character.description ?? ""}
                       />
@@ -809,7 +811,17 @@ if (!book && !loadError) {
     border-radius: 0;
     padding-inline: 2px;
     padding-block: 2px 5px;
-    min-height: 4.4em;
+    /* Two rows at rest. 3.4em, not 2.9em: the box is border-box, so the floor has
+       to carry the 7px of padding as well as two 1.45em lines, or the second line
+       is clipped. Changing `rows` alone does nothing while a taller min-height
+       sits under it — that is what kept this field three rows high. */
+    min-height: 3.4em;
+    /* Grows with the note where the browser supports it, and stops at six lines so
+       a long description cannot push the rest of the form off a phone screen.
+       Chromium-only today: elsewhere the field stays at two rows and the reader
+       drags it, which is why `resize` stays. */
+    field-sizing: content;
+    max-height: 9.2em;
     resize: vertical;
     overflow-wrap: anywhere;
   }
@@ -840,6 +852,49 @@ if (!book && !loadError) {
      untouched, so the browser still hides the panel itself. */
   /* Right-aligned so the pencil lands directly above the dates on the line below,
      and the opener carries no "+"/"-" affix -- an icon does not need one. */
+  /* Title and the edit opener share a line; the panel still wants the full width.
+     `display: contents` only while open dissolves the <details> box so the summary
+     stays where the reader pressed it and just the panel wraps to its own row —
+     the same trick 65678ac used for the delete confirmations, and safe here for
+     the same reason: .bookedit carries no box styling of its own. */
+  /* A grid with explicit placement, not a wrapping flex row. Flex put the opened
+     panel on the same line as the title — its 100% basis was meant to force a
+     wrap and did not — which squeezed the title and dragged the pencil from the
+     right edge to the middle. Grid areas do not depend on anything fitting. */
+  .title-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: baseline;
+    column-gap: var(--space-sm);
+  }
+  .title-row .page-title {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .bookedit {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  /* Only while open: dissolving the box lets the summary hold its grid cell while
+     the panel takes a full row of its own. Closed, the element is untouched, so
+     the browser still hides the panel — 65678ac's reasoning, and safe here for
+     the same reason: .bookedit carries no box styling, only `> summary` does. */
+  .bookedit[open] {
+    display: contents;
+  }
+  .bookedit[open] > summary {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .bookedit[open] > .disclose-body {
+    /* `1 / 3`, not `1 / -1`: the negative line resolved to column 1 only here and
+       left the panel 26px narrower than the page, so its fields did not line up
+       with any other field. An explicit end line does not depend on how the
+       implicit grid is counted. */
+    grid-column: 1 / 3;
+    grid-row: 2;
+  }
+
   .bookedit > summary {
     margin-inline-start: auto;
     min-height: 28px;

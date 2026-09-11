@@ -10,10 +10,13 @@ interface Props {
    *  height down a list costs more than the part was worth. */
   metaWide?: (string | null | undefined)[];
   note?: string | null;
+  /** A named figure on its own line — label in the accent, value beside it.
+   *  Anything in `meta` then moves to the right end of that same line. */
+  stat?: { label: string; value: string } | null;
   dim?: boolean;
 }
 
-const { href, title, meta = [], metaWide = [], note, dim = false } = Astro.props;
+const { href, title, meta = [], metaWide = [], note, stat = null, dim = false } = Astro.props;
 const metaParts = meta.filter((m): m is string => Boolean(m));
 const wideParts = metaWide.filter((m): m is string => Boolean(m));
 ---
@@ -30,7 +33,7 @@ const wideParts = metaWide.filter((m): m is string => Boolean(m));
       )
     }
     {
-      (metaParts.length > 0 || wideParts.length > 0) && (
+      !stat && (metaParts.length > 0 || wideParts.length > 0) && (
         <p class="meta label">
           {metaParts.join(" · ")}
           {wideParts.length > 0 && (
@@ -44,6 +47,25 @@ const wideParts = metaWide.filter((m): m is string => Boolean(m));
     }
   </div>
   {note && <p class="note">{note}</p>}
+  {
+    stat && (
+      <p class="stat">
+        <span class="stat-k label">{stat.label}</span>
+        <span class="stat-v">{stat.value}</span>
+        {(metaParts.length > 0 || wideParts.length > 0) && (
+          <span class="stat-meta label">
+            {metaParts.join(" · ")}
+            {wideParts.length > 0 && (
+              <span class="wide">
+                {metaParts.length > 0 ? " · " : ""}
+                {wideParts.join(" · ")}
+              </span>
+            )}
+          </span>
+        )}
+      </p>
+    )
+  }
   <slot />
 </li>
 
@@ -132,7 +154,34 @@ const wideParts = metaWide.filter((m): m is string => Boolean(m));
     overflow-wrap: anywhere;
   }
 
+  /* The figure gets its own line: a label in the accent, the value beside it, and
+     any meta pushed to the far end. Same device as the relationship types in the
+     cast — a system word in the accent, the reader's content in ink. */
+  .stat {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+    margin: 1px 0 0;
+    font-size: 0.9rem;
+    color: var(--ink-2);
+    min-width: 0;
+  }
+  .stat-k {
+    color: var(--accent);
+    flex: none;
+  }
+  .stat-v {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .stat-meta {
+    margin-inline-start: auto;
+    flex: none;
+    text-align: end;
+  }
+
   .dim .title,
+  .dim .stat,
   .dim .note {
     color: var(--muted-fg);
   }

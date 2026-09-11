@@ -95,7 +95,7 @@ const emptyMessage =
       land inside a collapsed section. Server-rendered, so no JavaScript decides it. */
   }
   <details class="disclose block-disclose" open={formError !== null}>
-    <summary>Add a book</summary>
+    <summary>Add book</summary>
     <div class="disclose-body">
       <AddBookForm serverError={formError} client:load />
     </div>
@@ -139,12 +139,10 @@ const emptyMessage =
           href={`/books/${book.id}`}
           title={book.title}
           dim={book.finished_at !== null}
-          meta={[
-            book.author ?? "Author unknown",
-            castLabel(book.characters[0]?.count ?? 0),
-            book.finished_at ? `Finished ${formatDate(book.finished_at)}` : null,
-          ]}
-          metaWide={[book.finished_at ? null : `Added ${formatDate(book.created_at)}`]}
+          note={book.author ?? "Author unknown"}
+          stat={{ label: "Cast", value: castLabel(book.characters[0]?.count ?? 0) }}
+          meta={[book.finished_at ? `Finished ${formatDate(book.finished_at)}` : null]}
+          metaWide={[book.finished_at ? null : formatDate(book.created_at)]}
         />
       ))
     }

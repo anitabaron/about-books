@@ -65,6 +65,16 @@ Run these against `npm run dev -- --host` on a real phone.
       by someone other than this session, so check `git log origin/main..main`
       rather than trusting any count written here.
 
+## 2b. Known cosmetic, not chased further
+
+- [ ] **The book-edit panel is 26px narrower than the page** (317px inside a 343px
+      row at 390px). Its `<details>` is dissolved with `display: contents` while
+      open so the pencil can hold its grid cell, and the panel is placed at
+      `grid-column: 1 / 3` on row 2 — but it still lays out inside column 1 only.
+      Tried and did not fix it: `1 / -1`, `justify-self: stretch`, `width: 100%`.
+      The fields inside come out 247px, which is usable, and the panel opens once
+      or twice in a book's life. Worth ten minutes with devtools, not more.
+
 ## 3. Housekeeping — nobody's job yet, so it is nobody's
 
 - [x] ~~`.claude/worktrees/reading-room-ui`~~ — removed 2026-09-11 with its
