@@ -2,7 +2,7 @@
 import AppLayout from "@/layouts/AppLayout.astro";
 import Row from "@/components/ui/Row.astro";
 import { Button } from "@/components/ui/button";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Pencil, Trash2 } from "lucide-react";
 import AddCharacterForm from "@/components/characters/AddCharacterForm";
 import { createClient } from "@/lib/supabase";
 import type { Book, Character, Relationship, RelationshipTypeRow } from "@/types";
@@ -30,6 +30,7 @@ const relationshipTypesError = errorAt === "relationship-types" && relationshipT
 // `for` narrows a connection error to the one character whose form was rejected, so the other
 // cast rows do not each repeat it.
 const connectionsErrorFor = errorAt === "connections" ? Astro.url.searchParams.get("for") : null;
+const bookError = errorAt === "book" ? formError : null;
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 
@@ -170,6 +171,61 @@ if (!book && !loadError) {
               questions — which book this is, and how long it has been sitting
               here — so putting them at opposite ends lets each be found without
               reading the other. */}
+          {/* Editing a book is rare -- a typo in a title, or a book added by mistake -- so it
+              lives behind a disclosure like every other management control on this page, and
+              the header stays a header. `open` when its own error is showing, so a rejected
+              title is not hidden in a section that closed on reload. */}
+          <details class="disclose bookedit" open={bookError !== null}>
+            {/* Icon only, and sitting directly above the date: the words "Edit book" spelled
+                out a control used once or twice in a book's whole life, in a header the
+                reader passes on every single visit. */}
+            <summary aria-label={`Edit ${book.title}`}>
+              <Pencil className="size-3.5" aria-hidden="true" />
+            </summary>
+            <div class="disclose-body">
+              {bookError && <p class="error-text">{bookError}</p>}
+              <form method="POST" action={`/api/books/${book.id}`} id={`edit-book-${book.id}`} class="stack">
+                <div class="field">
+                  <label for={`book-title-${book.id}`}>Title</label>
+                  <input id={`book-title-${book.id}`} name="title" value={book.title} />
+                </div>
+                <div class="field">
+                  <label for={`book-author-${book.id}`}>Author</label>
+                  <input
+                    id={`book-author-${book.id}`}
+                    name="author"
+                    value={book.author ?? ""}
+                    placeholder="Author unknown"
+                  />
+                </div>
+              </form>
+
+              {/* Save reaches its form with `form=` because the delete needs a form of its own
+                  and a <form> cannot nest inside another. Same shape as the character row. */}
+              <div class="edit-actions">
+                <details class="confirm">
+                  <summary>Delete book</summary>
+                  <form method="POST" action={`/api/books/${book.id}/delete`} class="confirm-body">
+                    <p>
+                      Delete <strong>{book.title}</strong>? Its characters, their connections and any relationship types
+                      you defined for it go too. This cannot be undone.
+                    </p>
+                    <div class="confirm-actions">
+                      <Button type="submit" variant="destructive" size="sm">
+                        Yes, delete this book
+                      </Button>
+                      <button type="button" class="cancel" onclick="this.closest('details').open = false">
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                </details>
+                <Button type="submit" form={`edit-book-${book.id}`} size="sm">
+                  Save
+                </Button>
+              </div>
+            </div>
+          </details>
           <div class="bookmeta">
             <span class="label">{book.author ?? "Author unknown"}</span>
             <span class="label bookdates">
@@ -782,6 +838,20 @@ if (!book && !loadError) {
      `flex-basis: 100%` moved the bin down with it, which is movement for nothing: the
      reader pressed it where it was and expects it to stay there. Closed, the element is
      untouched, so the browser still hides the panel itself. */
+  /* Right-aligned so the pencil lands directly above the dates on the line below,
+     and the opener carries no "+"/"-" affix -- an icon does not need one. */
+  .bookedit > summary {
+    margin-inline-start: auto;
+    min-height: 28px;
+    color: var(--muted-fg);
+  }
+  .bookedit > summary::before {
+    content: none;
+  }
+  .bookedit > summary:hover {
+    color: var(--ink-2);
+  }
+
   .confirm-actions {
     display: flex;
     flex-wrap: wrap;

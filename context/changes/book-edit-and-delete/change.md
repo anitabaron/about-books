@@ -1,9 +1,9 @@
 ---
 change_id: book-edit-and-delete
 title: Reader can fix a book's title or author, and delete a book
-status: new
+status: implemented
 created: 2026-09-10
-updated: 2026-09-10
+updated: 2026-09-11
 archived_at: null
 ---
 
