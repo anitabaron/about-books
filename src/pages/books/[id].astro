@@ -260,25 +260,17 @@ if (!book && !loadError) {
 
                     {others.length > 0 ? (
                       <div class="rel">
-                        <label for={`newrel-who-${character.id}`}>Link</label>
+                        <label for={`newrel-type-${character.id}`}>Link</label>
                         <div class="rel-controls">
-                          {/* Person before type: the reader picks who this is about, then what
-                              it is. One field, two meanings -- a shared literal or a custom
+                          {/* Type before person, matching the editor rows below: a reader knows
+                              WHAT the relationship is before they pick who it is with, and the
+                              two rows must not disagree. One field, two meanings -- a shared literal or a custom
                               type's id; <optgroup> is native, so the merged list costs no
                               JavaScript and the endpoint decides the column by shape. */}
                           <select
-                            id={`newrel-who-${character.id}`}
-                            form={`character-${character.id}-relationships`}
-                            name="other_character_id"
-                          >
-                            {others.map((other) => (
-                              <option value={other.id}>{other.name}</option>
-                            ))}
-                          </select>
-                          <select
+                            id={`newrel-type-${character.id}`}
                             form={`character-${character.id}-relationships`}
                             name="type"
-                            aria-label={`Relationship type for ${character.name}`}
                           >
                             <optgroup label="Shared">
                               {RELATIONSHIP_TYPES.map((relationshipType) => (
@@ -292,6 +284,15 @@ if (!book && !loadError) {
                                 ))}
                               </optgroup>
                             )}
+                          </select>
+                          <select
+                            form={`character-${character.id}-relationships`}
+                            name="other_character_id"
+                            aria-label={`Character to link with ${character.name}`}
+                          >
+                            {others.map((other) => (
+                              <option value={other.id}>{other.name}</option>
+                            ))}
                           </select>
                           <Button
                             type="submit"

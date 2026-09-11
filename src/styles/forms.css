@@ -34,7 +34,7 @@
 .rel select {
   font-family: var(--font-serif);
   font-size: 0.9rem;
-  line-height: 1.2;
+  line-height: 1.1;
   color: var(--ink);
   background-color: transparent;
   border: 0;
@@ -45,8 +45,8 @@
      box around 14.4px type left ~7px above and below and pushed the underline
      away from the letters it belongs to. 26px brings the rule back under the
      text. Still clears WCAG 2.2 AA (2.5.8), which asks 24px. */
-  min-height: 26px;
-  height: 26px;
+  min-height: 22px;
+  height: 22px;
   min-width: 0;
   max-width: 100%;
 }
@@ -88,8 +88,8 @@
   .field input,
   .field select,
   .rel select {
-    min-height: 32px;
-    height: 32px;
+    min-height: 26px;
+    height: 26px;
   }
 }
 
