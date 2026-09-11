@@ -1,34 +1,9 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
-import { createRelationshipSchema, isSharedType } from "@/types";
+import { DUPLICATE_PAIR, duplicateConnectionMessage, resolveTypeColumns } from "@/lib/relationship-type";
+import { createRelationshipSchema } from "@/types";
 
 export const prerender = false;
-
-/**
- * Which of the two type columns to write. A custom type must belong to the SAME book as the
- * characters -- the same requirement these routes already enforce for the other character,
- * and for the same reason: RLS checks ownership, not the relation between rows. Returns null
- * when the id is not a type of this book, which includes another reader's type (RLS makes it
- * simply not found).
- */
-async function resolveTypeColumns(
-  supabase: NonNullable<ReturnType<typeof createClient>>,
-  choice: string,
-  bookId: string,
-): Promise<{ type: string | null; custom_type_id: string | null } | null> {
-  if (isSharedType(choice)) {
-    return { type: choice, custom_type_id: null };
-  }
-
-  const { data: customType } = await supabase
-    .from("relationship_types")
-    .select("id, book_id")
-    .eq("id", choice)
-    .maybeSingle<{ id: string; book_id: string }>();
-
-  if (customType?.book_id !== bookId) return null;
-  return { type: null, custom_type_id: choice };
-}
 
 export const POST: APIRoute = async (context) => {
   const anchorId = context.params.id;
@@ -53,9 +28,9 @@ export const POST: APIRoute = async (context) => {
   // books: the policies only check auth.uid() = user_id, not the relation.
   const { data: pair } = await supabase
     .from("characters")
-    .select("id, book_id")
+    .select("id, book_id, name")
     .in("id", parsed.success ? [anchorId, parsed.data.other_character_id] : [anchorId])
-    .overrideTypes<{ id: string; book_id: string }[], { merge: false }>();
+    .overrideTypes<{ id: string; book_id: string; name: string }[], { merge: false }>();
 
   const anchor = pair?.find((c) => c.id === anchorId);
   if (!anchor) {
@@ -94,6 +69,11 @@ export const POST: APIRoute = async (context) => {
   });
 
   if (error) {
+    // The unique index normalises the pair, so this fires whichever end the reader entered it
+    // from -- which is exactly how the duplicate got made.
+    if (error.code === DUPLICATE_PAIR) {
+      return backToBook(duplicateConnectionMessage(other.name));
+    }
     return backToBook(error.message);
   }
 

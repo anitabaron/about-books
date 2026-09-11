@@ -695,6 +695,54 @@ begin
     raise exception 'FAIL cascade: deleting a book left % of the connections using its types', n;
   end if;
 
+  ----------------------------------------------------------------- duplikaty par
+  -- The same pair with the same type is one connection, however it was entered. The index
+  -- normalises the order, so B->A after A->B must be refused too -- that reversal is how the
+  -- duplicate actually gets made, once from each end.
+  perform set_config('role', 'postgres', true);
+  insert into public.characters (user_id, book_id, name)
+    values (a_id, a_book2, 'Dup fixture 1') returning id into a_c1;
+  insert into public.characters (user_id, book_id, name)
+    values (a_id, a_book2, 'Dup fixture 2') returning id into a_c2;
+  insert into public.relationships (user_id, character_a_id, character_b_id, type)
+    values (a_id, a_c1, a_c2, 'ally');
+
+  denied := false;
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type)
+      values (a_id, a_c2, a_c1, 'ally');
+  exception when unique_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL unique pair: the same pair was recorded twice, entered from the other end';
+  end if;
+
+  -- A second TYPE between the same pair is a different connection and must still be allowed.
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type)
+      values (a_id, a_c1, a_c2, 'family');
+  exception when unique_violation then
+    raise exception 'FAIL unique pair: a second type between the same pair was refused';
+  end;
+
+  -- And a custom type on that pair too. Both of these assertions depend on
+  -- `nulls not distinct`: every row has exactly one null among the two type columns, so with
+  -- the default the index would treat every row as distinct and reject nothing at all.
+  insert into public.relationships (user_id, character_a_id, character_b_id, type, custom_type_id)
+    values (a_id, a_c1, a_c2, null, a_type2);
+  denied := false;
+  begin
+    insert into public.relationships (user_id, character_a_id, character_b_id, type, custom_type_id)
+      values (a_id, a_c2, a_c1, null, a_type2);
+  exception when unique_violation then
+    denied := true;
+  end;
+  if not denied then
+    raise exception 'FAIL unique pair: a duplicate CUSTOM-type connection was accepted '
+      '(is the index missing `nulls not distinct`?)';
+  end if;
+
   raise notice 'PASS relationship_types: names are unique per book and cannot shadow the five; '
     'a connection carries exactly one type source; a type in use cannot be deleted but a book '
     'delete still cascades; reader A can act on own rows (incl. default auth.uid()); reader B '

@@ -3,7 +3,7 @@ project: about-books
 version: 2
 status: draft
 created: 2026-09-09
-updated: 2026-09-10
+updated: 2026-09-11
 prd_version: 3
 main_goal: speed
 top_blocker: time
@@ -107,41 +107,6 @@ Phase-2 requirements, in the return order the PRD itself sets. Nothing here is c
 - **FR-008 — collection browse and search.** Why parked: PRD § Scope Triage, phase 2 item 5; a plain unsorted list plus the active/finished filter covers the collection today.
 - **Editing and deleting a book — follow-up to S-01 of M-1.** Why parked: FR-002 covers adding only, and FR-003's full CRUD is about characters, not books. Deferred during M-1 planning on 2026-09-09, and kept out of M-2 on 2026-09-10 because it is about books, not the relationship vocabulary — including it would dilute this milestone's Done-when. Needs no PRD change to come back. **The cost is small, and this is the first thing to pick up if time remains after Phase 3 — ahead of anything else parked:** `updateBookSchema` already exists unused, and the endpoints are a copy of `src/pages/api/characters/[id].ts` and `characters/[id]/delete.ts`. Raised again on 2026-09-10 and confirmed in the code — books support create and the finished-status update only, so a typo in a title is permanent. Not a PRD gap (FR-002 covers adding), and the rubric is satisfied by characters and relationships, which each carry all four operations.
 - **A confirmation step before destructive actions elsewhere in the app.** Why parked: character and relationship delete were put behind a nested `<details>` confirmation on 2026-09-10 (`ceb5bca`). Nothing else in the app deletes anything yet; when book delete returns, it inherits the same pattern rather than inventing one.
-- **Deduplicating relationship pairs — was S-02 of M-2, now parked with its blocker answered.**
-  Why parked: the decision that unblocked it also made clear it is not worth the remaining
-  budget. It was never a PRD gap; the symptom is mild and the fix is not the one-liner it looks
-  like. Moved out of `blocked` deliberately — keeping it blocked would misrepresent why it is
-  not being built.
-
-  **Decided 2026-09-10, so a later `/10x-plan` starts from a settled shape:**
-  - **The uniqueness key is (pair, type), not (pair).** A pair may legitimately carry more than
-    one connection — "mieszka z" and "siostry" between the same two women. The defect being
-    fixed is only the true duplicate: the same pair with the same type recorded twice, usually
-    because it was entered once from each end.
-  - **The key must normalise pair order:** `(least(character_a_id, character_b_id),
-greatest(character_a_id, character_b_id), type, custom_type_id)`. Without normalising, A→B
-    and B→A look different to the index and the defect survives the fix — which is the entire
-    failure mode.
-  - **The index must be declared `unique nulls not distinct`.** Exactly one of `type` and
-    `custom_type_id` is always null, held by the `relationships_one_type` constraint, and
-    Postgres treats nulls as distinct in a unique index by default. A plain unique index would
-    therefore permit two identical rows and pass every test written against it. This is the trap
-    in this change: it is not obvious and it fails silently.
-  - **The known cost stands.** A unique index raises a raw database error, so the work is
-    catching the violation and translating it into a sentence — in both write endpoints, which
-    is the same duplicated `resolveTypeColumns` surface parked below. Doing both together is
-    cheaper than doing either alone.
-
-- **Write-side type resolution is duplicated and untested — risk-list entry for `test-plan.md`.**
-  Why parked: the code is correct today and the deadline is real. `resolveTypeColumns` exists as
-  two near-identical private copies, in `src/pages/api/characters/[id]/relationships.ts` and
-  `src/pages/api/relationships/[id].ts`, with no shared definition and no test. Phase 2's named
-  key risk was "one form field carrying two meanings", and the unit tests cover only the READ
-  side. The update endpoint's own comment names the subtle part: both type columns are always
-  written, because writing one leaves the other set and trips `relationships_one_type` — so
-  fixing one copy without the other surfaces a raw database error to the reader. The natural
-  shape when addressed: a pure classifier (shared literal vs uuid, already half-done by
-  `isSharedType`) split from the book-membership check that needs the Supabase client.
 - **The 12 `src/lib/connections.ts` tests need an entry in the test plan's risk map.**
   Why parked: retroactive mapping costs nothing but has to happen when `/10x-test-plan` runs.
   Tests that exist without a plan naming the risk they cover read as unmotivated, and the
@@ -151,7 +116,6 @@ greatest(character_a_id, character_b_id), type, custom_type_id)`. Without normal
   is deliberate — `getViteConfig` from `astro/config` pulls in the Cloudflare adapter and fails
   the test run at startup with "exports is not defined" — and a drift here fails loudly on the
   next test run rather than silently. Not worth a mechanism today.
-- **Add `npx astro check` to CI.** Why parked: raised 2026-09-10 while reviewing the test plan and deliberately deferred until after Phase 3. One line in `.github/workflows/ci.yml`, and it would make §5 of `test-plan.md` able to claim typecheck as a CI gate rather than local-only — it is the gate that catches exactly the type drift Phase 2 of `reader-defined-relationship-types` was about.
 - **App-level observability (logging, error tracking, metrics).** Why parked: no requirement in this milestone depends on it, Cloudflare platform observability is already enabled in `wrangler.jsonc`, and `main_goal: speed` keeps every ungated layer simple.
 - **All PRD § Non-Goals stand unchanged:** no social features, no book purchasing or commerce, no academic or textbook support, no reading progress tracking.
 
