@@ -802,12 +802,12 @@ if (!book && !loadError) {
     display: flex;
     flex-direction: column;
   }
-  /* Identical to .conn-edit: same rule, same 7/3 padding. These are the same
-     kind of row — a label, one control, a tick and a bin — and the container
-     still carrying its old stacked layout was the only thing making the
-     vocabulary sit 13px taller than the connection editors it copies. */
+  /* No rule between these, unlike .conn-edit. Every row here is a single field,
+     and a field carries its own underline — a divider as well put three
+     horizontal lines within a few pixels of each other. The connection rows
+     keep theirs because a row there is two selects and two glyphs, which needs
+     the help. */
   .vocab-item {
-    border-block-start: var(--rule-w) solid var(--rule);
-    padding-block: 7px 3px;
+    padding-block: 2px;
   }
 </style>
