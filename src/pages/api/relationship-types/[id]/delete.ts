@@ -44,13 +44,14 @@ export const POST: APIRoute = async (context) => {
     .select("id", { count: "exact", head: true })
     .eq("custom_type_id", typeId);
 
-  const inUse = count ?? 0;
+  // Doubled on purpose: the query counts ROWS, but a connection renders under both of its
+  // characters, so a reader looking at the cast counts it twice. The number in the sentence
+  // has to be the number they can see, or it reads as a bug. A row can never have both ends
+  // on one character (relationships_distinct_characters), so this is always even -- which is
+  // why the sentence needs no singular form.
+  const inUse = (count ?? 0) * 2;
   if (inUse > 0) {
-    return backToBook(
-      `"${existing.name}" is used by ${inUse} connection${inUse === 1 ? "" : "s"}. Change ${
-        inUse === 1 ? "it" : "them"
-      } first.`,
-    );
+    return backToBook(`"${existing.name}" is used by ${inUse} connections. Change them first.`);
   }
 
   const { error } = await supabase.from("relationship_types").delete().eq("id", typeId);
