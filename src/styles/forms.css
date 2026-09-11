@@ -31,6 +31,7 @@
 
 .field input,
 .field select,
+.rel input,
 .rel select {
   font-family: var(--font-serif);
   font-size: 0.9rem;
@@ -50,7 +51,8 @@
   min-width: 0;
   max-width: 100%;
 }
-.field input::placeholder {
+.field input::placeholder,
+.rel input::placeholder {
   color: var(--muted-fg);
 }
 
@@ -68,6 +70,7 @@
 
 .field input:focus-visible,
 .field select:focus-visible,
+.rel input:focus-visible,
 .rel select:focus-visible {
   border-block-end-color: var(--focus);
 }
@@ -87,6 +90,7 @@
 @media (pointer: coarse) {
   .field input,
   .field select,
+  .rel input,
   .rel select {
     min-height: 26px;
     height: 26px;
