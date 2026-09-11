@@ -1,7 +1,7 @@
 ---
 change_id: one-way-relationships
 title: Relationships become one-way — a connection shows only on the card it was created from
-status: implementing
+status: implemented
 created: 2026-09-11
 updated: 2026-09-11
 archived_at: null

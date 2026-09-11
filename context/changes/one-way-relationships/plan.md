@@ -299,20 +299,20 @@ in rendering: each connection moves to the card it was created from.
 
 #### Automated
 
-- [x] 1.1 Migrations apply cleanly from scratch: `npx supabase db reset`
-- [x] 1.2 RLS + duplicate harness passes: `npm run db:verify-rls`
-- [x] 1.3 Mutation check: index without `nulls not distinct` makes assertion (d) fail
-- [x] 1.4 Unit tests pass, including the rewritten connection tests: `npm test`
-- [x] 1.5 `diagram.test.ts` passes unchanged
-- [x] 1.6 Lint passes: `npm run lint`
-- [x] 1.7 Type check passes: `npx astro check`
-- [x] 1.8 Formatting of touched files: `npx prettier --check`
+- [x] 1.1 Migrations apply cleanly from scratch: `npx supabase db reset` — 3ec2663
+- [x] 1.2 RLS + duplicate harness passes: `npm run db:verify-rls` — 3ec2663
+- [x] 1.3 Mutation check: index without `nulls not distinct` makes assertion (d) fail — 3ec2663
+- [x] 1.4 Unit tests pass, including the rewritten connection tests: `npm test` — 3ec2663
+- [x] 1.5 `diagram.test.ts` passes unchanged — 3ec2663
+- [x] 1.6 Lint passes: `npm run lint` — 3ec2663
+- [x] 1.7 Type check passes: `npx astro check` — 3ec2663
+- [x] 1.8 Formatting of touched files: `npx prettier --check` — 3ec2663
 
 #### Manual
 
-- [x] 1.9 A connection lists once, under the card it was created from
-- [x] 1.10 The reverse direction with a different type is accepted and shows on the other card
-- [x] 1.11 The same direction with the same type is refused with the scoped duplicate message
-- [x] 1.12 Editing a connection from its owning card still saves, across both type sources
-- [x] 1.13 CIRCLE and PERSON views unchanged; a target-only character still appears
-- [ ] 1.14 Pushed to production and the production book matches the measured table
+- [x] 1.9 A connection lists once, under the card it was created from — 3ec2663
+- [x] 1.10 The reverse direction with a different type is accepted and shows on the other card — 3ec2663
+- [x] 1.11 The same direction with the same type is refused with the scoped duplicate message — 3ec2663
+- [x] 1.12 Editing a connection from its owning card still saves, across both type sources — 3ec2663
+- [x] 1.13 CIRCLE and PERSON views unchanged; a target-only character still appears — 3ec2663
+- [x] 1.14 Pushed to production and the production book matches the measured table — 3ec2663
