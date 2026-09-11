@@ -101,28 +101,32 @@ const emptyMessage =
     </div>
   </details>
 
-  <nav class="filters" aria-label="Filter by status">
-    <a
-      href="/books"
-      class:list={["filter", "label", { on: status === "active" }]}
-      aria-current={status === "active" ? "page" : undefined}>Reading</a
-    >
-    <a
-      href="/books?status=finished"
-      class:list={["filter", "label", { on: status === "finished" }]}
-      aria-current={status === "finished" ? "page" : undefined}>Finished</a
-    >
-    <a
-      href="/books?status=all"
-      class:list={["filter", "label", { on: status === "all" }]}
-      aria-current={status === "all" ? "page" : undefined}>All</a
-    >
-  </nav>
-
-  <p class="sec-head">
-    <span class="label">Collection</span>
+  {
+    /* The filters ARE the section head. They were a separate band under a
+      "Collection" label that said the same thing the active filter already
+      says, which cost a whole strip of a phone screen to tell the reader
+      twice. */
+  }
+  <div class="sec-head">
+    <nav class="filters" aria-label="Filter by status">
+      <a
+        href="/books"
+        class:list={["filter", "label", { on: status === "active" }]}
+        aria-current={status === "active" ? "page" : undefined}>Reading</a
+      >
+      <a
+        href="/books?status=finished"
+        class:list={["filter", "label", { on: status === "finished" }]}
+        aria-current={status === "finished" ? "page" : undefined}>Finished</a
+      >
+      <a
+        href="/books?status=all"
+        class:list={["filter", "label", { on: status === "all" }]}
+        aria-current={status === "all" ? "page" : undefined}>All</a
+      >
+    </nav>
     <span class="label">{books.length}</span>
-  </p>
+  </div>
 
   {loadError && <p class="error-text pad">{loadError}</p>}
 
@@ -138,8 +142,9 @@ const emptyMessage =
           meta={[
             book.author ?? "Author unknown",
             castLabel(book.characters[0]?.count ?? 0),
-            book.finished_at ? `Finished ${formatDate(book.finished_at)}` : `Added ${formatDate(book.created_at)}`,
+            book.finished_at ? `Finished ${formatDate(book.finished_at)}` : null,
           ]}
+          metaWide={[book.finished_at ? null : `Added ${formatDate(book.created_at)}`]}
         />
       ))
     }
@@ -151,11 +156,19 @@ const emptyMessage =
     font-size: var(--text-lg);
     line-height: 1.15;
   }
+  /* A phone already says "about-books" in the top bar and "COLLECTION" in the
+     section head; a 23px title between them is the third time the reader is
+     told where they are, and it costs a row of the list. */
+  @media (max-width: 40rem) {
+    .page-title {
+      font-size: var(--text-md);
+    }
+  }
 
   /* A page-level disclosure reads as a band across the page, not as a row. */
   .block-disclose {
     border-block: var(--rule-w) solid var(--rule);
-    margin-block: var(--space-md);
+    margin-block: var(--space-xs);
     padding-inline: var(--space-md);
   }
   .block-disclose > summary {
@@ -169,16 +182,15 @@ const emptyMessage =
   .filters {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-md);
-    padding-inline: var(--space-md);
-    margin-block-end: var(--space-md);
+    gap: var(--space-xs) var(--space-md);
+    min-width: 0;
   }
   .filter {
     text-decoration: none;
     white-space: nowrap;
-    min-height: 44px;
     display: inline-flex;
     align-items: center;
+    min-height: 36px;
   }
   @media (pointer: fine) {
     .filter {

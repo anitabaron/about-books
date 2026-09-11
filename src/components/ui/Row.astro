@@ -5,12 +5,17 @@ interface Props {
   title: string;
   /** Rendered in the label device: mono, uppercase, tracked. Short strings only. */
   meta?: (string | null | undefined)[];
+  /** Meta that only earns its place when there is room. Hidden below 40rem —
+   *  at 390px a third part tips the line into wrapping, and an uneven row
+   *  height down a list costs more than the part was worth. */
+  metaWide?: (string | null | undefined)[];
   note?: string | null;
   dim?: boolean;
 }
 
-const { href, title, meta = [], note, dim = false } = Astro.props;
+const { href, title, meta = [], metaWide = [], note, dim = false } = Astro.props;
 const metaParts = meta.filter((m): m is string => Boolean(m));
+const wideParts = metaWide.filter((m): m is string => Boolean(m));
 ---
 
 <li class:list={["row", { dim }]}>
@@ -24,7 +29,19 @@ const metaParts = meta.filter((m): m is string => Boolean(m));
         <p class="title">{title}</p>
       )
     }
-    {metaParts.length > 0 && <p class="meta label">{metaParts.join(" · ")}</p>}
+    {
+      (metaParts.length > 0 || wideParts.length > 0) && (
+        <p class="meta label">
+          {metaParts.join(" · ")}
+          {wideParts.length > 0 && (
+            <span class="wide">
+              {metaParts.length > 0 ? " · " : ""}
+              {wideParts.join(" · ")}
+            </span>
+          )}
+        </p>
+      )
+    }
   </div>
   {note && <p class="note">{note}</p>}
   <slot />
@@ -34,8 +51,9 @@ const metaParts = meta.filter((m): m is string => Boolean(m));
   /* No radius, no background, no shadow, no box. The hairline is the whole
      visual language of every list in the product. */
   .row {
+    position: relative;
     border-block-end: var(--rule-w) solid var(--rule);
-    padding: var(--space-xs) var(--space-md);
+    padding: 6px var(--space-md);
     min-height: var(--row-h);
     transition: background var(--dur-fast) var(--ease-out);
   }
@@ -82,15 +100,30 @@ const metaParts = meta.filter((m): m is string => Boolean(m));
     text-decoration: underline;
     text-underline-offset: 2px;
   }
+  /* The whole row is the target, not the 20px title. Two gains at once: a
+     thumb no longer has to find a line of text, and the block padding can come
+     down without dropping the hit area below the 44px floor. Anything
+     interactive inside the row (a disclosure, a form) sits above this layer
+     because it comes later in the DOM and this has no z-index of its own. */
+  a.title::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+  }
 
   .meta {
     margin: 0;
+  }
+  @media (max-width: 40rem) {
+    .meta .wide {
+      display: none;
+    }
   }
 
   .note {
     margin: 1px 0 0;
     font-size: 0.9rem;
-    line-height: 1.45;
+    line-height: 1.35;
     color: var(--ink-2);
     max-width: 62ch;
     overflow-wrap: anywhere;

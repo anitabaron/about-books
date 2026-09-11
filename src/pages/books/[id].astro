@@ -499,6 +499,11 @@ if (!book && !loadError) {
     font-size: var(--text-lg);
     line-height: 1.15;
   }
+  @media (max-width: 40rem) {
+    .page-title {
+      font-size: var(--text-md);
+    }
+  }
 
   .notfound {
     display: flex;
@@ -538,7 +543,7 @@ if (!book && !loadError) {
   /* A page-level disclosure reads as a band across the page, not as a row. */
   .block-disclose {
     border-block: var(--rule-w) solid var(--rule);
-    margin-block: var(--space-md);
+    margin-block: var(--space-xs);
     padding-inline: var(--space-md);
   }
   .block-disclose > summary {
@@ -583,7 +588,7 @@ if (!book && !loadError) {
     grid-template-columns: 7.2em 1fr;
     gap: var(--space-xs);
     align-items: baseline;
-    line-height: 1.5;
+    line-height: 1.35;
   }
   .conn-type {
     color: var(--accent);
