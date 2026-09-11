@@ -71,7 +71,7 @@ export default function AddBookForm({ serverError }: Props) {
         placeholder="Frank Herbert"
         error={errors.author}
         icon={<User className="size-4" />}
-        hint={<p className="text-muted-fg mt-0.5 text-[0.78rem]">Optional.</p>}
+        hint={<p className="text-muted-fg text-[0.78rem]">Optional.</p>}
       />
 
       <ServerError message={serverError} />

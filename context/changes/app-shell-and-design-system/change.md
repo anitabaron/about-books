@@ -7,6 +7,10 @@ updated: 2026-09-10
 archived_at: null
 ---
 
+> **Open items live in `todo.md` beside this file.** This change stays
+> `implementing` until § 1 of that list is ticked; it is not archivable before
+> then.
+
 ## Notes
 
 **Not a roadmap slice.** The roadmap tracks PRD requirements; this change ships no new

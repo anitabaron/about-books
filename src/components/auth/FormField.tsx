@@ -62,15 +62,17 @@ export function FormField({
             aria-describedby={error ? `${id}-error` : undefined}
             className={cn(error && "border-b-signal")}
           />
+          {/* In the grid's second column, so it lines up under the field it is
+              about rather than under the label. */}
+          {error ? (
+            <p id={`${id}-error`} className="field-aside text-signal flex items-center gap-1 text-[0.78rem]">
+              <CircleAlert className="size-3 shrink-0" />
+              {error}
+            </p>
+          ) : (
+            hint && <div className="field-aside">{hint}</div>
+          )}
         </div>
-        {error ? (
-          <p id={`${id}-error`} className="text-signal mt-0.5 flex items-center gap-1 text-[0.78rem]">
-            <CircleAlert className="size-3 shrink-0" />
-            {error}
-          </p>
-        ) : (
-          hint
-        )}
       </div>
     );
   }
