@@ -85,7 +85,7 @@ export const POST: APIRoute = async (context) => {
   // exactly-one-source check.
   const typeColumns = await resolveTypeColumns(supabase, type, anchor.book_id);
   if (typeColumns === null) {
-    return backToBook("That type is not in this book");
+    return backToBook("That relationship type does not exist");
   }
 
   const { data: updated, error } = await supabase

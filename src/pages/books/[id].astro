@@ -6,7 +6,6 @@ import { Check, Pencil, Trash2 } from "lucide-react";
 import AddCharacterForm from "@/components/characters/AddCharacterForm";
 import { createClient } from "@/lib/supabase";
 import type { Book, Character, Relationship, RelationshipTypeRow } from "@/types";
-import { RELATIONSHIP_TYPES } from "@/types";
 import { buildConnections } from "@/lib/connections";
 import { defaultFocus, layoutCircle, layoutEgo, toLinks } from "@/lib/diagram";
 
@@ -79,6 +78,26 @@ const castView: CastView = CAST_VIEWS.find((v) => v === requestedView) ?? "list"
 
 const dateFormatter = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium" });
 
+// The shared types, read rather than hardcoded. They used to be an array in src/types.ts,
+// which is exactly what this change removed: adding a sixth or renaming one is a migration
+// now, and this page follows without being edited. Ordered by the column that exists to say
+// what the reader sees first.
+let sharedTypes: string[] = [];
+
+if (supabase) {
+  const { data, error: presetsError } = await supabase
+    .from("relationship_type_presets")
+    .select("slug")
+    .order("sort_order")
+    .overrideTypes<{ slug: string }[], { merge: false }>();
+
+  if (presetsError) {
+    loadError ??= presetsError.message;
+  } else {
+    sharedTypes = data.map((p) => p.slug);
+  }
+}
+
 // The types this reader coined for THIS book. Loaded once and passed to buildConnections,
 // which resolves each connection's label from whichever source it carries. A second query
 // plus a Map, mirroring how character names are resolved — no embedded select, so the
@@ -120,9 +139,10 @@ if (supabase && characters.length > 0) {
   if (relError) {
     loadError ??= relError.message;
   } else {
-    // Undirected indexing and the two-source label resolution both live in
-    // src/lib/connections.ts, where they are covered by unit tests. Nothing about them can
-    // be checked from here: page frontmatter is unreachable by any command.
+    // Anchoring each connection to the character it was created from, and the two-source
+    // label resolution, both live in src/lib/connections.ts, where they are covered by unit
+    // tests. Nothing about them can be checked from here: page frontmatter is unreachable by
+    // any command.
     connectionsByCharacter = buildConnections(characters, rels, customTypes);
   }
 }
@@ -462,7 +482,7 @@ if (!book && !loadError) {
                               name="type"
                             >
                               <optgroup label="Shared">
-                                {RELATIONSHIP_TYPES.map((relationshipType) => (
+                                {sharedTypes.map((relationshipType) => (
                                   <option value={relationshipType}>{relationshipType}</option>
                                 ))}
                               </optgroup>
@@ -568,7 +588,7 @@ if (!book && !loadError) {
                                   aria-label={`Relationship type with ${connection.otherName}`}
                                 >
                                   <optgroup label="Shared">
-                                    {RELATIONSHIP_TYPES.map((relationshipType) => (
+                                    {sharedTypes.map((relationshipType) => (
                                       <option
                                         value={relationshipType}
                                         selected={relationshipType === connection.typeValue}
@@ -676,7 +696,7 @@ if (!book && !loadError) {
                 sentences here used to say, the rows below show. */}
               <p class="vocab-note">
                 <span class="label">Predefined</span>
-                {RELATIONSHIP_TYPES.join(" · ")}
+                {sharedTypes.join(" · ")}
               </p>
 
               {customTypes.length > 0 && (

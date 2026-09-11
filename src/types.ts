@@ -113,28 +113,27 @@ export type CreateCharacterCommand = z.infer<typeof createCharacterSchema>;
 export type UpdateCharacterCommand = z.infer<typeof updateCharacterSchema>;
 
 /**
- * The five relationship names from FR-004. Single source of truth: the Zod schema and the
- * form's select both read this, so they cannot drift, and the migration's check constraint
- * carries the same list.
- */
-export const RELATIONSHIP_TYPES = ["family", "ally", "antagonist", "romantic", "other"] as const;
-
-export type RelationshipType = (typeof RELATIONSHIP_TYPES)[number];
-
-/**
  * A row of `public.relationships`.
  * Mirrors `supabase/migrations/20260910103932_create_relationships_with_rls.sql`.
  *
- * Undirected: the row is rendered beneath both characters, and which id sits in
- * `character_a_id` depends only on whose row it was created from. Never assume the anchor.
+ * One-way: the row belongs to the character in `character_a_id` -- the one whose card it was
+ * created from -- and renders only there. `character_b_id` is who it points at. Recording the
+ * reverse is a second row, and the reader's choice to make.
  */
 export interface Relationship {
   id: string;
   user_id: string;
   character_a_id: string;
   character_b_id: string;
-  /** One of the five shared types, or `null` when `custom_type_id` is set. Exactly one of the two. */
-  type: RelationshipType | null;
+  /**
+   * A shared type's slug -- a row of `public.relationship_type_presets`, enforced by a foreign
+   * key -- or `null` when `custom_type_id` is set. Exactly one of the two.
+   *
+   * Plain `string`, not a union of the five: the names are data now, so the set is not known at
+   * compile time. A wrong value is refused by the foreign key, which is the same guarantee the
+   * union used to give, moved to where the names actually live.
+   */
+  type: string | null;
   /** A reader-defined type's id, or `null` when `type` is set. Never the type's NAME. */
   custom_type_id: string | null;
   created_at: string;
@@ -145,8 +144,9 @@ export interface Relationship {
  * A row of `public.relationship_types` -- a name this reader coined for ONE of their books.
  * Mirrors `supabase/migrations/20260910140215_create_relationship_types_with_rls.sql`.
  *
- * The five shared types are NOT rows here; they live in `RELATIONSHIP_TYPES` above and are
- * immutable. This table holds only what the reader added alongside them.
+ * The shared types are NOT rows here -- they live in `public.relationship_type_presets` and
+ * are immutable from the application. This table holds only what the reader added alongside
+ * them, and `relationship_types_not_shared` stops a name here shadowing one of those.
  */
 export interface RelationshipTypeRow {
   id: string;
@@ -161,12 +161,10 @@ const relationshipTypeNameField = z
   .string()
   .trim()
   .min(1, "Give the type a name")
-  .max(40, "Keep the name under 40 characters")
-  // The database rejects these too (relationship_types_not_shared); catching it here is what
-  // turns a constraint violation into a sentence the reader can act on.
-  .refine((name) => !RELATIONSHIP_TYPES.includes(name.toLowerCase() as RelationshipType), {
-    message: "That is already one of the shared types",
-  });
+  .max(40, "Keep the name under 40 characters");
+// No "that is already a shared type" rule here any more: the shared names are rows, and a
+// schema cannot read the database. The endpoints check the presets before writing and produce
+// that sentence themselves, exactly as they already translate SQLSTATE 23505 into one.
 
 export const createRelationshipTypeSchema = z.object({ name: relationshipTypeNameField });
 export const updateRelationshipTypeSchema = z.object({ name: relationshipTypeNameField });
@@ -175,27 +173,18 @@ export type CreateRelationshipTypeCommand = z.infer<typeof createRelationshipTyp
 export type UpdateRelationshipTypeCommand = z.infer<typeof updateRelationshipTypeSchema>;
 
 /**
- * The type `<select>` submits ONE field carrying two possible meanings: one of the five
- * shared literals, or the uuid of a reader-defined type. A value that is neither is refused
- * by validation rather than written to the wrong column.
+ * The type `<select>` submits ONE field carrying two possible meanings: a shared type's slug,
+ * or the uuid of a reader-defined type. The schema can only check that something was picked --
+ * whether the value names a real type is a question about rows, answered by
+ * `resolveTypeColumns` and, failing that, by the two foreign keys.
  *
- * A refine rather than `z.union([z.enum(...), z.uuid()])`: measured on Zod 4.5.4, a failing
- * union reports the LAST branch's issue and ignores the union-level `error`, so a reader who
- * submitted neither saw the internal "Invalid UUID". The refine yields one message that
- * means something to them.
+ * It used to test membership of a hardcoded list here. Once the shared types became rows, that
+ * test could only have been kept by copying the names back into the code, which is the
+ * duplication this change removed.
  */
-export const relationshipTypeChoice = z
-  .string()
-  .refine(
-    (choice) => (RELATIONSHIP_TYPES as readonly string[]).includes(choice) || z.uuid().safeParse(choice).success,
-    { message: "Pick a relationship type" },
-  );
+export const relationshipTypeChoice = z.string().min(1, "Pick a relationship type");
 
 export type RelationshipTypeChoice = z.infer<typeof relationshipTypeChoice>;
-
-/** Narrows a submitted choice to the shared-literal branch. */
-export const isSharedType = (choice: RelationshipTypeChoice): choice is RelationshipType =>
-  (RELATIONSHIP_TYPES as readonly string[]).includes(choice);
 
 /**
  * The add form lives under one character, so it submits only the OTHER end plus the type.
@@ -208,8 +197,9 @@ export const createRelationshipSchema = z.object({
 
 /**
  * Editing keeps the anchor character fixed and replaces the other end and/or the type.
- * `anchor_id` tells the route which column holds the anchor; it is validated but never
- * written, and the route re-reads the row rather than trusting it to decide the column.
+ * `anchor_id` names the character whose card the form sits on; it is validated but never
+ * written. The route re-reads the row to confirm that character really owns this connection --
+ * a posted anchor that does not is refused rather than allowed to rewrite someone else's.
  */
 export const updateRelationshipSchema = z.object({
   anchor_id: z.uuid(),

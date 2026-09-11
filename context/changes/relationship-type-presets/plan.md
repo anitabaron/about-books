@@ -344,37 +344,37 @@ written — and the fix is to rename that one row by hand and re-run.
 
 #### Automated
 
-- [x] 1.1 Migrations apply cleanly from scratch: `npx supabase db reset`
-- [x] 1.2 RLS and preset harness pass: `npm run db:verify-rls`
-- [x] 1.3 Mutation check: dropping the anon revoke makes the anon assertion fail
-- [x] 1.4 Unit tests pass unchanged: `npm test`
-- [x] 1.5 Lint passes: `npm run lint`
-- [x] 1.6 Type check passes: `npx astro check`
-- [x] 1.7 `npm run db:types` produces no uncommitted drift
+- [x] 1.1 Migrations apply cleanly from scratch: `npx supabase db reset` — 53f247d
+- [x] 1.2 RLS and preset harness pass: `npm run db:verify-rls` — 53f247d
+- [x] 1.3 Mutation check: dropping the anon revoke makes the anon assertion fail — 53f247d
+- [x] 1.4 Unit tests pass unchanged: `npm test` — 53f247d
+- [x] 1.5 Lint passes: `npm run lint` — 53f247d
+- [x] 1.6 Type check passes: `npx astro check` — 53f247d
+- [x] 1.7 `npm run db:types` produces no uncommitted drift — 53f247d
 
 #### Manual
 
-- [x] 1.8 Both dropdowns still list the same five shared names
-- [x] 1.9 Adding a connection with a shared type still saves
-- [x] 1.10 Adding a connection with a reader-defined type still saves
+- [x] 1.8 Both dropdowns still list the same five shared names — 53f247d
+- [x] 1.9 Adding a connection with a shared type still saves — 53f247d
+- [x] 1.10 Adding a connection with a reader-defined type still saves — 53f247d
 
 ### Phase 2: The code stops enumerating them, and `other` becomes `friend`
 
 #### Automated
 
-- [ ] 2.1 Migrations apply cleanly from scratch: `npx supabase db reset`
-- [ ] 2.2 RLS, preset and drift assertions pass: `npm run db:verify-rls`
-- [ ] 2.3 Mutation check: renaming a preset without the check list makes the drift assertion fail
-- [ ] 2.4 Unit tests pass, including the rewritten classifier tests: `npm test`
-- [ ] 2.5 `grep -rn "antagonist" src/` matches nothing outside generated types
-- [ ] 2.6 Lint passes: `npm run lint`
-- [ ] 2.7 Type check passes: `npx astro check`
+- [x] 2.1 Migrations apply cleanly from scratch: `npx supabase db reset`
+- [x] 2.2 RLS, preset and drift assertions pass: `npm run db:verify-rls`
+- [x] 2.3 Mutation check: renaming a preset without the check list makes the drift assertion fail
+- [x] 2.4 Unit tests pass, including the rewritten classifier tests: `npm test`
+- [x] 2.5 `grep -rn "antagonist" src/` matches nothing outside generated types
+- [x] 2.6 Lint passes: `npm run lint`
+- [x] 2.7 Type check passes: `npx astro check`
 
 #### Manual
 
-- [ ] 2.8 Both dropdowns list the five with `friend` in place of `other`
-- [ ] 2.9 The "Predefined" line reads the same five
-- [ ] 2.10 Adding and editing a connection works with both type sources
-- [ ] 2.11 Naming a reader-defined type `friend` is refused with the sentence
-- [ ] 2.12 Naming one `other` is now allowed
+- [x] 2.8 Both dropdowns list the five with `friend` in place of `other`
+- [x] 2.9 The "Predefined" line reads the same five
+- [x] 2.10 Adding and editing a connection works with both type sources
+- [x] 2.11 Naming a reader-defined type `friend` is refused with the sentence
+- [x] 2.12 Naming one `other` is now allowed
 - [ ] 2.13 Deployed to production and an existing book renders every connection it had

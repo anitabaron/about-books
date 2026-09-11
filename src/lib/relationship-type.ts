@@ -1,9 +1,9 @@
+import { z } from "zod";
 import type { createClient } from "@/lib/supabase";
-import { isSharedType, type RelationshipType } from "@/types";
 
 /**
- * The type `<select>` submits ONE field with two possible meanings: one of FR-004's five
- * shared literals, or the uuid of a reader-defined type. Turning that into database columns
+ * The type `<select>` submits ONE field with two possible meanings: a shared type's slug (a
+ * row of `relationship_type_presets`), or the uuid of a reader-defined type. Turning that into database columns
  * was duplicated in both write endpoints, which is how the two copies could drift apart on a
  * rule neither of them states out loud: the update path must write BOTH columns every time,
  * because writing one leaves the other set and trips `relationships_one_type`.
@@ -13,17 +13,28 @@ import { isSharedType, type RelationshipType } from "@/types";
  */
 
 /** Which of the two type sources a submitted value names. */
-export type TypeChoice = { kind: "shared"; type: RelationshipType } | { kind: "custom"; id: string };
+export type TypeChoice = { kind: "shared"; type: string } | { kind: "custom"; id: string };
 
 /** The pair of columns on `public.relationships`. Exactly one is ever set. */
 export interface TypeColumns {
-  type: RelationshipType | null;
+  type: string | null;
   custom_type_id: string | null;
 }
 
-/** Read the submitted value's shape. Pure, so the branch is checkable without a database. */
+/**
+ * Read the submitted value's SHAPE. Pure, so the branch is checkable without a database.
+ *
+ * A uuid means a reader-defined type; anything else is read as a shared type's slug. It used
+ * to be the other way round -- membership of a hardcoded list decided "shared", and everything
+ * else fell through to "custom" -- but the shared names are rows now, so the only thing this
+ * function can know on its own is which of the two shapes it is looking at.
+ *
+ * Classification deliberately accepts a slug that names no preset: whether the row exists is
+ * `resolveTypeColumns`'s question, and answering it here would need the database this function
+ * exists to stay free of.
+ */
 export function classifyTypeChoice(choice: string): TypeChoice {
-  return isSharedType(choice) ? { kind: "shared", type: choice } : { kind: "custom", id: choice };
+  return z.uuid().safeParse(choice).success ? { kind: "custom", id: choice } : { kind: "shared", type: choice };
 }
 
 /**
@@ -38,11 +49,39 @@ export function columnsFor(choice: TypeChoice): TypeColumns {
 }
 
 /**
- * Resolve a submitted choice to columns, confirming a custom type belongs to the same book as
- * the characters. RLS checks ownership, not the relation between rows, so this check is what
- * stops a hand-crafted post borrowing another book's vocabulary. Returns null when the id is
- * not a type of this book — which includes another reader's type, since RLS makes that
- * indistinguishable from a typo.
+ * Does this slug name one of the shared types? Compared against the rows, so a sixth preset
+ * needs no code change — and so the endpoints can turn "you picked a shared name" into a
+ * sentence instead of letting the database answer with a constraint violation.
+ *
+ * Callers doing a name comparison must normalise first: `relationship_types_not_shared`
+ * compares `lower(btrim(name))`, so anything else would refuse names the constraint accepts.
+ */
+export async function isPresetSlug(
+  supabase: NonNullable<ReturnType<typeof createClient>>,
+  slug: string,
+): Promise<boolean> {
+  const { data } = await supabase
+    .from("relationship_type_presets")
+    .select("slug")
+    .eq("slug", slug)
+    .maybeSingle<{ slug: string }>();
+
+  return data !== null;
+}
+
+/**
+ * Resolve a submitted choice to columns, confirming the type actually exists: a shared slug
+ * must name a preset row, and a custom id must belong to the same book as the characters. RLS
+ * checks ownership, not the relation between rows, so the second check is what stops a
+ * hand-crafted post borrowing another book's vocabulary.
+ *
+ * Returns null for both failures, and the caller says the same thing about each — deliberately.
+ * A reader cannot tell another reader's type from a typo, because RLS makes them
+ * indistinguishable, so a message that separated the cases would be inventing a distinction.
+ *
+ * The shared branch costs a query it did not used to. That is the price of the names being
+ * data; the foreign key would refuse a bad value anyway, but with a raw error rather than a
+ * sentence.
  */
 export async function resolveTypeColumns(
   supabase: NonNullable<ReturnType<typeof createClient>>,
@@ -50,7 +89,9 @@ export async function resolveTypeColumns(
   bookId: string,
 ): Promise<TypeColumns | null> {
   const classified = classifyTypeChoice(choice);
-  if (classified.kind === "shared") return columnsFor(classified);
+  if (classified.kind === "shared") {
+    return (await isPresetSlug(supabase, classified.type)) ? columnsFor(classified) : null;
+  }
 
   const { data: customType } = await supabase
     .from("relationship_types")

@@ -58,7 +58,7 @@ export const POST: APIRoute = async (context) => {
   // exactly one of the two to be set.
   const typeColumns = await resolveTypeColumns(supabase, parsed.data.type, anchor.book_id);
   if (typeColumns === null) {
-    return backToBook("That type is not in this book");
+    return backToBook("That relationship type does not exist");
   }
 
   // No user_id: the column defaults to auth.uid() and the insert policy rejects a forged one.

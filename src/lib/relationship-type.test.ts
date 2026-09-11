@@ -8,16 +8,24 @@ import { classifyTypeChoice, columnsFor, duplicateConnectionMessage } from "./re
  */
 
 describe("classifyTypeChoice", () => {
-  it("reads a shared literal as shared", () => {
-    expect(classifyTypeChoice("family")).toEqual({ kind: "shared", type: "family" });
-    expect(classifyTypeChoice("antagonist")).toEqual({ kind: "shared", type: "antagonist" });
-  });
-
-  it("reads anything else as a custom type's id", () => {
+  it("reads a uuid as a custom type's id", () => {
     expect(classifyTypeChoice("a7ad43ae-6e13-4e4d-9238-8eeed84ee160")).toEqual({
       kind: "custom",
       id: "a7ad43ae-6e13-4e4d-9238-8eeed84ee160",
     });
+  });
+
+  it("reads a slug as a shared type", () => {
+    expect(classifyTypeChoice("family")).toEqual({ kind: "shared", type: "family" });
+    expect(classifyTypeChoice("antagonist")).toEqual({ kind: "shared", type: "antagonist" });
+  });
+
+  it("reads a slug that names NO preset as shared, and leaves the refusal to resolution", () => {
+    // The test that fails if the old rule comes back. It classified by membership of a
+    // hardcoded list, so an unknown word fell through to "custom" and was then looked up as a
+    // uuid. Shape is the only thing this function can decide without a database.
+    expect(classifyTypeChoice("nemesis")).toEqual({ kind: "shared", type: "nemesis" });
+    expect(classifyTypeChoice("mieszka z")).toEqual({ kind: "shared", type: "mieszka z" });
   });
 
   it("does not treat a custom type NAMED like a shared one as shared", () => {

@@ -784,6 +784,7 @@ declare
   a_c2   uuid;
   n      int;
   denied boolean;
+  r      record;
 begin
   -- Its own book, not the shared fixture: the relationship_types block above deletes that
   -- one to assert the book-delete cascade, so reusing it would fail on a foreign key and
@@ -884,9 +885,50 @@ begin
     raise exception 'FAIL presets: a shared type in use by a connection was deleted';
   end if;
 
+  --------------------------------------------------------------- drift
+  -- The shared names now live in exactly two places: these rows, and the list written out
+  -- inside relationship_types_not_shared. A check constraint cannot subquery, so that
+  -- duplication is structural -- and this is what stops it becoming silent. Probe the
+  -- constraint through its own behaviour rather than by parsing its text: every preset slug
+  -- must be refused as a reader-defined name, and a name that is not a preset must be
+  -- accepted. Either half failing means the two copies have diverged.
+  perform set_config('role', 'postgres', true);
+  for r in select slug from public.relationship_type_presets loop
+    denied := false;
+    begin
+      insert into public.relationship_types (user_id, book_id, name) values (a_id, a_book, r.slug);
+    exception when check_violation then
+      denied := true;
+    end;
+    if not denied then
+      raise exception 'FAIL presets drift: "%" is a shared type but relationship_types_not_shared '
+        'let a reader coin it -- the check''s list and the preset rows disagree', r.slug;
+    end if;
+  end loop;
+
+  -- The other direction. Without it, a check listing every word in the dictionary would pass
+  -- the loop above while breaking the feature.
+  begin
+    insert into public.relationship_types (user_id, book_id, name) values (a_id, a_book, 'nemesis');
+  exception when check_violation then
+    raise exception 'FAIL presets drift: relationship_types_not_shared refused "nemesis", which '
+      'is not a shared type -- the check''s list carries more than the preset rows';
+  end;
+
+  -- And the rename itself: after 20260911170000 these two must have swapped places.
+  select count(*) into n from public.relationship_type_presets where slug = 'friend';
+  if n <> 1 then
+    raise exception 'FAIL presets: expected a shared type called "friend", found %', n;
+  end if;
+  select count(*) into n from public.relationship_type_presets where slug = 'other';
+  if n <> 0 then
+    raise exception 'FAIL presets: "other" is still a shared type after the rename';
+  end if;
+
   raise notice 'PASS relationship_type_presets: every signed-in reader reads all five; none '
     'can insert, rename or delete one; anon denied at the grant level; an unknown type is '
-    'refused by the foreign key and a type in use cannot be deleted';
+    'refused by the foreign key and a type in use cannot be deleted; the preset rows and '
+    'relationship_types_not_shared describe the same set, and it contains friend, not other';
 end $$;
 
 rollback;

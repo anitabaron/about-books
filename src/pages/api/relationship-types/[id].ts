@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
+import { isPresetSlug } from "@/lib/relationship-type";
 import { updateRelationshipTypeSchema } from "@/types";
 
 export const prerender = false;
@@ -44,6 +45,12 @@ export const POST: APIRoute = async (context) => {
   const parsed = updateRelationshipTypeSchema.safeParse({ name: form.get("name") });
   if (!parsed.success) {
     return backToBook(parsed.error.issues[0].message);
+  }
+
+  // Same check as the create path: the shared names are rows, so the schema cannot hold them
+  // and the sentence has to be produced here.
+  if (await isPresetSlug(supabase, parsed.data.name.trim().toLowerCase())) {
+    return backToBook("That is already one of the shared types");
   }
 
   // The whole point of the foreign key: the name lives in one row, so this single update

@@ -1,5 +1,6 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
+import { isPresetSlug } from "@/lib/relationship-type";
 import { createRelationshipTypeSchema } from "@/types";
 
 export const prerender = false;
@@ -39,6 +40,13 @@ export const POST: APIRoute = async (context) => {
     return context.redirect(`/books?error=${encodeURIComponent("Book not found")}`);
   }
 
+  // The shared names are rows now, so the schema cannot know them and this check has to
+  // happen here. Normalised the way `relationship_types_not_shared` normalises, or we would
+  // refuse names the constraint would have accepted.
+  if (await isPresetSlug(supabase, parsed.data.name.trim().toLowerCase())) {
+    return backToBook("That is already one of the shared types");
+  }
+
   // No user_id: the column defaults to auth.uid() and the insert policy rejects a forged one.
   const { error } = await supabase.from("relationship_types").insert({ book_id: bookId, name: parsed.data.name });
 
@@ -48,8 +56,9 @@ export const POST: APIRoute = async (context) => {
     if (error.code === "23505") {
       return backToBook(`You already have a type called "${parsed.data.name}" in this book`);
     }
-    // Zod rejects the five shared names before we get here, so a check violation means the
-    // name failed the length bound the schema also enforces.
+    // The preset check above and the schema's length bound both run first, so a check
+    // violation here means the constraint and those two disagree -- worth a message the
+    // reader can report rather than a raw error.
     if (error.code === "23514") {
       return backToBook("That name cannot be used for a relationship type");
     }
