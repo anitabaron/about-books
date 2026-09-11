@@ -7,9 +7,19 @@ updated: 2026-09-10
 archived_at: null
 ---
 
-> **Open items live in `todo.md` beside this file.** This change stays
-> `implementing` until § 1 of that list is ticked; it is not archivable before
-> then.
+> **Archived shipped, not verified.** Closed on 2026-09-11 at the reader's
+> decision, with plan criteria **6.15 / 7.8** (the 320 / 414 / 768 px sweep),
+> **7.10** (contrast measured rather than computed) and **7.12** (keyboard
+> traversal) never run. They were not skipped for haste: `resize_window` reports
+> success in this environment without changing the viewport, so everything
+> narrow was measured by forcing the mobile branch in the DOM — honest heights,
+> but no exercise of width- or pointer-based media queries.
+>
+> `todo.md` travels with this folder and still holds the full list, including two
+> judgement calls left to a real device (whether 26px fields and 32px buttons are
+> comfortable under a thumb, and whether iOS zoom-on-focus is the worse of the
+> two costs) and one known cosmetic defect (§ 2b). Archived folders are read-only
+> by convention, so anything acted on from that list belongs in a new change.
 
 ## Notes
 
@@ -32,7 +42,7 @@ background, pure-grey neutrals. It is not a neutral palette; it is an absent one
 **The direction, from the brief.** A reading companion, phone-first, dense and legible,
 light but not glaring, neutral with restrained colour. Two named references: Claude Desktop's
 sidebar (warm off-white, grouped and labelled, quiet) and macOS Finder (hairline-divided rows,
-much information in little space). Both are *application* surfaces, not marketing pages —
+much information in little space). Both are _application_ surfaces, not marketing pages —
 that is the register to hit.
 
 **Decisions taken with the user before planning (2026-09-10):**
@@ -60,7 +70,7 @@ that is the register to hit.
 five specs (`carnival`, `cobalt`, `grid`, `hum`, `lumen`) of the twenty-one named themes, and
 the file carrying the other sixteen palettes (`site/css/tokens.css`) does not exist in this
 installation. For sixteen of twenty-one there is a name and three axis labels, nothing more.
-Separately, the brief's genre (dense application UI) routes to *modern-minimal*, whose
+Separately, the brief's genre (dense application UI) routes to _modern-minimal_, whose
 rotation cluster is exactly two themes — Coral and Cobalt — and Cobalt is a Space-Grotesk +
 mono dev-tool register. The choice was not between rich options.
 
@@ -73,9 +83,9 @@ mono dev-tool register. The choice was not between rich options.
   themselves and the map is dead requirement. The rest of S-05 (custom types, the two-column
   shape, `on delete restrict`) is untouched. **S-05 planning should not inherit it.**
 - **Update 2026-09-10 — the S-04 blocker is cleared, and S-05 went with it.** Both slices landed
-and were archived while this plan was being written; main moved 25 commits and +1505 lines.
-The branch is rebased onto `cd6eb2c` and the plan re-verified against it. Two findings worth
-carrying:
+  and were archived while this plan was being written; main moved 25 commits and +1505 lines.
+  The branch is rebased onto `cd6eb2c` and the plan re-verified against it. Two findings worth
+  carrying:
 
 - **S-05 did not ship the Polish display map**, exactly as predicted below — and it went
   further: `src/types.ts` and every page are already English. Only `src/lib/config-status.ts`
@@ -88,11 +98,11 @@ carrying:
 
 **(Superseded, kept for the record.) S-04 is mid-flight and owns two of the four files this
 change rewrites.**
-  `book-status-and-recall` is `status: implementing`; `src/pages/books/[id].astro` already
-  carries `finished_at`, the finish/reopen form and a date line, and `/books` is expected to
-  grow the active/finished filter. **This change must not start until S-04 is committed** —
-  otherwise both rewrite the same templates and one of them loses. Phase 3 additionally
-  *depends* on S-04's filter existing, because the library screen groups by status.
+`book-status-and-recall` is `status: implementing`; `src/pages/books/[id].astro` already
+carries `finished_at`, the finish/reopen form and a date line, and `/books` is expected to
+grow the active/finished filter. **This change must not start until S-04 is committed** —
+otherwise both rewrite the same templates and one of them loses. Phase 3 additionally
+_depends_ on S-04's filter existing, because the library screen groups by status.
 
 **Inherited and settled, unchanged here:**
 
@@ -106,7 +116,7 @@ change rewrites.**
   must still work after.
 - No database change, no migration, no RLS work, no `db:types`. `npm run db:verify-rls` should
   pass untouched — if it does not, something outside this change's scope broke.
-- Test data in the local stack: book *Dune*, characters Paul Atreides / Chani / Duncan Idaho,
+- Test data in the local stack: book _Dune_, characters Paul Atreides / Chani / Duncan Idaho,
   one relationship (Chani ↔ Duncan, family). Readers `ra@t.test` / `rb@t.test`, password
   `probe-123456`.
 
