@@ -252,14 +252,15 @@ if (!book && !loadError) {
                         value={character.name}
                       />
                     </div>
-                    <div class="field">
+                    <div class="field field-note">
                       <label for={`desc-${character.id}`}>Note</label>
-                      <input
+                      <textarea
                         id={`desc-${character.id}`}
                         form={`edit-character-${character.id}`}
                         name="description"
-                        value={character.description ?? ""}
+                        rows="3"
                         placeholder="Add a note as you read"
+                        set:text={character.description ?? ""}
                       />
                     </div>
 
@@ -432,8 +433,7 @@ if (!book && !loadError) {
                                 >
                                   <p>
                                     Remove the <strong>{connection.typeLabel}</strong> connection with{" "}
-                                    <strong>{connection.otherName}</strong>? Both characters stay; only the connection
-                                    goes.
+                                    <strong>{connection.otherName}</strong>?
                                   </p>
                                   <Button type="submit" variant="destructive" size="sm">
                                     Yes, remove it
@@ -695,6 +695,73 @@ if (!book && !loadError) {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
   }
+  /* A note is prose: it wraps, and a reader editing one wants to see it. A single-line
+     input showed a sliver of a sentence and scrolled sideways, which made correcting a
+     typo halfway through a description a guessing game.
+
+     Deliberate deviation from the mockup, which uses an <input> here -- its demo note is
+     four words long. Real notes are sentences.
+
+     Same treatment as the system's inputs (serif, transparent, rule underneath), with two
+     differences a multi-line field needs: the label aligns to the top of the box rather
+     than its middle, and the line-height matches the rendered note in Row.astro so editing
+     looks like reading. */
+  .field-note {
+    align-items: start;
+  }
+  .field-note > label {
+    margin-block-start: 5px;
+  }
+  .field-note textarea {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-family: var(--font-serif);
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--ink);
+    background-color: transparent;
+    border: 0;
+    border-block-end: var(--rule-w) solid var(--rule-strong);
+    border-radius: 0;
+    padding-inline: 2px;
+    padding-block: 2px 5px;
+    min-height: 4.4em;
+    resize: vertical;
+    overflow-wrap: anywhere;
+  }
+  .field-note textarea::placeholder {
+    color: var(--muted-fg);
+  }
+  .field-note textarea:focus-visible {
+    border-block-end-color: var(--focus);
+    outline: none;
+  }
+
+  /* The confirmation must not compete for width with the controls beside it.
+     .rel-controls is a nowrap flex row whose selects are `flex: 1 1 0` with
+     `min-width: 0`, and everything else is `flex: none` -- so an opened panel
+     took its natural width and shrank the selects to nothing, leaving the two
+     chevron stubs and a stray dash that made the row look destroyed. Wrapping,
+     plus a full-width basis once open, drops the whole disclosure onto its own
+     line and leaves the row intact. .edit-actions already wraps, which is why
+     the character-delete confirmation was never affected. */
+  .rel-controls {
+    flex-wrap: wrap;
+  }
+  /* `display: contents` while open dissolves the <details> box, so the summary (the bin)
+     stays where it was in the row and only the panel becomes a flex item -- which then
+     takes a full-width basis and wraps onto its own line. Giving the whole <details>
+     `flex-basis: 100%` moved the bin down with it, which is movement for nothing: the
+     reader pressed it where it was and expects it to stay there. Closed, the element is
+     untouched, so the browser still hides the panel itself. */
+  .rel-controls .confirm[open] {
+    display: contents;
+  }
+  .rel-controls .confirm[open] > .confirm-body {
+    flex-basis: 100%;
+  }
+
   .conns li {
     display: grid;
     grid-template-columns: subgrid;
