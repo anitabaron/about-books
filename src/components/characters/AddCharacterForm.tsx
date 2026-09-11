@@ -79,14 +79,17 @@ export default function AddCharacterForm({ bookId, serverError }: Props) {
         placeholder="Who they are, how you met them"
         error={errors.description}
         icon={<PenLine className="size-4" />}
-        hint={<p className="text-muted-fg text-[0.78rem]">Optional. Fill this in as you read.</p>}
       />
 
       <ServerError message={serverError} />
 
-      <SubmitButton size="default" full={false} pendingText="Adding..." icon={<UserPlus className="size-4" />}>
-        Add character
-      </SubmitButton>
+      {/* A little air above the submit: it is the one control that commits, and
+          sitting flush against the last field it read as a fourth row of the form. */}
+      <div className="mt-2 flex justify-end">
+        <SubmitButton size="default" full={false} pendingText="Adding..." icon={<UserPlus className="size-4" />}>
+          Add character
+        </SubmitButton>
+      </div>
     </form>
   );
 }
