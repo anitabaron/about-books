@@ -79,11 +79,7 @@ export default function AddCharacterForm({ bookId, serverError }: Props) {
         placeholder="Who they are, how you met them"
         error={errors.description}
         icon={<PenLine className="size-4" />}
-        hint={
-          <p className="text-muted-fg mt-0.5 text-[0.78rem]">
-            Optional — a name alone is enough. Fill this in as you read.
-          </p>
-        }
+        hint={<p className="text-muted-fg mt-0.5 text-[0.78rem]">Optional. Fill this in as you read.</p>}
       />
 
       <ServerError message={serverError} />
