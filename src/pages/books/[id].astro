@@ -9,7 +9,7 @@ import type { Book, Character, Relationship, RelationshipTypeRow } from "@/types
 import { RELATIONSHIP_TYPES } from "@/types";
 import { buildConnections } from "@/lib/connections";
 
-type BookRow = Pick<Book, "id" | "title" | "author" | "finished_at">;
+type BookRow = Pick<Book, "id" | "title" | "author" | "created_at" | "finished_at">;
 type CharacterRow = Pick<Character, "id" | "name" | "description" | "created_at">;
 type RelationshipRow = Pick<Relationship, "id" | "character_a_id" | "character_b_id" | "type" | "custom_type_id">;
 type RelationshipTypeOption = Pick<RelationshipTypeRow, "id" | "name">;
@@ -44,7 +44,7 @@ if (!supabase) {
   // the behaviour we want — a 404 leaks nothing about what other readers have.
   const { data: found } = await supabase
     .from("books")
-    .select("id, title, author, finished_at")
+    .select("id, title, author, created_at, finished_at")
     .eq("id", bookId)
     .maybeSingle<BookRow>();
   book = found;
@@ -166,9 +166,16 @@ if (!book && !loadError) {
             </form>
           </div>
           <h1 class="page-title">{book.title}</h1>
+          {/* Author left, dates right, on one line: the two answer different
+              questions — which book this is, and how long it has been sitting
+              here — so putting them at opposite ends lets each be found without
+              reading the other. */}
           <div class="bookmeta">
             <span class="label">{book.author ?? "Author unknown"}</span>
-            {book.finished_at && <span class="label">Finished {dateFormatter.format(new Date(book.finished_at))}</span>}
+            <span class="label bookdates">
+              {book.finished_at && <>Finished {dateFormatter.format(new Date(book.finished_at))} · </>}
+              {dateFormatter.format(new Date(book.created_at))}
+            </span>
           </div>
         </header>
 
@@ -628,9 +635,16 @@ if (!book && !loadError) {
   .bookmeta {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: var(--space-xs) var(--space-sm);
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 2px var(--space-sm);
     margin-block-start: var(--space-2xs);
+  }
+  /* margin-inline-start: auto rather than relying on justify-content, so the
+     date still sits hard right if the author wraps to its own line. */
+  .bookdates {
+    margin-inline-start: auto;
+    text-align: end;
   }
 
   /* A page-level disclosure reads as a band across the page, not as a row. */
