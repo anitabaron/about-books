@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
  * is 44px and the type is 16px, because the reader is mid-chapter and the 16px
  * floor is what stops iOS zooming the viewport on focus. */
 const inputBase =
-  "w-full min-h-11 rounded-none border-0 border-b bg-transparent py-2 pr-2 pl-7 font-[family-name:var(--font-serif)] text-base text-ink transition-colors outline-none placeholder:text-muted-fg";
+  "w-full min-h-10 rounded-none border-0 border-b bg-transparent py-1.5 pr-2 pl-7 font-[family-name:var(--font-serif)] text-base text-ink transition-colors outline-none placeholder:text-muted-fg";
 
 interface FormFieldProps {
   /** Inspector density: label in a narrow left column instead of above the

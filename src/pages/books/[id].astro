@@ -2,7 +2,7 @@
 import AppLayout from "@/layouts/AppLayout.astro";
 import Row from "@/components/ui/Row.astro";
 import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import AddCharacterForm from "@/components/characters/AddCharacterForm";
 import { createClient } from "@/lib/supabase";
 import type { Book, Character, Relationship, RelationshipTypeRow } from "@/types";
@@ -219,79 +219,67 @@ if (!book && !loadError) {
               <details class="disclose">
                 <summary>Edit</summary>
                 <div class="disclose-body">
-                  <form
-                    method="POST"
-                    action={`/api/characters/${character.id}`}
-                    id={`edit-character-${character.id}`}
-                    class="stack"
-                  >
+                  {/* Both forms are empty shells: every control lives in the stack below and
+                      reaches its form with `form=`. That is what lets Name, Note and Link read
+                      as one block of fields with a single Save/Delete row underneath, even
+                      though three different endpoints are involved. A <form> cannot nest
+                      inside another, so this is the only way to interleave them. */}
+                  <form method="POST" action={`/api/characters/${character.id}`} id={`edit-character-${character.id}`}>
                     <input type="hidden" name="book_id" value={book.id} />
+                  </form>
+                  {others.length > 0 && (
+                    <form
+                      method="POST"
+                      action={`/api/characters/${character.id}/relationships`}
+                      id={`character-${character.id}-relationships`}
+                    />
+                  )}
+
+                  <div class="stack">
                     <div class="field">
                       <label for={`name-${character.id}`}>Name</label>
-                      <input id={`name-${character.id}`} name="name" value={character.name} />
+                      <input
+                        id={`name-${character.id}`}
+                        form={`edit-character-${character.id}`}
+                        name="name"
+                        value={character.name}
+                      />
                     </div>
                     <div class="field">
                       <label for={`desc-${character.id}`}>Note</label>
                       <input
                         id={`desc-${character.id}`}
+                        form={`edit-character-${character.id}`}
                         name="description"
                         value={character.description ?? ""}
                         placeholder="Add a note as you read"
                       />
                     </div>
-                  </form>
 
-                  {/* Save and delete share one line, and delete is an icon: editing is
-                      constant, deleting is rare, and a full-width red button gave the rare
-                      action more weight than the frequent one.
+                    {connectionsErrorFor === character.id && formError && <p class="error-text">{formError}</p>}
 
-                      Save sits OUTSIDE its form and reaches it with `form=` — a <form>
-                      cannot nest inside another <form>, and the delete needs its own.
-
-                      The confirmation stays a nested <details>: the destructive control only
-                      exists once the reader has opened it, so a mis-tap costs a click, not a
-                      character. A JS confirm() would not survive scripting being off. */}
-                  <div class="edit-actions">
-                    <Button type="submit" form={`edit-character-${character.id}`} size="sm">
-                      Save
-                    </Button>
-                    <details class="confirm icon">
-                      <summary aria-label={`Delete ${character.name}`}>
-                        <Trash2 className="size-3.5" aria-hidden="true" />
-                      </summary>
-                      <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
-                        <p>
-                          Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot be
-                          undone.
-                        </p>
-                        <Button type="submit" variant="destructive" size="sm">
-                          Yes, delete permanently
-                        </Button>
-                      </form>
-                    </details>
-                  </div>
-
-                  {others.length > 0 ? (
-                    <form
-                      method="POST"
-                      action={`/api/characters/${character.id}/relationships`}
-                      id={`character-${character.id}-relationships`}
-                      class="sub"
-                    >
-                      {connectionsErrorFor === character.id && formError && <p class="error-text">{formError}</p>}
-                      {/* One row, as the mockup has it: label, then both selects and the button
-                          inline in .rel-controls. Two stacked .rel rows with a "Add a relationship"
-                          heading above them read as a second section rather than as one control,
-                          which made adding and editing indistinguishable.
-
-                          Type before person: a reader knows WHAT the relationship is before they
-                          pick who it is with. One field, two meanings -- a shared literal or a
-                          custom type's id; <optgroup> is native, so the merged list costs no
-                          JavaScript and the endpoint decides the column by shape. */}
+                    {others.length > 0 ? (
                       <div class="rel">
-                        <label for={`newrel-type-${character.id}`}>Link</label>
+                        <label for={`newrel-who-${character.id}`}>Link</label>
                         <div class="rel-controls">
-                          <select id={`newrel-type-${character.id}`} name="type">
+                          {/* Person before type: the reader picks who this is about, then what
+                              it is. One field, two meanings -- a shared literal or a custom
+                              type's id; <optgroup> is native, so the merged list costs no
+                              JavaScript and the endpoint decides the column by shape. */}
+                          <select
+                            id={`newrel-who-${character.id}`}
+                            form={`character-${character.id}-relationships`}
+                            name="other_character_id"
+                          >
+                            {others.map((other) => (
+                              <option value={other.id}>{other.name}</option>
+                            ))}
+                          </select>
+                          <select
+                            form={`character-${character.id}-relationships`}
+                            name="type"
+                            aria-label={`Relationship type for ${character.name}`}
+                          >
                             <optgroup label="Shared">
                               {RELATIONSHIP_TYPES.map((relationshipType) => (
                                 <option value={relationshipType}>{relationshipType}</option>
@@ -305,25 +293,42 @@ if (!book && !loadError) {
                               </optgroup>
                             )}
                           </select>
-                          <select name="other_character_id" aria-label={`Character to link with ${character.name}`}>
-                            {others.map((other) => (
-                              <option value={other.id}>{other.name}</option>
-                            ))}
-                          </select>
-                          <Button type="submit" variant="outline" size="sm">
+                          <Button
+                            type="submit"
+                            form={`character-${character.id}-relationships`}
+                            variant="outline"
+                            size="sm"
+                          >
                             Add
                           </Button>
                         </div>
                       </div>
-                      {/* A quiet link, not the red label device: as `.label` it carried the same
-                          weight as a section heading and competed with the controls above it. */}
-                      <a href="#relationship-types-add" class="hint">
-                        Need another word?
-                      </a>
-                    </form>
-                  ) : (
-                    <p class="sub note-small">Add another character to this book before creating a relationship.</p>
-                  )}
+                    ) : (
+                      <p class="note-small">Add another character to this book before creating a relationship.</p>
+                    )}
+                  </div>
+
+                  {/* Save left, Delete right, on the last line. The confirmation stays a nested
+                      <details>: the destructive control only exists once the reader has opened
+                      it, so a mis-tap costs a click, not a character. A JS confirm() would not
+                      survive scripting being off. */}
+                  <div class="edit-actions">
+                    <Button type="submit" form={`edit-character-${character.id}`} size="sm">
+                      Save
+                    </Button>
+                    <details class="confirm">
+                      <summary>Delete</summary>
+                      <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
+                        <p>
+                          Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot be
+                          undone.
+                        </p>
+                        <Button type="submit" variant="destructive" size="sm">
+                          Yes, delete permanently
+                        </Button>
+                      </form>
+                    </details>
+                  </div>
 
                   {/* Managing connections lives inside the disclosure on purpose: the always-visible list
                       above stays a clean scan, and edit/delete controls do not compete with it. */}
@@ -393,8 +398,18 @@ if (!book && !loadError) {
                                   </option>
                                 ))}
                               </select>
-                              <Button type="submit" form={`edit-rel-${character.id}-${connection.id}`} size="sm">
-                                Save
+                              {/* A glyph, not the black Save from the block above. Correcting an
+                                    existing connection is a smaller act than saving the character,
+                                    and two solid buttons in one disclosure read as two equally
+                                    important commits. Paired with the bin beside it, both quiet. */}
+                              <Button
+                                type="submit"
+                                form={`edit-rel-${character.id}-${connection.id}`}
+                                variant="ghost"
+                                size="sm"
+                                aria-label={`Save the connection with ${connection.otherName}`}
+                              >
+                                <Check className="size-3.5" aria-hidden="true" />
                               </Button>
                               <details class="confirm icon">
                                 <summary
@@ -684,10 +699,10 @@ if (!book && !loadError) {
 
   .sub {
     border-block-start: var(--rule-w) solid var(--rule);
-    padding-block-start: var(--space-xs);
+    padding-block-start: 4px;
     display: flex;
     flex-direction: column;
-    gap: 7px;
+    gap: 2px;
   }
   .sub-label {
     margin: 0;
@@ -697,39 +712,29 @@ if (!book && !loadError) {
     font-size: 0.9rem;
     color: var(--muted-fg);
   }
-  .hint {
-    font-family: var(--font-label);
-    font-size: var(--text-label);
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--accent);
-    text-decoration: none;
-    justify-self: start;
-  }
-  .hint:hover {
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
 
+  /* One control row per connection, so the padding was doing all the work and
+     the gap none. 3px is enough to keep the rule off the selects. */
   .conn-edit {
     border-block-start: var(--rule-w) solid var(--rule);
-    padding-block: var(--space-xs);
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
+    padding-block: 3px;
   }
 
   /* Nested confirmation. Deleting is rare and saving is constant, so the
      opener is quiet text — not the outlined red box it used to be, which gave
      the rare action more weight than the frequent one. The destructive control
      still only exists once the disclosure is open. */
+  /* Matches the Save button beside it — a taller opener made the actions row
+     as tall as the tallest thing in it, which was the rarely-used one. */
   .confirm > summary {
     list-style: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 30px;
-    color: var(--muted-fg);
+    min-height: 28px;
+    /* Brand red, like the bin glyph variant: every destructive opener reads the
+       same, and the word carries the meaning so nothing rests on hue alone. */
+    color: var(--accent);
     cursor: pointer;
     font-family: var(--font-label);
     font-size: var(--text-label);
@@ -738,7 +743,8 @@ if (!book && !loadError) {
     letter-spacing: 0.1em;
   }
   .confirm > summary:hover {
-    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
   /* Icon-only opener, on the same line as Save. Square, a full touch target
      under a thumb even though the glyph is 14px, and in the brand red — small
@@ -751,10 +757,10 @@ if (!book && !loadError) {
   }
   @media (pointer: coarse) {
     .confirm > summary {
-      min-height: 44px;
+      min-height: 32px;
     }
     .confirm.icon > summary {
-      min-width: 44px;
+      min-width: 32px;
     }
   }
   .confirm > summary::-webkit-details-marker {
