@@ -146,22 +146,29 @@ if (!book && !loadError) {
   {
     book && (
       <>
+        {/* The status control rides the breadcrumb line rather than sitting under
+            the title as an outlined button. It is used once or twice in a book's
+            whole life, and at button weight it drew more attention than the cast
+            it sits above. A <div>, not the <p> this used to be: a <form> is flow
+            content and cannot live inside a paragraph. */}
         <header class="pad">
-          <p class="crumb label">
-            <a href="/books">Books</a> <span aria-hidden="true">/</span> <span>{book.title}</span>
-          </p>
-          <h1 class="page-title">{book.title}</h1>
-          <div class="bookmeta">
-            <span class="label">{book.author ?? "Author unknown"}</span>
-            {book.finished_at && <span class="label">Finished {dateFormatter.format(new Date(book.finished_at))}</span>}
+          <div class="crumb label">
+            <span class="trail">
+              <a href="/books">Books</a> <span aria-hidden="true">/</span> <span>{book.title}</span>
+            </span>
             {/* The form submits the state it WANTS, not "flip whatever it is now" -- submitting
                 twice is therefore idempotent, which a double tap on a slow connection needs. */}
             <form method="POST" action={`/api/books/${book.id}/finish`}>
               <input type="hidden" name="finished" value={book.finished_at ? "false" : "true"} />
-              <Button type="submit" variant="outline" size="sm">
+              <button type="submit" class="finish">
                 {book.finished_at ? "Reopen" : "Mark finished"}
-              </Button>
+              </button>
             </form>
+          </div>
+          <h1 class="page-title">{book.title}</h1>
+          <div class="bookmeta">
+            <span class="label">{book.author ?? "Author unknown"}</span>
+            {book.finished_at && <span class="label">Finished {dateFormatter.format(new Date(book.finished_at))}</span>}
           </div>
         </header>
 
@@ -498,6 +505,10 @@ if (!book && !loadError) {
   .page-title {
     font-size: var(--text-lg);
     line-height: 1.15;
+    /* Separation from the breadcrumb above it, not a page-top offset — which
+       is why /books does not get this: its title has nothing above it but the
+       top bar. */
+    margin-block-start: 3px;
   }
   @media (max-width: 40rem) {
     .page-title {
@@ -521,7 +532,40 @@ if (!book && !loadError) {
   }
 
   .crumb {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm);
     margin: 0 0 var(--space-2xs);
+  }
+  .trail {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Same register as the breadcrumb beside it: mono caps at label size, quiet
+     until touched. It is still a submit in its own form, so nothing about the
+     behaviour changes with the weight. */
+  .finish {
+    background: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+    font-family: var(--font-label);
+    color: var(--accent);
+    white-space: nowrap;
+    min-height: 34px;
+  }
+  @media (pointer: fine) {
+    .finish {
+      min-height: 0;
+    }
+  }
+  .finish:hover {
+    text-decoration: underline;
+    text-underline-offset: 2px;
   }
   .crumb a {
     color: var(--accent);

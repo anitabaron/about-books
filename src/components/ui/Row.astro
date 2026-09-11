@@ -53,7 +53,10 @@ const wideParts = metaWide.filter((m): m is string => Boolean(m));
   .row {
     position: relative;
     border-block-end: var(--rule-w) solid var(--rule);
-    padding: 6px var(--space-md);
+    /* Asymmetric on purpose: 8 above, 6 below. The title needs a little air
+       off the hairline it sits under; the meta line beneath it does not, and
+       the 2px would cost a row of the list every dozen entries. */
+    padding: 8px var(--space-md) 6px;
     min-height: var(--row-h);
     transition: background var(--dur-fast) var(--ease-out);
   }
