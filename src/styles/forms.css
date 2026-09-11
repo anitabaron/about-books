@@ -98,10 +98,14 @@
   gap: 6px;
   min-width: 0;
 }
-.rel-controls select {
+/* Text fields share the row the same way selects do — the vocabulary rows are
+ * an input plus two glyphs rather than two selects plus a button. */
+.rel-controls select,
+.rel-controls input {
   flex: 1 1 0;
+  min-width: 0;
 }
-.rel-controls > :not(select) {
+.rel-controls > :not(select):not(input) {
   flex: none;
 }
 

@@ -466,47 +466,58 @@ if (!book && !loadError) {
                   <li id={`relationship-type-${customType.id}`} class="vocab-item">
                     {/* Rename is the half that repairs a typo -- delete cannot, because the
                         foreign key refuses to remove a type a connection still points at.
-                        One update to this row changes the name on every connection holding it. */}
+                        One update to this row changes the name on every connection holding it.
+
+                        An empty shell again: the field, the tick and the bin all sit in one
+                        row and reach this form with `form=`, because a <form> cannot nest
+                        inside another and the delete needs its own. Same row shape as the
+                        connection editors above, so the two read as the same kind of thing. */}
                     <form
                       method="POST"
                       action={`/api/relationship-types/${customType.id}`}
                       id={`rename-type-${customType.id}`}
-                      class="stack"
-                    >
-                      <div class="field">
-                        <label for={`rename-${customType.id}`}>Name</label>
-                        <input id={`rename-${customType.id}`} name="name" value={customType.name} maxlength="40" />
-                      </div>
-                    </form>
+                    />
 
                     {relationshipTypeErrorFor === customType.id && formError && <p class="error-text">{formError}</p>}
 
-                    {/* Same shape as the character row: renaming is what a reader actually
-                        does here, deleting is rare, so they share a line and delete is a
-                        glyph. Save reaches its form with `form=` because a <form> cannot
-                        nest inside another <form>. */}
-                    <div class="edit-actions">
-                      <Button type="submit" form={`rename-type-${customType.id}`} size="sm">
-                        Save name
-                      </Button>
-                      <details class="confirm icon">
-                        <summary aria-label={`Delete the type ${customType.name}`}>
-                          <Trash2 className="size-3.5" aria-hidden="true" />
-                        </summary>
-                        <form
-                          method="POST"
-                          action={`/api/relationship-types/${customType.id}/delete`}
-                          class="confirm-body"
+                    <div class="rel">
+                      <label for={`rename-${customType.id}`}>Name</label>
+                      <div class="rel-controls">
+                        <input
+                          id={`rename-${customType.id}`}
+                          form={`rename-type-${customType.id}`}
+                          name="name"
+                          value={customType.name}
+                          maxlength="40"
+                        />
+                        <Button
+                          type="submit"
+                          form={`rename-type-${customType.id}`}
+                          variant="ghost"
+                          size="sm"
+                          aria-label={`Save the name ${customType.name}`}
                         >
-                          <p>
-                            Delete <strong>{customType.name}</strong> from this book’s vocabulary? Connections using it
-                            must be changed first.
-                          </p>
-                          <Button type="submit" variant="destructive" size="sm">
-                            Yes, delete this type
-                          </Button>
-                        </form>
-                      </details>
+                          <Check className="size-3.5" aria-hidden="true" />
+                        </Button>
+                        <details class="confirm icon">
+                          <summary aria-label={`Delete the type ${customType.name}`}>
+                            <Trash2 className="size-3.5" aria-hidden="true" />
+                          </summary>
+                          <form
+                            method="POST"
+                            action={`/api/relationship-types/${customType.id}/delete`}
+                            class="confirm-body"
+                          >
+                            <p>
+                              Delete <strong>{customType.name}</strong> from this book’s vocabulary? Connections using
+                              it must be changed first.
+                            </p>
+                            <Button type="submit" variant="destructive" size="sm">
+                              Yes, delete this type
+                            </Button>
+                          </form>
+                        </details>
+                      </div>
                     </div>
                   </li>
                 ))}
@@ -518,20 +529,15 @@ if (!book && !loadError) {
             {/* The fragment target sits on content INSIDE the <details>, not on the element
                 itself: browsers that expand a closed disclosure to reach a fragment then open
                 it, and the rest simply scroll here. No JavaScript either way. */}
-            <form
-              method="POST"
-              action={`/api/books/${book.id}/relationship-types`}
-              id="relationship-types-add"
-              class="stack"
-            >
-              <div class="field">
+            <form method="POST" action={`/api/books/${book.id}/relationship-types`} id="relationship-types-add">
+              <div class="rel">
                 <label for="relationship-type-name">New</label>
-                <input id="relationship-type-name" name="name" placeholder="lives with" maxlength="40" />
-              </div>
-              <div class="edit-actions">
-                <Button type="submit" variant="outline" size="sm">
-                  Add type
-                </Button>
+                <div class="rel-controls">
+                  <input id="relationship-type-name" name="name" placeholder="lives with" maxlength="40" />
+                  <Button type="submit" variant="outline" size="sm">
+                    Add
+                  </Button>
+                </div>
               </div>
             </form>
           </div>
