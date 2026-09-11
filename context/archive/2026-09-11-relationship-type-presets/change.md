@@ -1,10 +1,10 @@
 ---
 change_id: relationship-type-presets
 title: The five shared relationship types move into the database, and `other` becomes `friend`
-status: implemented
+status: archived
 created: 2026-09-11
 updated: 2026-09-11
-archived_at: null
+archived_at: 2026-09-11T12:09:19Z
 ---
 
 ## Notes
