@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 
 interface SubmitButtonProps {
@@ -13,23 +12,16 @@ interface SubmitButtonProps {
   full?: boolean;
 }
 
+/* The pending state is not React state. These forms post to a URL, and useFormStatus -- which
+ * this used to read -- only tracks React form actions, so it never reported pending and the
+ * spinner below it never rendered. The shared submit script in Layout.astro sets aria-busy on
+ * the button and swaps the `[data-label]` text for `data-pending-text`; button.tsx draws the
+ * spinner in place of the icon. */
 export function SubmitButton({ pendingText, icon, children, size = "lg", full = true }: SubmitButtonProps) {
-  const { pending } = useFormStatus();
-
   return (
-    <Button type="submit" size={size} disabled={pending} aria-busy={pending} className={full ? "w-full" : undefined}>
-      {pending ? (
-        <>
-          {/* motion-reduce:animate-none — a spinner is spatial motion like any other. */}
-          <span className="border-paper/30 border-t-paper size-3.5 animate-spin border-2 motion-reduce:animate-none" />
-          {pendingText}
-        </>
-      ) : (
-        <>
-          {icon}
-          {children}
-        </>
-      )}
+    <Button type="submit" size={size} data-pending-text={pendingText} className={full ? "w-full" : undefined}>
+      {icon}
+      <span data-label>{children}</span>
     </Button>
   );
 }

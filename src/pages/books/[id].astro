@@ -268,7 +268,7 @@ if (!book && !loadError) {
                       </div>
                     </form>
                   </details>
-                  <Button type="submit" form={`edit-book-${book.id}`} size="sm">
+                  <Button type="submit" form={`edit-book-${book.id}`} size="sm" data-pending-text="Saving…">
                     Save
                   </Button>
                 </div>
@@ -435,13 +435,6 @@ if (!book && !loadError) {
                     >
                       <input type="hidden" name="book_id" value={book.id} />
                     </form>
-                    {others.length > 0 && (
-                      <form
-                        method="POST"
-                        action={`/api/characters/${character.id}/relationships`}
-                        id={`character-${character.id}-relationships`}
-                      />
-                    )}
 
                     <div class="stack">
                       <div class="field">
@@ -468,7 +461,13 @@ if (!book && !loadError) {
                       {connectionsErrorFor === character.id && formError && <p class="error-text">{formError}</p>}
 
                       {others.length > 0 ? (
-                        <div class="rel">
+                        /* The Link row belongs to the CHARACTER form, not a form of its own: Save
+                           used to drop a connection the reader had picked but not pressed Add for,
+                           which is logical and not what anyone expects. Save now submits it too
+                           (both empty = no connection); Add is the same form sent to the
+                           relationships endpoint via `formaction`, for adding several in a row.
+                           The id is the fragment a rejected link returns to. */
+                        <div class="rel" id={`character-${character.id}-relationships`}>
                           <label for={`newrel-type-${character.id}`}>Link</label>
                           <div class="rel-controls">
                             {/* Type before person, matching the editor rows below: a reader knows
@@ -478,9 +477,12 @@ if (!book && !loadError) {
                               JavaScript and the endpoint decides the column by shape. */}
                             <select
                               id={`newrel-type-${character.id}`}
-                              form={`character-${character.id}-relationships`}
+                              form={`edit-character-${character.id}`}
                               name="type"
                             >
+                              {/* Blank and selected: the first type and the first person used to
+                                  be preselected, which read as a connection already recorded. */}
+                              <option value="" selected />
                               <optgroup label="Shared">
                                 {sharedTypes.map((relationshipType) => (
                                   <option value={relationshipType}>{relationshipType}</option>
@@ -495,17 +497,20 @@ if (!book && !loadError) {
                               )}
                             </select>
                             <select
-                              form={`character-${character.id}-relationships`}
+                              form={`edit-character-${character.id}`}
                               name="other_character_id"
                               aria-label={`Character to link with ${character.name}`}
                             >
+                              <option value="" selected />
                               {others.map((other) => (
                                 <option value={other.id}>{other.name}</option>
                               ))}
                             </select>
                             <Button
                               type="submit"
-                              form={`character-${character.id}-relationships`}
+                              form={`edit-character-${character.id}`}
+                              formAction={`/api/characters/${character.id}/relationships`}
+                              data-pending-text="Adding…"
                               variant="outline"
                               size="sm"
                             >
@@ -544,7 +549,12 @@ if (!book && !loadError) {
                           </div>
                         </form>
                       </details>
-                      <Button type="submit" form={`edit-character-${character.id}`} size="sm">
+                      <Button
+                        type="submit"
+                        form={`edit-character-${character.id}`}
+                        size="sm"
+                        data-pending-text="Saving…"
+                      >
                         Save
                       </Button>
                     </div>

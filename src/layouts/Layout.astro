@@ -54,5 +54,57 @@ const fontHref = `https://fonts.googleapis.com/css2?${families.map((f) => `famil
       ))
     }
     <slot />
+    <script>
+      /* Every form in this app is a plain POST that answers with a redirect, so between the tap
+         and the next page nothing on screen changed -- readers pressed Save, saw nothing, and
+         pressed it again. This marks the button that submitted as busy (button.tsx draws the
+         spinner) and swallows a second submit of the same form.
+
+         A progressive enhancement: with scripting off, forms submit exactly as they did.
+         `aria-busy` rather than `disabled`, because a disabled submitter is left out of the
+         submission. The React SubmitButton relied on useFormStatus, which only tracks React
+         form actions -- with a URL `action` it never reported pending, so it is covered here too. */
+      document.addEventListener("submit", (event) => {
+        // A client-side validation failure (the React forms) already cancelled this submit.
+        if (event.defaultPrevented || !(event.target instanceof HTMLFormElement)) return;
+        const form = event.target;
+
+        if (form.dataset.pending !== undefined) {
+          event.preventDefault();
+          return;
+        }
+        form.dataset.pending = "";
+
+        const button = event.submitter;
+        if (!(button instanceof HTMLButtonElement)) return;
+        button.setAttribute("aria-busy", "true");
+
+        // Optional wording for the wait. Swapped only in a `[data-label]` element or a button
+        // that holds nothing but text, so an icon is never overwritten.
+        const pendingText = button.dataset.pendingText;
+        const label =
+          button.querySelector<HTMLElement>("[data-label]") ?? (button.childElementCount === 0 ? button : null);
+        if (pendingText && label) {
+          label.dataset.idleText = label.textContent ?? "";
+          label.textContent = pendingText;
+        }
+      });
+
+      // Back/forward restores the page from cache exactly as it was left: mid-submit. Undo it,
+      // or the reader returns to a spinner that never finishes and a form that ignores them.
+      window.addEventListener("pageshow", (event) => {
+        if (!event.persisted) return;
+        document.querySelectorAll<HTMLFormElement>("form[data-pending]").forEach((f) => delete f.dataset.pending);
+        document.querySelectorAll('[aria-busy="true"]').forEach((b) => b.removeAttribute("aria-busy"));
+        document.querySelectorAll<HTMLElement>("[data-idle-text]").forEach((l) => {
+          l.textContent = l.dataset.idleText ?? "";
+          delete l.dataset.idleText;
+        });
+      });
+
+      // iOS Safari applies :active only on pages that listen for touches; without this the
+      // pressed state in button.tsx never shows on an iPhone.
+      document.addEventListener("touchstart", () => undefined, { passive: true });
+    </script>
   </body>
 </html>
