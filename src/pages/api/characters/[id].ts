@@ -1,6 +1,13 @@
 import type { APIRoute } from "astro";
 import { createClient } from "@/lib/supabase";
-import { addConnection, connectionErrorUrl, readPendingConnection } from "@/lib/services/connection";
+import {
+  addConnection,
+  connectionErrorUrl,
+  readConnectionEdits,
+  readPendingConnection,
+  updateConnection,
+  type StoredConnection,
+} from "@/lib/services/connection";
 import { updateCharacterSchema } from "@/types";
 
 export const prerender = false;
@@ -47,6 +54,27 @@ export const POST: APIRoute = async (context) => {
       : backToBooks(pending.message);
   }
 
+  // The "Change or remove" rows submit with Save as well, for the same reason as the Link row:
+  // a type changed in a select and never ticked used to be lost on Save. Compared against the
+  // stored rows (RLS-filtered, and only this character's own end), so only what the reader
+  // actually changed is written.
+  const { data: stored, error: storedError } = await supabase
+    .from("relationships")
+    .select("id, character_b_id, type, custom_type_id")
+    .eq("character_a_id", characterId ?? "")
+    .overrideTypes<StoredConnection[], { merge: false }>();
+
+  if (storedError) {
+    return backToBooks(storedError.message);
+  }
+
+  const connectionEdits = readConnectionEdits((name) => form.get(name), stored);
+  if (connectionEdits.kind === "invalid") {
+    return hasFormBookId && characterId
+      ? context.redirect(connectionErrorUrl(formBookId, characterId, connectionEdits.message))
+      : backToBooks(connectionEdits.message);
+  }
+
   // RLS restricts the update to the reader's own row, so no ownership check is duplicated
   // here. Returning book_id makes the redirect authoritative instead of trusting the form.
   const { data: updated, error } = await supabase
@@ -63,12 +91,25 @@ export const POST: APIRoute = async (context) => {
     return backToBooks("Character not found");
   }
 
-  // After the update, so the book_id is the row's, not the form's. If this fails the name and
-  // note are already saved; the message says only the connection was refused, which is true.
-  if (pending.kind === "ok" && characterId) {
-    const failure = await addConnection(supabase, { id: characterId, book_id: updated.book_id }, pending.command);
-    if (failure) {
-      return context.redirect(connectionErrorUrl(updated.book_id, characterId, failure));
+  // After the update, so the book_id is the row's, not the form's. If one of these fails the
+  // name and note are already saved, and so is any connection written before it; the message
+  // names only the connection that was refused, which is true. Edits first, then the new link:
+  // an edit can free a pair the new link is about to take.
+  if (characterId) {
+    const anchor = { id: characterId, book_id: updated.book_id };
+
+    for (const edit of connectionEdits.edits) {
+      const failure = await updateConnection(supabase, anchor, edit.id, edit.command);
+      if (failure) {
+        return context.redirect(connectionErrorUrl(updated.book_id, characterId, failure));
+      }
+    }
+
+    if (pending.kind === "ok") {
+      const failure = await addConnection(supabase, anchor, pending.command);
+      if (failure) {
+        return context.redirect(connectionErrorUrl(updated.book_id, characterId, failure));
+      }
     }
   }
 

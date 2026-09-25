@@ -7,6 +7,7 @@ import AddCharacterForm from "@/components/characters/AddCharacterForm";
 import { createClient } from "@/lib/supabase";
 import type { Book, Character, Relationship, RelationshipTypeRow } from "@/types";
 import { buildConnections } from "@/lib/connections";
+import { connectionFields } from "@/lib/services/connection";
 import { defaultFocus, layoutCircle, layoutEgo, toLinks } from "@/lib/diagram";
 
 type BookRow = Pick<Book, "id" | "title" | "author" | "created_at" | "finished_at">;
@@ -423,17 +424,20 @@ if (!book && !loadError) {
                 <details class="disclose">
                   <summary>Edit</summary>
                   <div class="disclose-body">
-                    {/* Both forms are empty shells: every control lives in the stack below and
-                      reaches its form with `form=`. That is what lets Name, Note and Link read
-                      as one block of fields with a single Save/Delete row underneath, even
-                      though three different endpoints are involved. A <form> cannot nest
-                      inside another, so this is the only way to interleave them. */}
+                    {/* An empty shell: every control in this panel -- Name, Note, the Link row
+                      and each "Change or remove" row -- reaches it with `form=`, so the one
+                      Save at the bottom commits all of it. Add and each row's tick submit the
+                      same form to their own endpoints via `formAction`. The deletes keep forms
+                      of their own, because a <form> cannot nest inside another. */}
                     <form
                       method="POST"
                       action={`/api/characters/${character.id}`}
                       id={`edit-character-${character.id}`}
                     >
                       <input type="hidden" name="book_id" value={book.id} />
+                      {/* The anchor tells the connection endpoint which end to keep; it re-reads
+                          the row to confirm this character owns it. */}
+                      <input type="hidden" name="anchor_id" value={character.id} />
                     </form>
 
                     <div class="stack">
@@ -523,42 +527,6 @@ if (!book && !loadError) {
                       )}
                     </div>
 
-                    {/* Save left, Delete right, on the last line. The confirmation stays a nested
-                      <details>: the destructive control only exists once the reader has opened
-                      it, so a mis-tap costs a click, not a character. A JS confirm() would not
-                      survive scripting being off. */}
-                    <div class="edit-actions">
-                      <details class="confirm">
-                        <summary>Delete</summary>
-                        <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
-                          <p>
-                            Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot
-                            be undone.
-                          </p>
-                          <div class="confirm-actions">
-                            <Button type="submit" variant="destructive" size="sm">
-                              Yes, delete permanently
-                            </Button>
-                            {/* Closes the disclosure it sits in. With scripting off it does nothing
-                                  and the reader closes the panel by pressing the opener again, which is
-                                  how it worked before this button existed -- so nothing is lost, and
-                                  nothing about the destructive path depends on JavaScript. */}
-                            <button type="button" class="cancel" onclick="this.closest('details').open = false">
-                              Cancel
-                            </button>
-                          </div>
-                        </form>
-                      </details>
-                      <Button
-                        type="submit"
-                        form={`edit-character-${character.id}`}
-                        size="sm"
-                        data-pending-text="Saving…"
-                      >
-                        Save
-                      </Button>
-                    </div>
-
                     {/* Managing connections lives inside the disclosure on purpose: the always-visible list
                       above stays a clean scan, and edit/delete controls do not compete with it. */}
                     {connections.length > 0 && (
@@ -566,25 +534,10 @@ if (!book && !loadError) {
                         <p class="sub-label label">Change or remove</p>
                         {connections.map((connection) => (
                           <div class="conn-edit">
-                            {/* Controls live OUTSIDE this form and reach it with `form=`, so the
-                              bin can share their row: a <form> cannot nest inside another, and
-                              the delete needs its own. Same shape as the character row above.
-
-                              The id carries BOTH ids, though a connection now renders under one
-                              character only, so the connection id alone would be unique. It
-                              stays compound because that uniqueness is a property of the data
-                              model, not of this template: a duplicate id here fails silently,
-                              associating two rows' controls with the first form, and the
-                              character id costs nothing to keep as a guard against that. */}
-                            <form
-                              method="POST"
-                              action={`/api/relationships/${connection.id}`}
-                              id={`edit-rel-${character.id}-${connection.id}`}
-                            >
-                              {/* The anchor tells the route which end to keep; it re-reads the row to work
-                                out which column that is. */}
-                              <input type="hidden" name="anchor_id" value={character.id} />
-                            </form>
+                            {/* These selects belong to the CHARACTER form, named per connection
+                              (connectionFields), so Save writes a change the reader made here and
+                              never ticked -- it used to be lost. Save compares against the stored
+                              row and rewrites only what changed. */}
                             {/* One row, the same shape as the add form above: type, person,
                                 button. Two stacked rows cost ~40px per connection and made an
                                 edit look like a different kind of control from an add. */}
@@ -593,8 +546,8 @@ if (!book && !loadError) {
                               <div class="rel-controls">
                                 <select
                                   id={`rel-type-${character.id}-${connection.id}`}
-                                  name="type"
-                                  form={`edit-rel-${character.id}-${connection.id}`}
+                                  name={connectionFields(connection.id).type}
+                                  form={`edit-character-${character.id}`}
                                   aria-label={`Relationship type with ${connection.otherName}`}
                                 >
                                   <optgroup label="Shared">
@@ -618,8 +571,8 @@ if (!book && !loadError) {
                                   )}
                                 </select>
                                 <select
-                                  name="other_character_id"
-                                  form={`edit-rel-${character.id}-${connection.id}`}
+                                  name={connectionFields(connection.id).other}
+                                  form={`edit-character-${character.id}`}
                                   aria-label={`Character connected to ${character.name}`}
                                 >
                                   {others.map((other) => (
@@ -631,10 +584,12 @@ if (!book && !loadError) {
                                 {/* A glyph, not the black Save from the block above. Correcting an
                                     existing connection is a smaller act than saving the character,
                                     and two solid buttons in one disclosure read as two equally
-                                    important commits. Paired with the bin beside it, both quiet. */}
+                                    important commits. Paired with the bin beside it, both quiet.
+                                    It saves this one connection only; Save saves them all. */}
                                 <Button
                                   type="submit"
-                                  form={`edit-rel-${character.id}-${connection.id}`}
+                                  form={`edit-character-${character.id}`}
+                                  formAction={`/api/relationships/${connection.id}`}
                                   variant="ghost"
                                   size="sm"
                                   aria-label={`Save the connection with ${connection.otherName}`}
@@ -680,6 +635,44 @@ if (!book && !loadError) {
                         ))}
                       </div>
                     )}
+
+                    {/* Delete left, Save right, BELOW the connection editors: Save commits the
+                      whole panel, and sitting between the fields and the connections it read as
+                      if it closed only the part above it. The confirmation stays a nested
+                      <details>: the destructive control only exists once the reader has opened
+                      it, so a mis-tap costs a click, not a character. A JS confirm() would not
+                      survive scripting being off. */}
+                    <div class="edit-actions">
+                      <details class="confirm">
+                        <summary>Delete</summary>
+                        <form method="POST" action={`/api/characters/${character.id}/delete`} class="confirm-body">
+                          <p>
+                            Delete <strong>{character.name}</strong> and every relationship it appears in? This cannot
+                            be undone.
+                          </p>
+                          <div class="confirm-actions">
+                            <Button type="submit" variant="destructive" size="sm">
+                              Yes, delete permanently
+                            </Button>
+                            {/* Closes the disclosure it sits in. With scripting off it does nothing
+                                  and the reader closes the panel by pressing the opener again, which is
+                                  how it worked before this button existed -- so nothing is lost, and
+                                  nothing about the destructive path depends on JavaScript. */}
+                            <button type="button" class="cancel" onclick="this.closest('details').open = false">
+                              Cancel
+                            </button>
+                          </div>
+                        </form>
+                      </details>
+                      <Button
+                        type="submit"
+                        form={`edit-character-${character.id}`}
+                        size="sm"
+                        data-pending-text="Saving…"
+                      >
+                        Save
+                      </Button>
+                    </div>
                   </div>
                 </details>
               </Row>
